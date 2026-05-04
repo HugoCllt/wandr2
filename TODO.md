@@ -1,298 +1,208 @@
-# TODO — Wandr Implementation Roadmap
+# TODO.md — Wandr Roadmap
 
-Execute in order. Each step references relevant documentation.
+Milestones, not checklists-of-checklists. Each milestone has a single goal, an explicit dependency, and a gate that decides "done." Stories inside a milestone come from `PRD_Phase{1,2,3}.md` by ID; this file does not duplicate them.
 
----
+> Cadence: ship M0–M5 (Phase 1) before touching anything in Phase 2. The temptation to skip ahead is the temptation to ship a worse Phase 1.
 
-## Phase 0: Foundation
-
-### ✅ Complete
-- [x] ARCHITECTURE.md — Clean architecture design
-- [x] CLAUDE.md — Guardrails for enforcement
-- [x] PRD.md, PRD_Phase1/2/3.md — Requirements
-- [x] design.md, spec.md — Design brief & functional spec
+Legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 
 ---
 
-## Phase 1: Discovery Core (MVP)
+## Phase 1 — Discovery Core
 
-**Timeline:** Q2 2026  
-**Reference:** `PRD_Phase1.md` (105 user stories) | `ARCHITECTURE.md` | `CLAUDE.md`
+### M0 — Bootstrap
 
-### STEP_ZERO: Initialize Monorepo (2 hours)
-**Reference:** `STEP_ZERO.md` (steps 0.1–0.12)
+**Goal:** `pnpm install && pnpm db:up && pnpm db:migrate && pnpm db:seed && pnpm dev` opens a working Next.js app at `localhost:3000` with seed data visible.
+**Dep:** none.
+**Gate:** STEP_ZERO §5 verification table — all 8 checks pass.
 
-- [ ] 0.1 — Root package.json, tsconfig.json, turbo.json
-- [ ] 0.2 — Create directory structure (apps/, packages/)
-- [ ] 0.3 — Initialize @wandr/database (Prisma + schema)
-- [ ] 0.4 — Initialize domain packages (activities, feed, favorites)
-- [ ] 0.5 — Initialize application packages (feed, activities, search)
-- [ ] 0.6 — Initialize @wandr/contracts (DTOs)
-- [ ] 0.7 — Initialize @wandr/presets (HOME_PRESET)
-- [ ] 0.8 — Initialize apps/web (Next.js)
-- [ ] 0.9 — Environment & Docker Compose setup
-- [ ] 0.10 — `pnpm install` & verify
-- [ ] 0.11 — Type check & lint pass
-- [ ] 0.12 — Commit skeleton
+- [ ] Root scaffolding (`pnpm-workspace.yaml`, `tsconfig.base.json`, `turbo.json`, `.env.example`, `.gitignore`, `.nvmrc`, `.npmrc`, `.editorconfig`, `docker-compose.yml`, husky + commitlint + lint-staged + Prettier).
+- [ ] `apps/web` scaffolding (Next 14, `tsconfig.json`, `eslint.config.mjs`, `next.config.mjs`).
+- [ ] `dependency-cruiser` config with the layer DAG (CLAUDE.md §2 + ARCHITECTURE.md §2).
+- [ ] Module folders stubbed: `activities`, `feed`, `filters`, `favorites`, `search`, `map`.
+- [ ] `shared/{db,config,obs,contracts,presets,ui}` stubbed.
+- [ ] Prisma schema (SCHEMA.md §3) authored and validated.
+- [ ] PostGIS bootstrap migration (`CREATE EXTENSION` + GIST index for `Location.geom`).
+- [ ] `prisma/seed.ts` with 30 hand-curated Montréal activities + 1 dev user + 1 manual `Source`.
+- [ ] Trivial `app/page.tsx` listing seeded activities.
 
-**Result:** `pnpm dev` works. Web app runs on localhost:3000. No runtime errors.
+### M1 — Catalog + Feed engine
 
----
+**Goal:** `GET /api/feed` returns paginated `FeedResultDTO` from real Prisma data, ranked by `featured DESC, dateStart ASC, recencyDecayedSaveCount DESC`.
+**Dep:** M0.
+**Gate:** spec.md F1.1, F1.2, F2.1, F2.2, F2.3 acceptance tests green; PRD_Phase1 stories 1, 2 pass Playwright.
 
-### STEP_ONE: Implement Feed Engine (4 days)
-**Reference:** `PRD_Phase1.md` stories 1–15 | `ARCHITECTURE.md` (Application layer)
+- [ ] `Activity` entity with invariants + unit tests (target: 90% domain coverage).
+- [ ] `IActivityRepository` port; `PrismaActivityRepository` adapter; testcontainers integration test.
+- [ ] `FeedQuery`/`FeedResult` domain types.
+- [ ] `GetFeedUseCase` (filter → rank → paginate). Cursor-based.
+- [ ] P1 ranker (`featured`, `dateStart`, `recencyDecayedSaveCount`) — unit tested.
+- [ ] `app/api/feed/route.ts` — DTO mapping, error handler.
+- [ ] `app/api/_lib/error-handler.ts` mapping `DomainError` → HTTP.
+- [ ] `app/api/_lib/track.ts` writing `EngagementEvent`.
 
-**1.1 — Catalog Service**
-- [ ] Implement `domain/activities/activity.entity.ts` (Activity class)
-- [ ] Implement `domain/activities/activity.repository.ts` (IActivityRepository port)
-- [ ] Implement `infrastructure/database/activity.repository.ts` (PrismaActivityRepository adapter)
-- [ ] Implement `application/activities/get-activity.usecase.ts` (GetActivityUseCase)
-- [ ] Tests: unit (domain) + integration (application with mocked repo)
-- [ ] Reference: CLAUDE.md rule #2, #4, #8
+### M2 — Filters + Search
 
-**1.2 — Feed Engine**
-- [ ] Implement `domain/feed/feed.entity.ts` (FeedQuery, FeedResult)
-- [ ] Implement `application/feed/get-feed.usecase.ts` (GetFeedUseCase: filter → rank → paginate)
-- [ ] Implement `packages/contracts/feed.contract.ts` (FeedQueryDTO, FeedResultDTO)
-- [ ] Tests: integration (application with mocked activities repo)
-- [ ] Reference: CLAUDE.md rule #9, ARCHITECTURE.md (Application layer)
+**Goal:** Filters apply instantly, URL is shareable, naive intent parser handles 20 fixture phrases. Search and feed share one response shape.
+**Dep:** M1.
+**Gate:** PRD_Phase1 stories 5–18 pass; round-trip filter URL test green; trigram + naive parser fixture suite ≥ 90% pass.
 
-**1.3 — API Routes**
-- [ ] Implement `apps/web/app/api/activities/route.ts` (GET /api/activities)
-- [ ] Implement `apps/web/app/api/activities/[id]/route.ts` (GET /api/activities/:id)
-- [ ] Error handling middleware
-- [ ] Tests: E2E (real API, real DB)
-- [ ] Reference: CLAUDE.md rule #7 (error mapping), ARCHITECTURE.md (Web layer)
+- [ ] `FilterDef`/`FilterValue` domain types in `modules/filters/domain`.
+- [ ] zod-validated URL ↔ filter serializer in `modules/filters/application`.
+- [ ] Filter composition wired into `GetFeedUseCase`.
+- [ ] `pg_trgm` extension migration.
+- [ ] `TrigramSearchAdapter` in `modules/search/infra`.
+- [ ] Naive intent parser (regex over date phrases, neighborhood, category) in `modules/search/application`.
+- [ ] `SearchActivitiesUseCase`.
+- [ ] `app/api/search/route.ts` returning `FeedResultDTO`.
+- [ ] Distance filter via PostGIS `ST_DWithin`.
 
-**Result:** `GET /api/activities?limit=10` returns paginated ActivityDTO[]. Tests pass.
+### M3 — Map + Detail + UI shell
 
----
+**Goal:** Home `/` renders the shared `<PageShell preset={HOME_PRESET} />`. `<FeedGrid>`, `<FilterBar>`, `<MapSection>`, `<ActivityCard>` exist as shared primitives. `/activity/[slug]` renders a real page.
+**Dep:** M2.
+**Gate:** PRD_Phase1 stories 19–33; visual-regression baseline captured; axe-core AA on Home and Detail.
 
-### STEP_TWO: Implement Filters (2 days)
-**Reference:** `PRD_Phase1.md` stories 16–29 | `ARCHITECTURE.md` (Application layer)
+- [ ] Design tokens shipped in `shared/ui/tokens.ts` with the contrast snapshot test.
+- [ ] Primitives (Button, IconButton, Input, Select, Toggle, Chip, Card, Sheet, Dialog, Skeleton, Carousel, MapPin, FlameIcon, DealBadge, Rating).
+- [ ] `<ActivityCard>` (3 variants).
+- [ ] `<FilterBar>` driven by `preset.feed.visibleFilters`.
+- [ ] `<FeedGrid>` with cursor pagination and `IntersectionObserver`-driven `VIEWED` tracking.
+- [ ] `<MapSection>` with Mapbox adapter, density clustering, pin/card sync.
+- [ ] `<PageShell>` composition root.
+- [ ] `app/(home)/page.tsx` using `HOME_PRESET`.
+- [ ] `app/activity/[slug]/page.tsx` (full-page, not a modal).
+- [ ] Mini overlay map on card location button.
 
-- [ ] Implement `application/filters/filter.service.ts` (FilterService)
-- [ ] Implement filter serialization (to URL, from URL)
-- [ ] Implement filter application in GetFeedUseCase
-- [ ] Update `packages/presets/home.preset.ts` with filter config
-- [ ] Tests: unit (filter composition) + integration (filters + catalog)
-- [ ] API: `GET /api/activities?filters[0].type=price&filters[0].min=0&filters[0].max=50`
-- [ ] Reference: CLAUDE.md rule #10 (presets), ARCHITECTURE.md
+### M4 — Favorites
 
-**Result:** Filters apply instantly. URL is shareable. Tests pass.
+**Goal:** Heart toggle persists, `/favorites` lists saved activities reusing `<FeedGrid>`.
+**Dep:** M3.
+**Gate:** PRD_Phase1 stories 22, 34–38 pass.
 
----
+- [ ] `Favorite` entity + `IFavoriteRepository` port.
+- [ ] `PrismaFavoriteRepository` adapter.
+- [ ] `AddFavoriteUseCase`, `RemoveFavoriteUseCase`, `ListFavoritesUseCase`.
+- [ ] `app/api/favorites/route.ts` (POST, DELETE, GET).
+- [ ] `app/favorites/page.tsx` reusing `<FeedGrid>`.
+- [ ] Heart toggle on cards: optimistic UI + rollback on failure.
 
-### STEP_THREE: Implement Search (2 days)
-**Reference:** `PRD_Phase1.md` stories 105–115 | `ARCHITECTURE.md` (Infrastructure layer)
+### M5 — Phase 1 done
 
-- [ ] Implement `domain/search/intent.entity.ts` (Intent value object)
-- [ ] Implement `domain/search/search.port.ts` (ISearchProvider port)
-- [ ] Implement `infrastructure/search/naive.adapter.ts` (NaiveSearchAdapter: regex-based fallback)
-- [ ] Implement `application/search/search-activities.usecase.ts` (SearchActivitiesUseCase)
-- [ ] Update `packages/contracts/search.contract.ts`
-- [ ] Tests: unit (intent parsing) + integration (search + catalog)
-- [ ] API: `GET /api/search?q=jazz+tonight`
-- [ ] Reference: CLAUDE.md rule #7 (selective hexagonal), ARCHITECTURE.md
+**Goal:** P1 acceptance gates green in CI; performance budgets met on dev box.
+**Dep:** M4.
+**Gate:** PRD_Phase1 §"Definition of done" — all four conditions hold.
 
-**Result:** Search parses intent. Returns filtered activities. Tests pass.
-
----
-
-### STEP_FOUR: Implement Map Integration (3 days)
-**Reference:** `PRD_Phase1.md` stories 62–70 | `ARCHITECTURE.md` (Infrastructure layer)
-
-- [ ] Implement `domain/map/map.port.ts` (IMapProvider port)
-- [ ] Implement `infrastructure/map/mapbox.adapter.ts` (MapboxAdapter)
-- [ ] Implement `packages/ui/map-section/MapSection.tsx` (React component)
-- [ ] Integrate with GetFeedUseCase (fetch pins, sync with cards)
-- [ ] Tests: integration (map adapter) + component (visual regression)
-- [ ] Reference: CLAUDE.md rule #7 (selective hexagonal), ARCHITECTURE.md
-
-**Result:** Map renders with pins. Pin/card sync works. Tests pass.
+- [ ] Playwright happy paths: Home, Detail, Favorites, Search.
+- [ ] Lighthouse CI: p95 LCP < 2.5s on `/`, JS < 200 KB.
+- [ ] axe-core AA on Home, Detail, Favorites.
+- [ ] `pnpm dep:check` enforces every rule in `.dependency-cruiser.cjs` (deliberate-bad-import test still fails).
+- [ ] 5-minute browse session writes `EngagementEvent` rows; verified by SQL.
 
 ---
 
-### STEP_FIVE: Implement Activity Cards & Detail (3 days)
-**Reference:** `PRD_Phase1.md` stories 42–56, 80–94 | `ARCHITECTURE.md` (UI + Web)
+## Phase 2 — Verticals + Trend Flame + Profile
 
-- [ ] Implement `packages/ui/activity-card/ActivityCard.tsx` (3 variants)
-- [ ] Implement `packages/ui/activity-card/ActivityCard.stories.tsx` (Storybook)
-- [ ] Implement `application/detail/get-activity-detail.usecase.ts` (GetActivityDetailUseCase)
-- [ ] Implement `apps/web/components/ActivityDetailOverlay.tsx`
-- [ ] Update `packages/contracts/activity.contract.ts` (ActivityDTO, ActivityCardVM)
-- [ ] Tests: component (visual) + E2E (click card → detail opens)
-- [ ] Reference: CLAUDE.md rule #5 (contracts), ARCHITECTURE.md (UI layer)
+Prereq: P1 in production-equivalent for ≥ 14 days, real engagement events accumulating.
 
-**Result:** Cards render correctly. Detail overlay opens. Tests pass.
+### M6 — Sport / Romantic / Food presets
 
----
+**Goal:** Three new vertical pages exist; **no new modules, no new components**. Each route file is < 20 LOC.
+**Gate:** PRD_Phase2 stories 44–49.
 
-### STEP_SIX: Implement Favorites (2 days)
-**Reference:** `PRD_Phase1.md` stories 95–104 | `ARCHITECTURE.md` (Application + Infrastructure)
+- [ ] `SPORT_PRESET`, `ROMANTIC_PRESET`, `FOOD_PRESET`.
+- [ ] `app/sport/page.tsx`, `app/romantic/page.tsx`, `app/food/page.tsx`.
+- [ ] PR template with the "no new module/component" checkbox.
 
-- [ ] Implement `domain/favorites/favorite.entity.ts` (Favorite class)
-- [ ] Implement `domain/favorites/favorite.repository.ts` (IFavoriteRepository port)
-- [ ] Implement `infrastructure/database/favorite.repository.ts` (PrismaFavoriteRepository)
-- [ ] Implement `application/favorites/add-favorite.usecase.ts`, `list-favorites.usecase.ts`
-- [ ] Implement `apps/web/app/api/favorites/route.ts` (POST, DELETE, GET)
-- [ ] Update `packages/contracts/favorites.contract.ts`
-- [ ] Tests: unit (domain) + integration (application) + E2E (save → list → remove)
-- [ ] Reference: CLAUDE.md rule #4, ARCHITECTURE.md
+### M7 — Trend Flame
 
-**Result:** Save/remove works. Favorites persist. Tests pass.
+**Goal:** Flame computed nightly from real engagement; cards render flame; filter "Trending+" works.
+**Gate:** PRD_Phase2 stories 50–55.
 
----
+- [ ] `flame.ts` ranker module with the published score formula.
+- [ ] `node-cron` job + Vercel Cron trigger.
+- [ ] `<FlameIcon>` integration on card and detail.
+- [ ] "Trending+" filter wired into `modules/filters`.
+- [ ] Cold-start prior tested.
 
-### STEP_SEVEN: Home Page UI (3 days)
-**Reference:** `PRD_Phase1.md` (entire), `ARCHITECTURE.md` (Web layer)
+### M8 — Reviews
 
-- [ ] Implement `apps/web/app/(home)/page.tsx` (Home page)
-- [ ] Implement `apps/web/hooks/use-home-feed.ts` (useHomeFeed hook)
-- [ ] Integrate carousel (STEP_CAROUSEL, if not done)
-- [ ] Integrate filters, feed, map, favorites
-- [ ] Responsive design (1200px → 800px)
-- [ ] Tests: E2E (full discovery flow < 60s)
-- [ ] Reference: `PRD_Phase1.md`, `HOME_PRESET` in `packages/presets`
+**Gate:** PRD_Phase2 stories 56–58.
 
-**Result:** Home page loads. All features work together. Discovery < 60s. Tests pass.
+- [ ] `Review` repository + use cases (create / update / delete).
+- [ ] `app/api/reviews/route.ts`.
+- [ ] Review section on `/activity/[slug]`.
+- [ ] Detail-page rating aggregation.
 
----
+### M9 — Profile
 
-### STEP_CAROUSEL: Implement Carousel (1 day)
-**Reference:** `PRD_Phase1.md` stories 8–15 | `ARCHITECTURE.md` (UI)
+**Gate:** PRD_Phase2 stories 59–62.
 
-- [ ] Implement `packages/ui/carousel/Carousel.tsx` (generic carousel component)
-- [ ] Implement `apps/web/components/FeaturedCarousel.tsx` (featured activities)
-- [ ] Tests: component (rotation, nav, pause on hover)
-- [ ] Reference: CLAUDE.md rule #10 (presets), ARCHITECTURE.md
+- [ ] `app/profile/page.tsx`.
+- [ ] On-the-fly stats queries (no aggregates table yet).
+- [ ] `<CategoryDonut>` chart.
+- [ ] Quick-action stubs for Preferences and History.
 
-**Result:** Carousel rotates, manual nav works, animations smooth. Tests pass.
+### M10 — Engagement retention + counter reconciliation
+
+**Gate:** PRD_Phase2 stories 64–65.
+
+- [ ] Nightly retention job (90-day TTL on `EngagementEvent`).
+- [ ] Counter reconciliation pass updating `Activity.viewCount` / `saveCount`.
 
 ---
 
-### STEP_TESTING: Testing Infrastructure (1 day)
-**Reference:** `CLAUDE.md` rule #11, `ARCHITECTURE_RECOMMENDATIONS.md` (removed, but covers: TESTING.md needed)
+## Phase 3 — Intelligence
 
-- [ ] Set up Vitest across packages
-- [ ] Configure test databases (testcontainers for Postgres)
-- [ ] E2E test framework (Playwright or similar)
-- [ ] Coverage thresholds (domain 90%, application 80%)
-- [ ] CI/CD matrix (test all layers in parallel)
+Prereq: P2 shipped, ≥ 30 days of engagement data.
 
-**Result:** All tests runnable. `pnpm test` works. CI passes.
+### M11 — NL search (P3.0)
 
----
+**Gate:** PRD_Phase3 stories 66–70; eval set ≥ 85%.
 
-### STEP_ZERO-FINAL: Phase 1 Complete
-- [ ] All 105 user stories (PRD_Phase1.md) completable
-- [ ] Zero CLAUDE.md violations (linter enforces)
-- [ ] E2E test: discovery < 60 seconds passes
-- [ ] Visual regression tests pass
-- [ ] FCP < 2s, LCP < 4s (measured)
-- [ ] WCAG AA compliance verified
-- [ ] Code coverage: domain 90%+, application 80%+
-- [ ] Monorepo builds cleanly
-- [ ] Ready for beta testing
+- [ ] `IIntentParser` port + `OpenAIIntentParser` adapter (structured output, pinned model).
+- [ ] `intentToFeedQuery` translator.
+- [ ] Cost-cap middleware (`cost:user:{id}:{yyyymmdd}`).
+- [ ] 5-min cache by query hash.
+- [ ] 50-phrase eval suite; CI gate.
 
----
+### M12 — Grounded chat (P3.1)
 
-## Phase 2: Specialization (Q3 2026)
+**Gate:** PRD_Phase3 stories 71–77; LLM safety checklist all green.
 
-**Reference:** `PRD_Phase2.md` (24 user stories) | `ARCHITECTURE.md`
+- [ ] `chat` module: domain (`Conversation`, `IExplanationWriter`), application (`ChatUseCase`), infra (`OpenAIExplanationWriter`).
+- [ ] `dep:check` rule `feed-must-not-depend-on-chat` active and tested.
+- [ ] `app/chat/page.tsx` reusing `<PageShell>` + `<FeedGrid>`.
+- [ ] `POST /api/chat` SSE response.
+- [ ] Out-of-vocabulary ID validator + retry + templated fallback.
+- [ ] PII redaction in prompt logs.
+- [ ] 30-scenario grounded-chat eval suite.
 
-### STEP_ONE-P2: Sport Page (3 days)
-- [ ] Implement `packages/presets/sport.preset.ts`
-- [ ] Extend filters for sports-specific (sport type, classes, deals)
-- [ ] Implement `apps/web/app/sport/page.tsx`
-- [ ] Add sport category tags, deal badges
-- [ ] Tests: E2E (sport discovery flow)
+### M13 — Personalization (P3.2)
 
-### STEP_TWO-P2: Trend Flame System (2 days)
-- [ ] Implement `domain/flame/flame.scorer.ts` (IFlameScorer)
-- [ ] Compute from views, saves, bookings, recency
-- [ ] Add nightly batch job (compute flame scores)
-- [ ] Cache in Redis
-- [ ] Update ActivityDTO with flameLevel
-- [ ] Tests: unit (flame scoring logic)
+**Gate:** PRD_Phase3 stories 78–84.
 
-### STEP_THREE-P2: User Profile (3 days)
-- [ ] Implement `domain/personalization/affinity.entity.ts`
-- [ ] Implement `application/profile/get-profile.usecase.ts`
-- [ ] Implement `apps/web/app/profile/page.tsx`
-- [ ] Add stats aggregation (viewed, saved, favorite category, monthly outings)
-- [ ] Tests: E2E (profile page loads, stats accurate)
-
-### STEP-COMPLETE-P2: Phase 2 Complete
-- [ ] All 24 user stories completable
-- [ ] Sport page engagement: 20%+ weekly users
-- [ ] Performance maintained (FCP < 2s, LCP < 4s)
-- [ ] Ready for rollout
+- [ ] `UserCategoryAffinity` nightly compute job.
+- [ ] `AffinityAwareRanker` plugged into `GetFeedUseCase`.
+- [ ] Cold-start fallback to flame ranker.
+- [ ] Explainability copy from rank deltas.
+- [ ] Anti-bias guard: `dealKind = PERCENT_OFF` capped at 30% of first 24.
+- [ ] Profile preference toggle for personalization.
 
 ---
 
-## Phase 3: Intelligence (Q4 2026)
+## Cross-cutting backlog (do when needed, not on a schedule)
 
-**Reference:** `PRD_Phase3.md` (21 user stories) | `ARCHITECTURE.md`
+- [ ] Replace `node-cron` with Inngest or Trigger.dev when there are > 3 jobs.
+- [ ] Replace in-process LRU cache with Redis when intent caching grows.
+- [ ] Promote `shared/contracts` and/or `shared/ui` to a workspace package when `apps/api` or `apps/mobile` actually exists.
+- [ ] Replace seeded user with Auth.js when the product has a second user.
+- [ ] Sentry / OTEL when production traffic exists.
+- [ ] Eventbrite / Ticketmaster ingestion connectors when manual seeding is no longer enough.
+- [ ] i18n + Quebec Loi 25 when public launch is on the table.
 
-### STEP_ONE-P3: Chat Infrastructure (3 days)
-- [ ] Implement `domain/chatbot/conversation.entity.ts`
-- [ ] Implement `domain/chatbot/intent.parser.ts` (IIntentParser port)
-- [ ] Implement `infrastructure/llm/openai.adapter.ts` (OpenAIAdapter)
-- [ ] Set up intent caching (Redis, 5-min TTL)
-- [ ] Tests: unit (intent parsing) + integration (LLM adapter)
-
-### STEP_TWO-P3: Chat Page (2 days)
-- [ ] Implement `application/chat/chat-with-activities.usecase.ts`
-- [ ] Implement `apps/web/app/chat/page.tsx` (Chat UI)
-- [ ] Add suggested prompts carousel
-- [ ] Add SSE streaming for LLM responses
-- [ ] Tests: E2E (chat → activity cards)
-
-### STEP_THREE-P3: Personalized Recommendations (3 days)
-- [ ] Implement `domain/personalization/affinity.calculator.ts`
-- [ ] Implement `application/recommendations/get-recommendations.usecase.ts`
-- [ ] Nightly batch job (compute user affinities)
-- [ ] Display on Home, Sport pages, Chat
-- [ ] Tests: unit (affinity scoring) + E2E (recommendations appear)
-
-### STEP-COMPLETE-P3: Phase 3 Complete
-- [ ] All 21 user stories completable
-- [ ] Chat adoption: 30%+ weekly users
-- [ ] Intent accuracy: 85%+
-- [ ] Recommendation CTR: 15%+
-- [ ] Ready for public launch
+Each item lands with its own ADR-style note appended to `ARCHITECTURE.md` so the rationale is recorded in-tree.
 
 ---
 
-## Post-Launch
-
-- [ ] Create DEVELOPMENT.md (local setup, debugging)
-- [ ] Create TESTING.md (test structure, fixtures)
-- [ ] Create API.md (contract design, pagination)
-- [ ] Create LOGGING.md (structured logging, observability)
-- [ ] Create AUTH.md (JWT, session, middleware)
-- [ ] Architecture Decision Records (ADRs)
-- [ ] Database migration strategy
-- [ ] Monitoring & alerting setup (Sentry, Datadog)
-- [ ] Performance profiling & optimization
-- [ ] Mobile app architecture (if pursuing native)
-
----
-
-## Key References
-
-- **CLAUDE.md** — Rules to enforce during coding
-- **ARCHITECTURE.md** — Layer design, examples, DAG
-- **STEP_ZERO.md** — Initial monorepo setup
-- **PRD_Phase1/2/3.md** — User stories per phase
-- **design.md** — Visual identity, motion, emotional goals
-- **spec.md** — Original functional requirements
-
----
-
-**Start with:** STEP_ZERO.md (2 hours) → Then STEP_ONE (4 days) → Continue in order.
-
-Each STEP references the PRD for requirements and ARCHITECTURE.md for design patterns.
-
-Execute in order. Commit after each STEP. Keep CLAUDE.md enforced throughout.
+**Authority:** `CLAUDE.md` > `ARCHITECTURE.md` > PRDs > this file. If a milestone here disagrees with a PRD, fix the PRD or fix the milestone — never both at once.

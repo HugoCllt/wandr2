@@ -1,634 +1,323 @@
-# Wandr Architecture v1 — Clean Monorepo
+# ARCHITECTURE.md — Wandr v1
 
-**Pattern:** Domain-Driven Design + Clean Architecture + Selective Hexagonal
+**Pattern:** Modular monolith with selective hexagonal. Single Next.js app. Capabilities are folders, not packages. Pages are compositions of shared modules parameterized by a preset.
 
----
-
-## Work Tree
-
-```
-wandr/
-├── apps/
-│   ├── web/                          # Next.js web application
-│   │   ├── app/
-│   │   │   ├── (home)/page.tsx
-│   │   │   ├── sport/page.tsx
-│   │   │   ├── chat/page.tsx
-│   │   │   ├── profile/page.tsx
-│   │   │   ├── api/
-│   │   │   │   ├── activities/route.ts
-│   │   │   │   ├── search/route.ts
-│   │   │   │   ├── chat/route.ts
-│   │   │   │   └── favorites/route.ts
-│   │   │   └── layout.tsx
-│   │   ├── components/
-│   │   │   └── (page compositions, minimal logic)
-│   │   ├── hooks/
-│   │   ├── lib/
-│   │   ├── package.json
-│   │   └── next.config.js
-│   │
-│   ├── api/                          # (Optional) Separate API if needed
-│   │   ├── src/
-│   │   │   ├── routes/
-│   │   │   └── middleware/
-│   │   └── package.json
-│   │
-│   └── mobile/                       # (Future) Native mobile app
-│
-├── packages/
-│   │
-│   ├── domain/                       # Business logic (pure, no frameworks)
-│   │   ├── activities/
-│   │   │   ├── src/
-│   │   │   │   ├── activity.entity.ts         # Domain model
-│   │   │   │   ├── activity.repository.ts     # Port interface
-│   │   │   │   ├── activity.errors.ts
-│   │   │   │   └── index.ts
-│   │   │   ├── package.json
-│   │   │   └── README.md
-│   │   │
-│   │   ├── feed/
-│   │   │   ├── src/
-│   │   │   │   ├── feed.entity.ts             # FeedQuery, FeedResult entities
-│   │   │   │   ├── feed.repository.ts         # Port: IActivityRepository
-│   │   │   │   ├── feed.sorter.ts             # Port: ISorter (pluggable)
-│   │   │   │   ├── feed.ranker.ts             # Port: IRanker (pluggable)
-│   │   │   │   ├── feed.errors.ts
-│   │   │   │   └── index.ts
-│   │   │   ├── package.json
-│   │   │   └── README.md
-│   │   │
-│   │   ├── favorites/
-│   │   │   ├── src/
-│   │   │   │   ├── favorite.entity.ts
-│   │   │   │   ├── favorite.repository.ts     # Port
-│   │   │   │   ├── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   ├── personalization/
-│   │   │   ├── src/
-│   │   │   │   ├── affinity.entity.ts
-│   │   │   │   ├── affinity.calculator.ts     # Port: IAffinityCalculator
-│   │   │   │   ├── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   └── chatbot/
-│   │       ├── src/
-│   │       │   ├── conversation.entity.ts
-│   │       │   ├── intent-parser.ts            # Port: IIntentParser
-│   │       │   ├── index.ts
-│   │       └── package.json
-│   │
-│   ├── application/                  # Use cases & orchestration
-│   │   ├── activities/
-│   │   │   ├── src/
-│   │   │   │   ├── get-activity.usecase.ts
-│   │   │   │   ├── search-activities.usecase.ts
-│   │   │   │   └── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   ├── feed/
-│   │   │   ├── src/
-│   │   │   │   ├── get-feed.usecase.ts         # Core feed orchestration
-│   │   │   │   │   # Merges: preset + filters + ranking + pagination
-│   │   │   │   ├── feed.pipeline.ts            # Filter → Sort → Rank → Paginate
-│   │   │   │   ├── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   ├── search/
-│   │   │   ├── src/
-│   │   │   │   ├── search-activities.usecase.ts
-│   │   │   │   ├── intent.parser.ts            # Calls domain port
-│   │   │   │   └── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   ├── chat/
-│   │   │   ├── src/
-│   │   │   │   ├── chat-with-activities.usecase.ts
-│   │   │   │   ├── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   └── favorites/
-│   │       ├── src/
-│   │       │   ├── add-favorite.usecase.ts
-│   │       │   ├── list-favorites.usecase.ts
-│   │       │   └── index.ts
-│   │       └── package.json
-│   │
-│   ├── infrastructure/                # External adapters (Hexagonal)
-│   │   ├── database/
-│   │   │   ├── src/
-│   │   │   │   ├── prisma/
-│   │   │   │   │   └── schema.prisma
-│   │   │   │   ├── activity.repository.ts      # Implements IActivityRepository
-│   │   │   │   ├── favorite.repository.ts      # Implements IFavoriteRepository
-│   │   │   │   ├── client.ts                   # PrismaClient factory
-│   │   │   │   └── index.ts
-│   │   │   ├── package.json
-│   │   │   └── README.md
-│   │   │
-│   │   ├── search/
-│   │   │   ├── src/
-│   │   │   │   ├── elasticsearch.adapter.ts    # Implements ISearchProvider
-│   │   │   │   ├── meilisearch.adapter.ts
-│   │   │   │   ├── naive.adapter.ts            # Fallback parser
-│   │   │   │   └── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   ├── map/
-│   │   │   ├── src/
-│   │   │   │   ├── mapbox.adapter.ts           # Implements IMapProvider
-│   │   │   │   ├── google-maps.adapter.ts
-│   │   │   │   └── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   ├── llm/
-│   │   │   ├── src/
-│   │   │   │   ├── openai.adapter.ts           # Implements ILLMProvider
-│   │   │   │   ├── anthropic.adapter.ts
-│   │   │   │   └── index.ts
-│   │   │   └── package.json
-│   │   │
-│   │   └── cache/
-│   │       ├── src/
-│   │       │   ├── redis.adapter.ts            # Implements ICache
-│   │       │   ├── memory.adapter.ts
-│   │       │   └── index.ts
-│   │       └── package.json
-│   │
-│   ├── contracts/                    # Transport & boundary types
-│   │   ├── src/
-│   │   │   ├── activity.contract.ts            # ActivityDTO, ActivitySummaryDTO
-│   │   │   ├── feed.contract.ts                # FeedQueryDTO, FeedResultDTO
-│   │   │   ├── page.contract.ts                # PagePresetDTO
-│   │   │   ├── chatbot.contract.ts             # ChatMessageDTO, IntentDTO
-│   │   │   └── index.ts
-│   │   ├── package.json
-│   │   └── README.md
-│   │
-│   ├── presets/                      # Page configurations
-│   │   ├── src/
-│   │   │   ├── home.preset.ts
-│   │   │   │   # {
-│   │   │   │   #   filters: ['price', 'distance', 'date', 'category'],
-│   │   │   │   #   defaultSort: 'relevance',
-│   │   │   │   #   sections: { carousel: true, map: true, grid: true },
-│   │   │   │   # }
-│   │   │   │
-│   │   │   ├── sport.preset.ts
-│   │   │   ├── romantic.preset.ts
-│   │   │   ├── food.preset.ts
-│   │   │   └── index.ts
-│   │   ├── package.json
-│   │   └── README.md
-│   │
-│   └── ui/                           # React components (UI-only)
-│       ├── src/
-│       │   ├── activity-card/
-│       │   │   ├── ActivityCard.tsx            # Accepts Activity DTO, renders
-│       │   │   ├── activity-card.stories.tsx
-│       │   │   └── package.json
-│       │   │
-│       │   ├── filter-bar/
-│       │   │   ├── FilterBar.tsx
-│       │   │   └── package.json
-│       │   │
-│       │   ├── feed-header/
-│       │   │   ├── FeedHeader.tsx
-│       │   │   └── package.json
-│       │   │
-│       │   └── sections/
-│       │       ├── hero-carousel/
-│       │       ├── discovery-grid/
-│       │       ├── map-section/
-│       │       └── package.json
-│       │
-│       ├── package.json
-│       └── tailwind.config.js
-│
-├── turbo.json
-├── tsconfig.json
-├── package.json
-├── pnpm-workspace.yaml
-└── .github/workflows/
-    ├── test.yml
-    ├── lint.yml
-    └── build.yml
-```
+**Stage:** personal POC. Optimize for "ship Phase 1 end-to-end on a laptop." Re-evaluate when there is a second consumer or a second engineer.
 
 ---
 
-## Layer Responsibilities
+## 1. Topology
 
-### **Domain** (`packages/domain/*`)
-**Purpose:** Business logic, pure, no frameworks, no side effects
-
-**Contains:**
-- Entities (Activity, Feed, Favorite, Conversation)
-- Value objects (Location, PriceRange)
-- Port interfaces (IActivityRepository, ISearchProvider, ILLMProvider)
-- Business rules & validation
-- Errors (ActivityNotFoundError, etc.)
-
-**Does NOT contain:**
-- Database calls (Prisma)
-- HTTP requests
-- React components
-- Framework-specific code
-
-**Example:** `packages/domain/activities/activity.entity.ts`
-```typescript
-export class Activity {
-  constructor(
-    readonly id: UUID,
-    readonly title: string,
-    readonly category: ActivityCategory,
-    readonly location: Location,
-    readonly price: PriceRange,
-  ) {}
-
-  isAvailable(): boolean {
-    // Business rule: pure function
-    return true
-  }
-}
-
-// Port interface (domain knows about this)
-export interface IActivityRepository {
-  findById(id: UUID): Promise<Activity>
-  findMany(query: FeedQuery): Promise<Activity[]>
-}
 ```
+apps/web/
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed.ts
+├── public/
+└── src/
+    ├── app/                          # Next.js App Router (thin)
+    │   ├── (home)/page.tsx
+    │   ├── sport/page.tsx
+    │   ├── romantic/page.tsx
+    │   ├── food/page.tsx
+    │   ├── activity/[slug]/page.tsx
+    │   ├── chat/page.tsx             # P3
+    │   ├── api/
+    │   │   ├── feed/route.ts
+    │   │   ├── activities/[id]/route.ts
+    │   │   ├── search/route.ts
+    │   │   ├── favorites/route.ts
+    │   │   ├── chat/route.ts         # P3
+    │   │   └── _lib/error-handler.ts
+    │   └── layout.tsx
+    │
+    ├── modules/                      # Capabilities (shared across pages)
+    │   ├── activities/
+    │   │   ├── domain/               # Activity entity, value objects, IActivityRepository, errors
+    │   │   ├── application/          # GetActivityUseCase
+    │   │   └── infra/                # PrismaActivityRepository
+    │   ├── feed/
+    │   │   ├── domain/               # FeedQuery, FeedResult, FeedFilter union
+    │   │   └── application/          # GetFeedUseCase: filter → rank → paginate
+    │   ├── filters/
+    │   │   ├── domain/               # FilterDef, FilterValue, parsers
+    │   │   └── application/          # filter ↔ URL serialization
+    │   ├── favorites/
+    │   │   ├── domain/               # Favorite entity, IFavoriteRepository
+    │   │   ├── application/          # AddFavoriteUseCase, ListFavoritesUseCase
+    │   │   └── infra/                # PrismaFavoriteRepository
+    │   ├── search/
+    │   │   ├── domain/               # IntentDTO, ISearchProvider port, IIntentParser port
+    │   │   ├── application/          # SearchActivitiesUseCase
+    │   │   └── infra/
+    │   │       ├── trigram-search.adapter.ts     # P1: pg_trgm + filter parser
+    │   │       └── llm-intent-parser.adapter.ts  # P3: OpenAI structured output
+    │   ├── map/
+    │   │   ├── domain/               # IMapProvider port (geocoding, clustering)
+    │   │   ├── infra/                # MapboxAdapter
+    │   │   └── web/                  # MapSection.tsx
+    │   └── chat/                     # P3 (consumer of feed module)
+    │       ├── domain/               # Conversation entity, IExplanationWriter port
+    │       ├── application/          # ChatUseCase: NL → IntentDTO → FeedQuery → FeedResult + explanation
+    │       └── infra/                # OpenAIIntentParser, OpenAIExplanationWriter
+    │
+    └── shared/
+        ├── contracts/                # DTOs at HTTP/UI boundary
+        ├── presets/                  # HOME_PRESET, SPORT_PRESET, …
+        ├── ui/                       # ActivityCard, FilterBar, FeedGrid, Carousel, MapSection composition root
+        ├── db/                       # Prisma client singleton
+        ├── config/                   # zod-validated env loader
+        └── obs/                      # pino logger
+```
+
+### Why folders, not packages
+
+A separate workspace package buys you: independent versioning, separate `node_modules`, parallel CI builds. None of those apply to a one-engineer POC. They cost you: `tsconfig` references, per-package `exports` maps, `tsup` builds, Next `transpilePackages`, longer cold starts. We pay zero ceremony tax until a second consumer (`apps/api`, `apps/mobile`) makes the seam real.
 
 ---
 
-### **Application** (`packages/application/*`)
-**Purpose:** Use cases & orchestration, thin layer, delegates to domain & infrastructure
+## 2. Layer DAG
 
-**Contains:**
-- Use case classes (GetActivityUseCase, GetFeedUseCase, ChatWithActivitiesUseCase)
-- Orchestration logic (feed pipeline, service composition)
-- Error handling & mapping
-- Dependency injection setup
-
-**Does NOT contain:**
-- Business logic (belongs in domain)
-- Database/HTTP details (belongs in infrastructure)
-- UI logic (belongs in web/components)
-
-**Example:** `packages/application/feed/get-feed.usecase.ts`
-```typescript
-export class GetFeedUseCase {
-  constructor(
-    private repository: IActivityRepository,  // Injected port
-    private sorter: ISorter,                  // Injected port
-    private ranker: IRanker,                  // Injected port
-  ) {}
-
-  async execute(query: FeedQuery): Promise<FeedResult> {
-    // 1. Fetch activities
-    const activities = await this.repository.findMany(query.filters)
-    
-    // 2. Apply ranking
-    const ranked = await this.ranker.rank(activities, query.context)
-    
-    // 3. Paginate
-    return this.paginate(ranked, query.cursor, query.limit)
-  }
-}
 ```
+        web (app/, page.tsx, route.ts)
+           │
+           ▼
+      application (use cases)
+           │
+           ▼
+        domain (entities, ports)
+           ▲
+           │   (infra implements ports)
+        infra (adapters)
+```
+
+Strictly no upward edges. No cycles. Cross-module edges are explicit (see §4).
+
+`shared/contracts` is reachable from any layer. `shared/ui` is reachable only from `web` and from a module's own `web/` folder.
+
+Enforcement: `dependency-cruiser` config lives at `apps/web/.dependency-cruiser.cjs`. CI runs `pnpm dep:check`.
 
 ---
 
-### **Infrastructure** (`packages/infrastructure/*`)
-**Purpose:** Implementations of ports, external dependencies, hexagonal adapters
+## 3. Capability modules vs. presets vs. pages
 
-**Contains:**
-- Database adapters (Prisma repositories)
-- Search adapters (Elasticsearch, Meilisearch)
-- Map adapters (Mapbox, Google Maps)
-- LLM adapters (OpenAI, Anthropic)
-- Cache adapters (Redis, in-memory)
+This is the rule that prevents the codebase from forking per page.
 
-**Does NOT contain:**
-- Business logic
-- Domain entities directly (converts to/from them)
+- A **capability module** owns a vertical concern (`activities`, `feed`, `filters`, `favorites`, `search`, `map`, `chat`). It exposes use cases and DTOs. It does not know which page is calling it.
+- A **preset** is a typed config object — pure data, no logic — that parameterizes capabilities for a given page.
+- A **page** is a Next.js route that composes shared UI components and feeds them a preset.
 
-**Example:** `packages/infrastructure/database/activity.repository.ts`
-```typescript
-export class PrismaActivityRepository implements IActivityRepository {
-  constructor(private db: PrismaClient) {}
-
-  async findMany(query: FeedQuery): Promise<Activity[]> {
-    const records = await this.db.activity.findMany({
-      where: this.buildWhere(query.filters),
-      orderBy: this.buildOrderBy(query.sort),
-      take: query.limit,
-    })
-    
-    // Convert DB record → Domain entity
-    return records.map(r => new Activity(r.id, r.title, ...))
-  }
-}
-```
-
----
-
-### **Contracts** (`packages/contracts/*`)
-**Purpose:** Shared types at boundaries (API, UI, external systems)
-
-**Contains:**
-- DTOs (ActivityDTO, FeedQueryDTO, ChatMessageDTO)
-- View models (ActivityCardVM for UI)
-- API request/response shapes
-- Enums shared across layers
-
-**Does NOT contain:**
-- Business logic
-- Entity classes (belongs in domain)
-
-**Principle:** Separate shapes by purpose
-- Domain model (Activity entity)
-- Transport DTO (ActivityDTO for API)
-- UI view model (ActivityCardVM for React)
-
-**Example:** `packages/contracts/activity.contract.ts`
-```typescript
-// For API transport
-export type ActivityDTO = {
-  id: string
-  title: string
-  price: { min: number; max: number }
-  location: string
-  imageUrl: string
-}
-
-// For UI rendering
-export type ActivityCardVM = {
-  id: string
-  title: string
-  price: string  // Formatted
-  distance: string
-  isFavorited: boolean
-}
-```
-
----
-
-### **Presets** (`packages/presets/*`)
-**Purpose:** Configuration per page, not code
-
-**Contains:**
-- Page preset objects (HOME_PRESET, SPORT_PRESET, etc.)
-- Filter definitions
-- Section visibility
-- Default sorting & ranking strategies
-- Layout configuration
-
-**Does NOT contain:**
-- Business logic
-- UI components
-- Data fetching
-
-**Example:** `packages/presets/home.preset.ts`
-```typescript
-export const HOME_PRESET: PagePreset = {
-  name: 'home',
+```ts
+// shared/presets/preset.ts
+export type PagePreset = {
+  name: 'home' | 'sport' | 'romantic' | 'food' | 'chat'
   feed: {
-    filters: ['price', 'distance', 'date', 'category', 'indoorOutdoor'],
-    defaultSort: 'relevance',
-    enableInfiniteScroll: true,
+    baseFilters: FilterValue[]      // e.g. [{ type: 'category', in: ['Sport'] }]
+    visibleFilters: FilterId[]
+    defaultSort: 'featured' | 'date' | 'price' | 'distance'
+    pageSize: number
+  }
+  sections: {
+    hero?:  { kind: 'carousel'; count: number }
+    map?:   { kind: 'map'; maxPins: number }
+    grid?:  { kind: 'grid' }
+  }
+  copy: { title: string; subtitle?: string }
+}
+```
+
+```ts
+// shared/presets/sport.preset.ts
+export const SPORT_PRESET: PagePreset = {
+  name: 'sport',
+  feed: {
+    baseFilters: [{ type: 'category', in: ['Sport'] }],
+    visibleFilters: ['price', 'distance', 'date', 'sportType', 'free'],
+    defaultSort: 'featured',
+    pageSize: 24,
   },
   sections: {
-    carousel: { enabled: true, count: 5 },
-    mapSection: { enabled: true, maxPins: 50 },
-    discoveryGrid: { enabled: true },
+    hero: { kind: 'carousel', count: 5 },
+    map:  { kind: 'map', maxPins: 50 },
+    grid: { kind: 'grid' },
   },
-  ranking: {
-    strategies: ['trending', 'personalization'],
-    weights: { trending: 0.4, personalization: 0.6 },
-  },
+  copy: { title: 'Sport in Montreal' },
 }
 ```
 
----
+```tsx
+// app/sport/page.tsx
+import { SPORT_PRESET } from '@/shared/presets/sport.preset'
+import { PageShell } from '@/shared/ui/page-shell'
 
-### **UI** (`packages/ui/*`)
-**Purpose:** React components, presentation only
-
-**Contains:**
-- Presentational components (ActivityCard, FilterBar, etc.)
-- Component stories (Storybook)
-- Styling (Tailwind, CSS modules)
-- Props interfaces matching DTOs
-
-**Does NOT contain:**
-- Data fetching
-- Business logic
-- Hooks with side effects (those go in apps/web)
-
-**Example:** `packages/ui/activity-card/ActivityCard.tsx`
-```typescript
-interface Props {
-  activity: ActivityDTO  // Contract type, not domain entity
-  onFavorite?: () => void
-}
-
-export function ActivityCard({ activity, onFavorite }: Props) {
-  return (
-    <div>
-      <h2>{activity.title}</h2>
-      <p>${activity.price.min}</p>
-      <button onClick={onFavorite}>Save</button>
-    </div>
-  )
+export default function SportPage() {
+  return <PageShell preset={SPORT_PRESET} />
 }
 ```
 
+`PageShell` reads the preset and renders `<Hero />`, `<MapSection />`, `<FilterBar />`, `<FeedGrid />` accordingly. The same `PageShell`, `FeedGrid`, `ActivityCard`, `FilterBar` power Home, Sport, Romantic, Food. **Duplication of any of these into a page-specific file is a CLAUDE.md violation.**
+
+A new vertical (e.g. *Nightlife*) ships as: one preset file + one route file. No new module, no new UI.
+
 ---
 
-### **Web** (`apps/web/*`)
-**Purpose:** Next.js application, page composition, hooks
+## 4. Selective hexagonal — when to draw a port
 
-**Contains:**
-- Page components (Home, Sport, Chat, Profile)
-- API routes
-- Custom hooks (useHomeFeed, useChatWithActivities)
-- Page layouts
-- Global styles
+Draw a port when **the same capability could be served by an interchangeable external system**. Otherwise it is a method.
 
-**Does NOT contain:**
-- Business logic (belongs in domain/application)
-- Infrastructure details (belongs in packages/infrastructure)
+| Capability | Port? | Adapters |
+|---|---|---|
+| Activity persistence | `IActivityRepository` | `PrismaActivityRepository` |
+| Favorite persistence | `IFavoriteRepository` | `PrismaFavoriteRepository` |
+| Map (geocode, cluster, tiles) | `IMapProvider` | `MapboxAdapter` (fallback: Leaflet+OSM) |
+| Search query → activities | `ISearchProvider` | `TrigramSearchAdapter` (P1), Meilisearch (P2 if needed) |
+| LLM intent parsing | `IIntentParser` | `OpenAIIntentParser` (fallback: `AnthropicIntentParser`) |
+| LLM explanation writing | `IExplanationWriter` | `OpenAIExplanationWriter` |
+| Cache | `ICache` | `LruCacheAdapter` (P1), `RedisAdapter` (P2+) |
 
-**Dependency direction:** `web → application/contracts → domain → infrastructure`
+**No port** for: filtering, sorting, ranking, pagination, presets, favorites business logic, feed orchestration, UI.
 
-**Example:** `apps/web/app/(home)/page.tsx`
-```typescript
-import { GetFeedUseCase } from '@wandr/application/feed'
-import { HOME_PRESET } from '@wandr/presets'
-import { useHomeFeed } from './hooks/use-home-feed'
+Ports live in the module's `domain/` folder. Adapters live in `infra/`. Wiring is manual constructor injection at the route handler level (no DI container).
 
-export default function HomePage() {
-  const { activities, loading } = useHomeFeed(HOME_PRESET)
+---
 
-  return (
-    <div>
-      <ActivityCarousel activities={activities.slice(0, 5)} />
-      <DiscoveryGrid activities={activities} />
-    </div>
-  )
+## 5. Feed engine
+
+`feed/application/get-feed.usecase.ts` is the orchestration spine. It does four things in order:
+
+1. **Compose filters** — `[...preset.baseFilters, ...userFilters]` after parsing/validating.
+2. **Fetch** — `IActivityRepository.findMany(filters, sort, cursor, limit)`.
+3. **Rank** — apply the preset's ranker (P1: `featured DESC, dateStart ASC, recencyDecayedSaveCount DESC`; P2: trend flame; P3: personalization-aware).
+4. **Paginate** — cursor-based, `nextCursor` returned.
+
+The use case signature:
+
+```ts
+class GetFeedUseCase {
+  constructor(private repo: IActivityRepository) {}
+  execute(query: FeedQuery): Promise<FeedResult> { … }
 }
 ```
 
-**Hook example:** `apps/web/hooks/use-home-feed.ts`
-```typescript
-export function useHomeFeed(preset: PagePreset) {
-  const [activities, setActivities] = useState<ActivityDTO[]>([])
+`FeedQuery` and `FeedResult` are domain types. Routes map them to `FeedQueryDTO`/`FeedResultDTO` at the HTTP boundary.
 
-  useEffect(() => {
-    // Call application use case
-    getFeedUseCase
-      .execute({
-        filters: parsePresetFilters(preset),
-        sort: preset.feed.defaultSort,
-        limit: preset.feed.defaultLimit,
-      })
-      .then(result => setActivities(result.items))
-  }, [preset])
-
-  return { activities, loading: false }
-}
-```
+The feed engine is **the only place** filter+rank+paginate logic lives. Search, chat, recommendations, and every page route through it.
 
 ---
 
-## Dependency Rules
+## 6. Chat follows the feed
 
-### ✅ Allowed
+The chatbot is one more consumer of the feed engine. It does not own a parallel activity model.
+
 ```
-web/ → application/ → domain/
-web/ → contracts/
-web/ → presets/
-web/ → ui/
-application/ → domain/
-infrastructure/ → domain/  (implements ports)
-domain/ → nothing
+user text
+   │
+   ▼
+IIntentParser.parse(text) ──► IntentDTO          // OpenAI, structured output (zod schema)
+   │
+   ▼
+intentToFeedQuery(intent, basePreset) ──► FeedQuery
+   │
+   ▼
+GetFeedUseCase.execute(query) ──► FeedResult     // SAME engine that powers Home/Sport
+   │
+   ▼
+IExplanationWriter.write(result, intent) ──► string  // grounded in returned IDs only
+   │
+   ▼
+{ activities: ActivityDTO[], explanation: string }
 ```
 
-### ❌ Forbidden
-```
-domain/ → application/
-domain/ → infrastructure/
-domain/ → web/
-web/ → infrastructure/ (directly)
-web/ → domain/ (directly)
-application/ → web/
-```
+Hard rules (enforced by `dependency-cruiser`):
+
+- `chat/* → feed/*` allowed. `feed/* → chat/*` forbidden.
+- `chat/* → activities/*` allowed (same direction).
+- Chat never instantiates an `IActivityRepository` directly. It calls `GetFeedUseCase`.
+- The LLM never returns activities — it returns an intent (P3.0) or an explanation grounded in IDs the retrieval already produced (P3.1). Output is validated against a zod schema; out-of-vocabulary fields are rejected.
 
 ---
 
-## Hexagonal Pattern (Selective)
+## 7. Auth (POC)
 
-**Apply hexagonal (ports + adapters) only to:**
-- Database (packages/infrastructure/database)
-- Search (packages/infrastructure/search)
-- Map (packages/infrastructure/map)
-- LLM (packages/infrastructure/llm)
-- Cache (packages/infrastructure/cache)
+P1 ships with **one seeded dev user**. Identity comes from a `x-user-id` request header for API routes; the seeded ID is hard-coded in dev. No login UI, no sessions, no provider.
 
-**Skip hexagonal for:**
-- Filters, sorting, ranking (domain/application logic)
-- Favorites, activities, feed (not external dependencies)
-- UI components (too simple)
-
-**Port definition** (in domain):
-```typescript
-export interface IActivityRepository {
-  findById(id: UUID): Promise<Activity>
-  findMany(query: FeedQuery): Promise<Activity[]>
-}
-```
-
-**Adapter implementation** (in infrastructure):
-```typescript
-export class PrismaActivityRepository implements IActivityRepository {
-  // Implementation
-}
-```
+When real auth becomes necessary, drop in Auth.js with the `Account`/`Session`/`VerificationToken` tables already declared in `SCHEMA.md`. The seam is `getCurrentUser(req)` in `app/api/_lib/auth.ts` — that one function changes; every use case keeps its signature.
 
 ---
 
-## Package.json Workspace Setup
+## 8. Catalog ingestion
 
-```json
-{
-  "workspaces": [
-    "apps/*",
-    "packages/domain/*",
-    "packages/application/*",
-    "packages/infrastructure/*",
-    "packages/contracts",
-    "packages/presets",
-    "packages/ui"
-  ]
-}
-```
+`Source` and `IngestionJob` tables exist in the schema from day one. P1 ingestion is two paths:
+
+1. **Seed file** — `prisma/seed.ts` upserts 30 hand-curated Montreal activities. Source `manual`. Re-runnable.
+2. **Admin API** — `POST /api/admin/activities` (header-gated) for ad-hoc additions during the POC.
+
+Connectors (Eventbrite, Ticketmaster, scrapers) are deferred. When they arrive, each becomes one `IngestionJob` writer; `(sourceId, externalId)` is unique to dedupe.
 
 ---
 
-## Monorepo Tooling
+## 9. Observability (POC)
 
-**Build & dependency management:**
-- **Turborepo** for task orchestration & caching
-- **pnpm** for fast, efficient package management
-- **TypeScript** for all packages
+- **Logger:** `pino` to stdout. Request-scoped child logger with `requestId`. JSON in prod, pretty in dev.
+- **Errors:** mapped in `app/api/_lib/error-handler.ts`. No Sentry until there is real traffic.
+- **Metrics:** none yet. When needed, OpenTelemetry → whatever Vercel exposes.
 
-**CI/CD:**
-- Run tests in parallel across packages
-- Build order: infrastructure → domain → application → apps
-- Cache build artifacts
+Field convention: `{ level, time, requestId, userId?, module, event, ...payload }`.
 
 ---
 
-## Phase Activation
+## 10. Operations (POC)
 
-**Phase 1 (MVP):**
-- domain/activities, domain/feed, domain/favorites
-- application/activities, application/feed
-- infrastructure/database, infrastructure/search
-- apps/web (Home page only)
-
-**Phase 2:**
-- domain/personalization
-- application/search
-- packages/presets (expand to sport, romantic, food)
-- apps/web (Sport page)
-
-**Phase 3:**
-- domain/chatbot
-- application/chat
-- infrastructure/llm
-- apps/web (Chat page)
+- **Target:** Vercel + Neon (Postgres + PostGIS). Local: Docker Compose (Postgres+PostGIS, optional Redis).
+- **Migrations:** `prisma migrate dev` locally, `prisma migrate deploy` on Vercel. Expand/contract pattern noted but not enforced for POC; assume short windows of incompatibility are tolerable.
+- **Backups:** Neon's automatic PITR is sufficient for a POC.
+- **SLOs (dev targets, not commitments):** p95 LCP < 2.5s on `/`, p95 DB query < 100ms on `findMany` for the home feed.
 
 ---
 
-## Summary
+## 11. LLM safety (P3, mandatory from day one)
 
-| Layer | Purpose | Examples |
-|-------|---------|----------|
-| **Domain** | Business rules | Activity, Feed entities; ports |
-| **Application** | Use cases | GetFeedUseCase, SearchActivitiesUseCase |
-| **Infrastructure** | External adapters | PrismaActivityRepository, MapboxAdapter |
-| **Contracts** | Boundary types | ActivityDTO, FeedQueryDTO |
-| **Presets** | Configuration | HOME_PRESET, SPORT_PRESET |
-| **UI** | React components | ActivityCard, FilterBar |
-| **Web** | Pages & hooks | HomePage, useHomeFeed |
+Even at POC scale, an LLM-facing endpoint must:
 
-**Guiding principle:** Domain knows business. Application orchestrates. Infrastructure adapts. UI renders.
+1. **Structured output** — OpenAI `response_format: { type: 'json_schema', json_schema: <zod-derived> }`. Output validated again on receipt; failures retry once then 422.
+2. **No input concatenation into instructions** — user text goes into the user message slot only; the system prompt is constant and version-pinned.
+3. **Per-user daily cost cap** — 50¢/user/day, hard kill at 80%. Tracked in Redis (`cost:user:{id}:{yyyymmdd}`).
+4. **PII redaction in logs** — emails, phone numbers, full names redacted before logging the prompt.
+5. **Output scope** — `IExplanationWriter` receives only the `Activity` IDs already retrieved; the model can write an explanation but cannot invent IDs. Validation rejects any ID not in the retrieval set.
 
 ---
 
-**Last Updated:** 2026-05-04  
-**Status:** Production-Ready v1
+## 12. Phasing — modules per phase
+
+| Module | P1 | P2 | P3 |
+|---|---|---|---|
+| `activities` | ✓ | ✓ | ✓ |
+| `feed`       | ✓ | ✓ (flame ranker) | ✓ (affinity ranker) |
+| `filters`    | ✓ | ✓ | ✓ |
+| `favorites`  | ✓ | ✓ | ✓ |
+| `search`     | ✓ (trigram) | ✓ | ✓ (LLM intent) |
+| `map`        | ✓ | ✓ | ✓ |
+| `chat`       | — | — | ✓ |
+| `personalization` (sub-module of `feed/application/ranking`) | — | — | ✓ |
+
+P2 adds: profile page (composition only, no new module), trend flame ranker, sport/romantic/food presets exercising the shared-modules model.
+P3 adds: chat module, LLM intent parser, LLM explanation writer, affinity-aware ranking.
+
+---
+
+## 13. Out of scope (POC)
+
+Reproduced from CLAUDE.md so it cannot be missed:
+
+- i18n / dual locale routing / translation tables
+- Quebec Loi 25 / Bill 96
+- Managed auth, multi-user identity
+- Sentry / OTEL / dashboards
+- Mobile, SSO, multi-tenant
+
+When any of these is reintroduced, it ships with its own ADR-style entry in this file.
+
+---
+
+**Last updated:** 2026-05-04

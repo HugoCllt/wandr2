@@ -1,212 +1,192 @@
-# Phase 1 PRD — Discovery Core (MVP)
+# PRD — Phase 1: Discovery Core
 
-**Timeline:** Q2 2026  
-**Goal:** Laptop-first discovery platform. User finds one appealing activity in < 60 seconds.
+**Owner:** Hugo
+**Stage:** personal POC, single locale, single seeded user
+**Reference index:** `spec.md` (feature IDs F1–F13)
+**Authority:** CLAUDE.md > ARCHITECTURE.md > this file
 
----
-
-## In Scope
-
-**Features:**
-- Home page with featured carousel, discovery feed, sticky filters
-- Activity catalog with infinite scroll, sorting, filtering
-- Smart search (keywords, date phrases, neighborhoods, categories, intents)
-- Live map with pins synchronized to feed
-- Activity detail full-page overlay
-- Favorites system (save, list, search, filter, remove)
-- Responsive design (laptop-first, usable to 800px)
-- WCAG AA accessibility
-
-**Not in Scope (Phase 2+):**
-- Sport page, chat, profile, trend flame system
-- Dark mode, mobile app, notifications
+> Goal of P1: a developer logged in as the seeded user can land on `/`, scan a curated list of Montréal activities, filter and search, open a detail page, save favorites, see activities on a map. Everything else is deferred.
 
 ---
 
-## User Stories (105 total)
+## In scope
 
-### Navigation & Search (7)
-1. Persistent navbar with logo, search, Home/Sport/Chat/Profile links
-2. Global search bar with autocomplete
-3. Smart search parsing ("jazz tonight" → jazz + today's date)
-4. Shareable search queries via URL
-5. Reset to default view
-6. Page navigation works across all screens
-7. Tab navigation support
+- Catalog: `Activity`, `Location`, `Source`, `IngestionJob`, `Review`, `Tag`, `EngagementEvent` (capture only).
+- Feed engine with cursor pagination and the P1 ranker (`featured DESC, dateStart ASC, recencyDecayedSaveCount DESC`).
+- Filters: price, distance, date, category, indoor/outdoor, free/paid. URL-serialized, instant.
+- Search: trigram + naive intent parser (regex over date phrases, neighborhood, category).
+- Map: Mapbox embed with pin/card sync, density clustering, mini overlay map on card.
+- Activity detail at `/activity/[slug]` (full page, not a modal).
+- Favorites: toggle, list, remove, persist.
+- Home page `/` composing the shared `<PageShell>` with `HOME_PRESET`.
+- Engagement event capture on view, click, save, search, filter (no consumer yet — read in P2).
+- Cross-cutting: layer enforcement, schema validation, env validation, logger, axe-core a11y on critical routes.
 
-### Featured Carousel (8)
-8. Auto-rotating hero carousel at page top
-9. Large, inspiring images
-10. Title, date, price, location on each card
-11. "Book Now" CTA
-12. Manual prev/next navigation
-13. Pause on hover
-14. Keyboard navigation (arrows, tab)
-15. Smooth animations
+## Out of scope (deferred)
 
-### Sticky Filters (14)
-16. Left sidebar persists during scroll
-17. Price range filter (free, <$20, $20–$50, $50+)
-18. Distance filter (walking, 1km, 5km, 10km+)
-19. Date filter (today, this week, this month, upcoming)
-20. Indoor/outdoor toggle
-21. Category multi-select
-22. Free/paid toggle
-23. Multi-select composition
-24. Instant application (no submit button)
-25. Clear all filters at once
-26. Active filter count badge
-27. Save filter presets
-28. Sidebar collapse on small screens
-29. Quick access to "Explore," "Saved" modes
-
-### Discovery Feed (12)
-30. Responsive grid (3 cols → 2 cols → 1)
-31. Infinite scroll auto-load
-32. Sort options: relevance, popularity, price, date
-33. Sort indicator
-34. Card preview (image, title, key info)
-35. Hover preview with expanded details
-36. Smooth hover animations (lift, shadow)
-37. Click to open detail overlay
-38. Feed remembers scroll position
-39. Skeleton loader while fetching
-40. Activity count display
-41. No duplicate results
-
-### Activity Cards (15)
-42. Cover image (lazy-loaded)
-43. Title prominent
-44. Distance from user
-45. Price display
-46. Date and time
-47. Dynamic updates based on location
-48. Location-pin button for mini map
-49. Heart/save button
-50. Heart fills on save
-51. Trend flame indicator (Phase 1: basic display only)
-52. Optional badges (limited spots, discount, new)
-53. Optional category tag
-54. Mix of card variants (hero, standard, compact)
-55. Smooth transitions
-56. Accessible focus states
-
-### Mini Map (5)
-57. Click location → overlay map opens
-58. Show exact pin with activity name
-59. Closable (X button, click outside)
-60. Overlay on feed (no nav away)
-61. Show nearby landmarks
-
-### Integrated Map (9)
-62. Large map section on Home
-63. All nearby activities as pins
-64. Pins color-coded by relevance
-65. Click pin → highlight card
-66. Click card → highlight pin
-67. Pan and zoom support
-68. Cluster dense pins
-69. Manual or geolocation location setting
-70. Responsive, readable on narrow screens
-
-### Activity Detail (15)
-80. Full-page premium overlay (not modal)
-81. Smooth entrance animation
-82. Closable (X, click outside, Esc)
-83. Hero image at top
-84. Title, description, reviews
-85. Full schedule (dates, times, recurrence)
-86. Pricing breakdown
-87. Exact location with embedded map
-88. External "Book Now" link
-89. Save/favorite button
-90. Trend flame display
-91. Similar activities section
-92. Prev/next navigation
-93. Doesn't lose scroll position
-94. Keyboard accessible
-
-### Favorites (10)
-95. Save activities via heart button
-96. View saved in dedicated panel
-97. Search within favorites
-98. Filter favorites by category
-99. Remove items
-100. Favorites count visible
-101. Persist across sessions
-102. Share favorites list
-103. Sort by date added, activity date, price
-104. Heart indicator on cards/detail
-
-### Responsive & Performance (9)
-149. Laptop-first optimization (1200px+)
-150. Usable on 800px+ screens
-151. Lazy image loading
-152. Sidebar collapse on small screens
-153. Smooth scrolling, instant filters
-154. Smooth navigation transitions
-155. Efficient map rendering
-156. High text contrast
-157. Works on modern browsers
-
-### Accessibility (5)
-158. Full keyboard navigation (Tab, Shift+Tab, Enter, Esc, Arrows)
-159. Respects prefers-reduced-motion
-160. Semantic HTML, ARIA labels
-161. Color blind friendly (contrast + secondary indicators)
-162. Zoomable to 200%+
+| Item | Why | When |
+|---|---|---|
+| Trend Flame display & filter | No engagement signal yet | P2 |
+| Sport / Romantic / Food / Profile pages | Phase 1 ships one page; the shared-modules thesis is proven by P2 adding three more without new modules | P2 |
+| Chat | Requires LLM provider + cost caps + intent eval set | P3 |
+| Real auth | Single seeded user is sufficient for POC | post-P3 |
+| i18n | Single locale is sufficient for POC | post-P3 |
+| Save filter presets | Polish, not core | post-P3 |
+| Sharable favorites list | Polish | post-P3 |
+| Similar activities on detail page | Reuses the feed engine but is detail-page polish | P2 |
+| Reviews submission UI | Schema is ready, UI is P2 | P2 |
+| Keyboard nav beyond focus traps and visible focus rings | Polish | P2 |
+| Accessibility on every route | P1 enforces AA only on Home, Detail, Favorites | P2 expands |
 
 ---
 
-## Architecture (Phase 1)
+## User stories
 
-**Packages:**
-- `domain/activities` — Activity entity, IActivityRepository port
-- `domain/feed` — FeedQuery, FeedResult entities
-- `application/feed` — GetFeedUseCase (merges filters, queries repo, ranks, paginates)
-- `infrastructure/database` — PrismaActivityRepository adapter
-- `contracts` — ActivityDTO, FeedDTO
-- `presets` — HOME_PRESET configuration
-- `apps/web` — Next.js pages, hooks, API routes
+Numbered contiguously. Every story has an actor, an action, an acceptance criterion, and the engagement event it emits (if any).
 
-**No Hexagonal:** Filters, sorting, detail are application logic, not external deps  
-**Selective Hexagonal:** Database only (repo pattern)
+### Discovery
 
-**Dependency flow:**
-```
-web/ → application/feed → domain/feed → domain/activities
-     → infrastructure/database (implements IActivityRepository)
-     → contracts (DTOs)
-     → presets (HOME_PRESET)
-```
+1. **Browse the home feed.** As a visitor on `/`, I see up to 24 activities sorted by `featured DESC, dateStart ASC, recencyDecayedSaveCount DESC`. AC: page returns within p95 LCP < 2.5s on seeded data; no horizontal scroll at 1280px and 1024px. *Emits:* `VIEWED` per card that intersects the viewport for ≥ 500ms.
+
+2. **Infinite scroll.** As a visitor, I scroll past the initial page and the next batch loads automatically using `nextCursor`. AC: no duplicate cards across batches; scroll position preserved on back-navigation.
+
+3. **Sort the feed.** As a visitor, I choose between `featured`, `date`, `price`. AC: URL contains `?sort=`; reload preserves the sort.
+
+4. **See an empty state.** As a visitor whose filters return zero results, I see a clear empty state with a "clear filters" affordance. AC: zero `flickering` between loading and empty states.
+
+### Filtering
+
+5. **Filter by price.** Free / <$20 / $20–$50 / $50+. Multi-select. AC: filter applies without a submit button; URL contains the filter; refresh preserves.
+
+6. **Filter by distance.** Walking / 1km / 5km / 10km+. Requires browser geolocation; falls back to a manual neighborhood selector if the user denies. AC: distance is computed via PostGIS `ST_DWithin`.
+
+7. **Filter by date.** Today / This week / This month / Upcoming. AC: respects the activity's `timezone` (Montréal) regardless of the visitor's timezone.
+
+8. **Filter by category.** Multi-select over the `ActivityCategory` enum.
+
+9. **Filter indoor / outdoor.** Single toggle.
+
+10. **Filter free / paid.** Single toggle.
+
+11. **Clear all filters.** Single click resets to the preset's `baseFilters`.
+
+12. **Active filter count badge.** The filter button displays how many user filters are active (excluding `baseFilters`).
+
+13. **Composable filters.** All filters compose with AND semantics across types, OR within a type.
+
+14. **URL is shareable.** Pasting any filtered URL into a fresh tab restores the same view. AC: round-trip serialization unit tests cover every filter type.
+
+### Search
+
+15. **Search by free text.** As a visitor, I type into the navbar search and see ranked results. AC: server route `GET /api/search?q=…` returns the same `FeedResultDTO` shape as `/api/feed`.
+
+16. **Search recognizes date phrases.** "tonight", "this weekend", "next friday" map to the same date filter the UI exposes. AC: a fixture set of 20 phrases passes; failures fall through to literal text search.
+
+17. **Search recognizes neighborhoods.** "old montreal", "plateau", "mile end" are pulled out as a neighborhood filter, the rest as text. AC: case-insensitive; missing neighborhood falls through.
+
+18. **Search recognizes categories.** "jazz", "padel", "yoga" map to category/sport filters when unambiguous.
+
+### Activity card
+
+19. **Card shape.** Each card shows: cover image (lazy, `next/image`), title, distance from user, price (or "Free"), date+time in Montréal local, save button, location button.
+
+20. **Hover state.** Subtle lift + shadow per the design tokens. *Emits:* nothing; hover is not a tracked event.
+
+21. **Click opens detail.** Card click navigates to `/activity/[slug]`. AC: scroll position on the feed preserved on back-navigation.
+
+22. **Save toggles favorite.** Heart icon fills/empties; debounced API call; optimistic UI; rolls back on failure. *Emits:* `SAVED` or `UNSAVED`.
+
+23. **Location button opens mini map.** Mini overlay shows the pin without leaving the page. AC: closable by Esc, X, or click outside.
+
+24. **Card variants.** Three layouts (`hero`, `standard`, `compact`) selected by the preset section. All consume the same `ActivityCardVM`.
+
+### Map
+
+25. **Map renders.** `<MapSection>` renders activities currently in the visible feed slice as pins.
+
+26. **Pin selects card.** Clicking a pin scrolls the feed to and highlights the matching card. The reverse is also true.
+
+27. **Clusters on density.** Pins cluster at low zoom; clusters resolve as you zoom in. AC: cluster count visible.
+
+28. **Geolocation prompt.** First visit prompts; denial falls back to a default Montréal centroid.
+
+### Activity detail
+
+29. **Detail page route.** `/activity/[slug]` is a real route, not a modal. AC: deep-linkable.
+
+30. **Hero image, title, save button.** Above the fold.
+
+31. **Body content.** Description, schedule (`dateStart` / `dateEnd` / `recurrence`), pricing breakdown, location with embedded map, external booking link.
+
+32. **Reviews section.** Reads existing reviews; submission UI is P2.
+
+33. **Similar activities placeholder.** Section is rendered with a "coming soon" state in P1; populated in P2.
+
+### Favorites
+
+34. **Favorites page.** `/favorites` lists saved activities using the same `<FeedGrid>`.
+
+35. **Search within favorites.** Reuses the search module, scoped to the user's favorites.
+
+36. **Filter favorites.** Reuses the filter module.
+
+37. **Remove a favorite.** Heart toggle works on the favorites page; row disappears with a smooth transition.
+
+38. **Persistence.** Favorites survive page reload (DB-backed, not local storage).
+
+### Cross-cutting
+
+39. **Logger.** Every API request carries a `requestId` propagated to the response header `x-request-id`. AC: log lines include `{ requestId, userId, module, event }`.
+
+40. **Env validation.** Boot fails fast if `DATABASE_URL` is missing or malformed.
+
+41. **Layer enforcement.** A deliberately-introduced `domain → infra` import fails `pnpm dep:check` in CI.
+
+42. **Schema validation.** `pnpm prisma validate` is part of the lint stage.
+
+43. **Accessibility.** Home, detail, favorites pass `axe-core` AA in Playwright. Focus is trapped inside open dialogs (mini map). Visible focus ring on every interactive element.
 
 ---
 
-## Success Metrics
+## Acceptance gates (CI must pass)
 
-| Metric | Target |
-|--------|--------|
-| Discovery time | < 60 seconds |
-| FCP | < 2s |
-| LCP | < 4s |
-| Accessibility | WCAG AA |
-| Unit test coverage (domain) | 90%+ |
-| Integration test coverage (application) | 80%+ |
-| E2E test: discovery flow | Pass |
+- `pnpm type-check` — clean.
+- `pnpm lint` — clean.
+- `pnpm format:check` — clean.
+- `pnpm dep:check` — clean (and a deliberately-bad import fails).
+- `pnpm prisma validate` — clean.
+- `pnpm test` (vitest) — domain ≥ 90% line, application ≥ 80% line on changed modules.
+- `pnpm test:e2e` (playwright) — happy paths for Home, Detail, Favorites, Search.
+- `axe-core` — zero serious or critical violations on Home, Detail, Favorites.
 
----
+## Performance gates (dev targets, M2 macbook, throttled "Fast 4G")
 
-## Acceptance Criteria
+- p95 LCP on `/` < 2.5s.
+- Initial JS on `/` < 200 KB.
+- p95 latency on `/api/feed` and `/api/search` < 200ms against seeded data.
 
-- [ ] All 105 user stories completable
-- [ ] Zero layer violations (CLAUDE.md enforcement)
-- [ ] E2E test passes (discovery < 60s)
-- [ ] Visual regression tests pass
-- [ ] Performance targets met
-- [ ] Accessibility audit passes WCAG AA
-- [ ] Code coverage targets met
-- [ ] Ready for beta testing
+## Telemetry contract
 
----
+P1 captures, does not consume. The following events are written to `EngagementEvent` so P2 can rank from real signal:
 
-**Next Phase:** Phase 2 — Sport page, trend flame, profile stats
+| Event | When | Payload |
+|---|---|---|
+| `VIEWED` | Card intersects viewport ≥ 500ms | `{ activityId, position, source: 'feed' \| 'search' \| 'favorites' }` |
+| `CLICKED` | Card click | `{ activityId, source }` |
+| `SAVED` / `UNSAVED` | Toggle | `{ activityId }` |
+| `SHARED` | Native share sheet invoked | `{ activityId }` (P1.5) |
+| `SEARCHED` | Search submit | `{ query, parsedFilters }` |
+| `FILTERED` | Any filter change | `{ filters }` |
+
+The schema (`EngagementEvent.payload: Json`) admits new event types without migration.
+
+## Definition of done
+
+P1 is done when:
+
+1. A fresh clone running STEP_ZERO §4 yields a Home page at `/` with seeded activities.
+2. Every gate above is green in CI for at least one PR.
+3. The deliberately-bad-import test in STEP_ZERO §5 step 8 still fails as expected.
+4. `EngagementEvent` rows accumulate as a developer browses for 5 minutes — proven by a SQL query against the dev DB.
+
+That is the line. Anything richer waits for P2.

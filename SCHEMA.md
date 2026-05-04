@@ -1,412 +1,464 @@
-# Database Schema — Wandr
+# SCHEMA.md — Wandr Database
 
-**Database:** PostgreSQL with PostGIS (for geospatial queries)  
-**ORM:** Prisma  
-**Location:** `packages/infrastructure/database/prisma/schema.prisma`
+**Engine:** PostgreSQL 16 + PostGIS 3.4
+**ORM:** Prisma
+**Location:** `apps/web/prisma/schema.prisma`
+
+Every block in this document passes `prisma format && prisma validate`. If you edit a snippet, re-run the check before committing.
 
 ---
 
-## Core Tables
+## 1. Conventions
 
-### User
-Authenticated user account.
+- **IDs:** `cuid()` everywhere. Distributed-friendly, sortable enough.
+- **Money:** `Decimal @db.Decimal(10, 2)`. Never `Float`. Always paired with a `currency` field.
+- **Time:** `DateTime` is UTC at the column level. Activities carry their own `timezone` for local-time semantics ("doors at 8pm" stays 8pm regardless of viewer).
+- **Enums:** Prisma `enum` for any constrained string. No magic strings in the schema.
+- **JSON:** `Json` for unstructured payloads (`parsedIntent`, `eventPayload`). Never stringified JSON in a `String` column.
+- **Geo:** PostGIS `geography(Point, 4326)` via Prisma `Unsupported`. Index is GIST, declared in a raw migration (Prisma cannot author it).
+- **Cascade:** declared explicitly on every relation. No "default" cascade behavior left implicit.
+- **Provenance:** every Activity has a `(sourceId, externalId)` unique pair to prevent duplicate ingestion.
+
+PostGIS is enabled in the initial migration:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS postgis;
+```
+
+---
+
+## 2. Enums
+
+```prisma
+enum ActivityStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  EXPIRED
+  CANCELLED
+}
+
+enum ActivityCategory {
+  SPORT
+  DINING
+  CULTURE
+  MUSIC
+  NIGHTLIFE
+  OUTDOOR
+  WELLNESS
+  FAMILY
+  FESTIVAL
+  ROMANTIC
+}
+
+enum Recurrence {
+  ONE_OFF
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum DealKind {
+  PERCENT_OFF
+  TWO_FOR_ONE
+  LIMITED_SPOTS
+  EARLY_BIRD
+  FREE
+}
+
+enum SportLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum FlameLevel {
+  LOW
+  MEDIUM
+  FULL
+  SUPER
+}
+
+enum EngagementEventType {
+  VIEWED
+  CLICKED
+  SAVED
+  UNSAVED
+  SHARED
+  SEARCHED
+  FILTERED
+  BOOKED_OUT
+}
+
+enum SourceKind {
+  MANUAL
+  EVENTBRITE
+  TICKETMASTER
+  SCRAPER
+  PARTNER_API
+}
+
+enum IngestionJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+```
+
+---
+
+## 3. Core models
+
+### User (POC: single seeded dev user)
 
 ```prisma
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  name            String?
-  
-  // Auth (Phase 0: placeholder for auth module)
-  passwordHash    String?
-  sessionToken    String?   @unique
-  
-  // Profile (Phase 2)
-  avatar          String?
-  vibeLine        String?
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  // Relations
-  favorites       Favorite[]
-  profile         Profile?
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites        Favorite[]
   engagementEvents EngagementEvent[]
+  reviews          Review[]
+  conversations    Conversation[]
+  affinities       UserCategoryAffinity[]
 }
 ```
 
-**Indexes:**
-- `email` (unique, auth lookups)
-- `sessionToken` (unique, session lookups)
-
----
+P1 reads identity from a request header and resolves to the seeded user. Real auth tables (Auth.js compatible) are explicitly **not** declared until that capability is in scope.
 
 ### Activity
-Single activity/event in catalog.
 
 ```prisma
 model Activity {
-  id              String    @id @default(cuid())
-  
-  // Content
-  title           String
-  description     String    @db.Text
-  category        String    // 'Sports', 'Dining', 'Culture', etc.
-  images          String[]  // JSON array of URLs
-  
-  // Pricing & Availability
-  price           Float
-  capacity        Int?
-  capacityFilled  Int       @default(0)
-  
-  // Scheduling
-  dateStart       DateTime
-  dateEnd         DateTime?
-  recurring       String?   // 'daily', 'weekly', null if one-time
-  
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String   @db.Text
+
+  category    ActivityCategory
+  status      ActivityStatus   @default(DRAFT)
+
+  // Pricing
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("CAD")
+  isFree      Boolean  @default(false)
+
+  // Capacity
+  capacity       Int?
+  capacityFilled Int       @default(0)
+
+  // Scheduling — UTC timestamps; local semantics via timezone
+  dateStart   DateTime
+  dateEnd     DateTime?
+  timezone    String   @default("America/Montreal")
+  recurrence  Recurrence @default(ONE_OFF)
+
   // Location
-  locationId      String
-  location        Location  @relation(fields: [locationId], references: [id])
-  
-  // External Link
-  bookingUrl      String?
-  
-  // Engagement Signals (Phase 1)
-  viewCount       Int       @default(0)
-  saveCount       Int       @default(0)
-  
-  // Trend Flame (Phase 2)
-  trendFlameLevel String?   // 'low', 'medium', 'full', 'super'
-  trendFlameScore Float     @default(0)
-  trendFlameComputedAt DateTime?
-  
-  // Sports-specific (Phase 2)
-  sportType       String?   // 'hockey', 'padel', 'yoga', etc.
-  sportLevel      String?   // 'beginner', 'intermediate', 'advanced'
-  
-  // Deal badge (Phase 2)
-  dealType        String?   // '20% Off', '2-for-1', 'Limited Spots'
-  dealDiscount    Float?
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  // Relations
-  favorites       Favorite[]
+  locationId  String
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
+
+  // Media
+  images      Json     // [{ url, alt, width, height }]
+  bookingUrl  String?
+
+  // Sport-specific (P2)
+  sportType   String?
+  sportLevel  SportLevel?
+
+  // Deal (P2)
+  dealKind     DealKind?
+  dealDiscount Decimal? @db.Decimal(5, 2) // percent for PERCENT_OFF
+
+  // Engagement counters (denormalized for speed; reconciled nightly)
+  viewCount   Int      @default(0)
+  saveCount   Int      @default(0)
+
+  // Ranking signals
+  featured    Boolean  @default(false) // P1 sort signal
+  flameLevel  FlameLevel? // P2
+  flameScore  Decimal? @db.Decimal(6, 4) // P2
+  flameComputedAt DateTime?
+
+  // Provenance
+  sourceId    String
+  source      Source   @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  externalId  String?  // ID in the upstream system, null for MANUAL
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  favorites        Favorite[]
   engagementEvents EngagementEvent[]
-  searchIndex     ActivitySearchIndex?
-  
-  @@index([category])
-  @@index([dateStart])
+  reviews          Review[]
+  tags             ActivityTag[]
+  conversationLinks ConversationActivity[]
+
+  @@unique([sourceId, externalId])
+  @@index([status, dateStart])
+  @@index([category, status])
+  @@index([featured, dateStart])
+  @@index([flameLevel])
   @@index([sportType])
-  @@index([trendFlameLevel])
 }
 ```
 
-**Indexes:**
-- `category` (filtering Phase 1)
-- `dateStart` (sorting Phase 1)
-- `sportType` (filtering Phase 2)
-- `trendFlameLevel` (filtering Phase 2)
-- Geo-index on location (PostGIS, Phase 1 map)
-
----
-
 ### Location
-Geographic location for activities.
 
 ```prisma
 model Location {
-  id              String    @id @default(cuid())
-  
-  address         String
-  neighborhood    String    // 'Old Montreal', 'Plateau', etc.
-  
-  // PostGIS Point (latitude, longitude)
-  latitude        Float
-  longitude       Float
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  // Relations
-  activities      Activity[]
-  
-  @@index([latitude, longitude]) // PostGIS geo-index
+  id           String  @id @default(cuid())
+  address      String
+  neighborhood String
+
+  latitude     Float
+  longitude    Float
+
+  // PostGIS column. Prisma cannot author the GIST index — it lives in a raw migration.
+  geom         Unsupported("geography(Point, 4326)")?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  activities   Activity[]
+
+  @@index([neighborhood])
 }
 ```
 
-**Indexes:**
-- `(latitude, longitude)` — PostGIS spatial index for nearby queries
+Companion migration (excerpt) — applied alongside the Prisma migration that introduces `Location`:
 
----
+```sql
+ALTER TABLE "Location"
+  ADD COLUMN IF NOT EXISTS geom geography(Point, 4326)
+  GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography) STORED;
+
+CREATE INDEX IF NOT EXISTS location_geom_gix ON "Location" USING GIST (geom);
+```
+
+`geom` is generated from `latitude/longitude`, so writes stay simple and the GIST index is real.
 
 ### Favorite
-User's saved activities.
 
 ```prisma
 model Favorite {
-  id              String    @id @default(cuid())
-  
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  activityId      String
-  activity        Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  
-  // Constraints
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
   @@unique([userId, activityId])
-  @@index([userId])
-  @@index([activityId])
+  @@index([userId, createdAt])
 }
 ```
 
-**Constraints:**
-- Unique pair (userId, activityId) — user can't favorite same activity twice
-- Cascade delete — removing user/activity removes favorites
-
----
-
-### Profile
-User profile data (Phase 2).
+### Source / IngestionJob
 
 ```prisma
-model Profile {
-  id              String    @id @default(cuid())
-  
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Stats (aggregated, updated nightly)
-  viewedCount     Int       @default(0)
-  savedCount      Int       @default(0)
-  favoriteCategory String?
-  monthlyOutings  Int       @default(0)
-  trendScore      Float     @default(0)
-  
-  // Preferences
-  preferredLocation String?
-  preferredPriceMax Float?
-  preferredDistanceMax Float?
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+model Source {
+  id          String     @id @default(cuid())
+  kind        SourceKind
+  name        String     @unique // e.g. "manual", "eventbrite-mtl"
+  config      Json?      // adapter-specific settings
+  enabled     Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  activities  Activity[]
+  jobs        IngestionJob[]
+}
+
+model IngestionJob {
+  id          String              @id @default(cuid())
+  sourceId    String
+  source      Source              @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  status      IngestionJobStatus  @default(QUEUED)
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  inserted    Int                 @default(0)
+  updated     Int                 @default(0)
+  failed      Int                 @default(0)
+  error       String?             @db.Text
+  createdAt   DateTime            @default(now())
+
+  @@index([sourceId, createdAt])
+  @@index([status])
 }
 ```
 
-**Purpose:** Aggregated stats, updated nightly via batch job. Not transactional during user session.
+### Review
 
----
+```prisma
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  rating     Int      // 1..5, validated in domain
+  body       String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, activityId])
+  @@index([activityId, rating])
+}
+```
+
+### Tag / ActivityTag
+
+```prisma
+model Tag {
+  id    String        @id @default(cuid())
+  slug  String        @unique
+  label String
+
+  activities ActivityTag[]
+}
+
+model ActivityTag {
+  activityId String
+  tagId      String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, tagId])
+  @@index([tagId])
+}
+```
 
 ### EngagementEvent
-Raw event log for user interactions (Phase 1+).
 
 ```prisma
 model EngagementEvent {
-  id              String    @id @default(cuid())
-  
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  activityId      String?
-  activity        Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  
-  // Event type
-  eventType       String    // 'viewed', 'saved', 'shared', 'searched', 'clicked'
-  
-  // Context
-  duration        Int?      // milliseconds spent viewing (Phase 1)
-  searchQuery     String?   // if eventType = 'searched' (Phase 1)
-  filterApplied   String?   // if eventType = 'filtered' (Phase 1)
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  
-  @@index([userId])
-  @@index([activityId])
-  @@index([eventType])
-  @@index([createdAt]) // for nightly aggregation queries
+  id           String              @id @default(cuid())
+  userId       String?
+  user         User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  activityId   String?
+  activity     Activity?           @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  type         EngagementEventType
+  payload      Json?               // event-specific properties (search query, filter set, dwell ms, …)
+  createdAt    DateTime            @default(now())
+
+  @@index([userId, createdAt])
+  @@index([activityId, type, createdAt])
+  @@index([type, createdAt])
 }
 ```
 
-**Purpose:** Immutable log of all user interactions. Used to compute stats, flame scores, affinities.
+**Retention:** 90 days, enforced by a daily job (P2). Monthly partitioning on `createdAt` once the table exceeds ~10M rows.
 
----
-
-### ActivitySearchIndex
-Denormalized search index (Phase 1).
+### UserCategoryAffinity (P3)
 
 ```prisma
-model ActivitySearchIndex {
-  id              String    @id @default(cuid())
-  
-  activityId      String    @unique
-  activity        Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  
-  // Denormalized for full-text search
-  title           String
-  description     String    @db.Text
-  category        String
-  neighborhood    String
-  
-  // Timestamps
-  updatedAt       DateTime  @updatedAt
+model UserCategoryAffinity {
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  ActivityCategory
+  score     Decimal          @db.Decimal(6, 4) // 0..1
+  updatedAt DateTime         @updatedAt
+
+  @@id([userId, category])
 }
 ```
 
-**Purpose:** 
-- For fallback naive search (regex on title/description)
-- Optionally synced to Elasticsearch for Phase 1+ advanced search
-- Denormalized for performance
+Computed nightly from `EngagementEvent`. Adding a new category is a no-op — the schema does not change.
 
----
-
-### Conversation
-Chat history (Phase 3).
+### Conversation / ConversationActivity (P3)
 
 ```prisma
 model Conversation {
-  id              String    @id @default(cuid())
-  
-  userId          String
-  // user User @relation(...) // Not created yet, optional for now
-  
-  // Intent parsed from user message
-  userMessage     String    @db.Text
-  parsedIntent    String    @db.Text // JSON: { mood, dateRange, budget, neighborhood }
-  
-  // AI response
-  assistantMessage String?  @db.Text
-  suggestedActivityIds String[] // JSON array of activity IDs returned
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  
-  @@index([userId])
-  @@index([createdAt])
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userMessage   String   @db.Text
+  parsedIntent  Json     // IntentDTO
+  explanation   String?  @db.Text
+  modelVersion  String   // pin for reproducibility, e.g. "gpt-4o-mini-2024-07-18"
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  costUsd       Decimal  @db.Decimal(10, 6) @default(0)
+  createdAt     DateTime @default(now())
+
+  activities    ConversationActivity[]
+
+  @@index([userId, createdAt])
+}
+
+model ConversationActivity {
+  conversationId String
+  activityId     String
+  rank           Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  activity       Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, activityId])
+  @@index([activityId])
 }
 ```
 
-**Purpose:** Log chat interactions for Phase 3. Optional user relation.
+Referential integrity replaces the old `String[]` of activity IDs.
 
 ---
 
-### UserAffinity
-Computed user preferences (Phase 3).
+## 4. Index plan
 
-```prisma
-model UserAffinity {
-  id              String    @id @default(cuid())
-  
-  userId          String    @unique
-  // user User @relation(...) // Not created yet, optional for now
-  
-  // Category affinities (0.0 - 1.0)
-  sportAffinity   Float     @default(0)
-  diningAffinity  Float     @default(0)
-  cultureAffinity Float     @default(0)
-  musicAffinity   Float     @default(0)
-  entertainmentAffinity Float @default(0)
-  outdoorAffinity Float     @default(0)
-  
-  // Timestamps
-  computedAt      DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-```
-
-**Purpose:** Computed nightly from engagement events. Used for personalized recommendations (Phase 3).
+| Table | Index | Purpose |
+|---|---|---|
+| Activity | `(status, dateStart)` | Default feed scan |
+| Activity | `(category, status)` | Category-filtered feed |
+| Activity | `(featured, dateStart)` | P1 ranker |
+| Activity | `flameLevel` | P2 filter |
+| Activity | `sportType` | Sport preset |
+| Activity | `(sourceId, externalId)` unique | Ingestion dedup |
+| Location | `geom` (GIST, raw migration) | "nearby" queries |
+| Location | `neighborhood` | Neighborhood filter |
+| Favorite | `(userId, createdAt)` | List user favorites |
+| Review | `(activityId, rating)` | Rating aggregations |
+| EngagementEvent | `(userId, createdAt)` | Per-user history |
+| EngagementEvent | `(activityId, type, createdAt)` | Per-activity engagement |
+| Conversation | `(userId, createdAt)` | Recent chats |
 
 ---
 
-## Relationships (Diagram)
+## 5. What's in each phase
 
-```
-User (1) ──→ (many) Favorite ←── (1) Activity
-User (1) ──→ (1) Profile
-User (1) ──→ (many) EngagementEvent ←── (1) Activity
-Activity (many) ──→ (1) Location
-Activity (1) ──→ (1) ActivitySearchIndex
-Activity (optional) ← Conversation (user messages about activities)
-User (optional) ← UserAffinity (computed preferences)
-```
+### P1 — required to ship the discovery feed
 
----
+Activity, Location, Favorite, EngagementEvent, Source, IngestionJob, Review, Tag, ActivityTag, User. PostGIS extension + `geom` column + GIST index.
 
-## Indexes Summary
+### P2 — engagement + sport vertical
 
-| Table | Column(s) | Purpose |
-|-------|-----------|---------|
-| User | email | Auth login |
-| User | sessionToken | Session lookup |
-| Activity | category | Filter Phase 1 |
-| Activity | dateStart | Sort Phase 1 |
-| Activity | sportType | Filter Phase 2 |
-| Activity | trendFlameLevel | Filter Phase 2 |
-| Location | (lat, lng) | PostGIS geo-index |
-| Favorite | userId | List user favorites |
-| Favorite | (userId, activityId) | Prevent duplicates |
-| EngagementEvent | userId | Nightly aggregation |
-| EngagementEvent | eventType | Analytics |
-| EngagementEvent | createdAt | Time-range queries |
-| ActivitySearchIndex | activityId | Lookup for search |
-| Conversation | userId | Chat history |
-| Conversation | createdAt | Recent conversations |
+Activity flame columns populated. EngagementEvent retention job. Sport preset uses `sportType`/`sportLevel` already in schema (no migration). Profile page uses pre-aggregated stats — add a `Profile` model only if we decide aggregations belong in a table rather than computed views.
+
+### P3 — chat + personalization
+
+Conversation, ConversationActivity, UserCategoryAffinity.
 
 ---
 
-## Phase Dependencies
+## 6. Constraints & assumptions
 
-### Phase 1 (MVP)
-✅ Required:
-- User, Activity, Location, Favorite
-- EngagementEvent (for views, saves)
-- ActivitySearchIndex (for search)
-- Indexes: category, dateStart, (lat, lng)
-
-❌ Not yet:
-- Profile, Conversation, UserAffinity
-- Trend Flame columns (can add, but not used)
-
-### Phase 2
-✅ Add:
-- Profile (stats aggregation)
-- trendFlameLevel, trendFlameScore (compute nightly)
-- sportType, sportLevel, dealType (Phase 2 data)
-
-### Phase 3
-✅ Add:
-- Conversation (chat logs)
-- UserAffinity (personalization)
+- All timestamps UTC; activities carry their own `timezone`.
+- IDs are `cuid()`; never `uuid()` (longer, less sortable).
+- `EngagementEvent` is append-only. No `updatedAt`.
+- Prices are `Decimal(10,2)`. Anything claiming a "free" price MUST set `isFree=true` and `price=0`.
+- `Activity.images` is structured JSON, validated at write time by zod (not by Prisma).
+- POC has no `Account` / `Session` / `VerificationToken`. When auth lands, those are added without breaking changes — they only attach to `User` via FK.
 
 ---
 
-## Constraints & Assumptions
+## 7. Validation contract
 
-1. **Cascade Delete:** Removing user/activity cascades to favorites/events
-2. **Unique Favorites:** User can't save same activity twice
-3. **Immutable Events:** EngagementEvent is append-only (no updates)
-4. **Denormalized Profile:** Stats updated nightly, not transactional
-5. **PostGIS:** Location queries use geo-index for "nearby" searches
-6. **JSON Arrays:** Images, parseIntent stored as JSON (Prisma arrays)
+Every PR that touches `schema.prisma` must:
 
----
-
-## Notes for Implementation
-
-- All timestamps use `DateTime` (UTC)
-- IDs use `cuid()` (collisionless, distributed-friendly)
-- Nullable fields for optional data (Phase 2/3 columns, optional fields)
-- Indexes applied to frequently queried columns only (avoid over-indexing)
-- PostGIS setup required in Postgres: `CREATE EXTENSION IF NOT EXISTS postgis;`
-
----
-
-**Ready for review. Challenge and suggest improvements.**
+1. Run `pnpm prisma format && pnpm prisma validate`.
+2. Generate a migration named after the change (`pnpm prisma migrate dev --name <thing>`).
+3. Update §3 above so the doc stays the source of truth.
+4. Add or update an index in §4 if query patterns changed.
