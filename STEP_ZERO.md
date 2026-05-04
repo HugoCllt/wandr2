@@ -1,194 +1,158 @@
-# Step Zero: Build the Modular Monolith Skeleton
+# Step Zero: Initialize Monorepo + Clean Architecture
 
-This document describes how to initialize the Wandr project with the modular monolith architecture defined in `CLAUDE.md`.
-
-**Objective:** After Step Zero, you have:
-- A Next.js 14 project with TypeScript and Tailwind
-- PostgreSQL + Prisma + PostGIS set up
-- Module directory structure scaffolded (Phase 1)
-- Shared types and utilities in place
-- Development environment ready
-- CI/CD pipeline configured
-
-**Duration:** ~4 hours (including waiting for initial builds)
+**Objective:** Production-ready monorepo with domain/application/infrastructure layers, Phase 1 packages scaffolded, zero to `pnpm dev` in ~2 hours.
 
 ---
 
-## Phase 1 Modules to Scaffold
+## Prerequisites
 
-Based on PRD Phase 1, scaffold these modules:
-
-```
-Core Modules:
-├── catalog      # Activity Catalog
-├── filters      # Filter Engine
-├── search       # Smart Search Parser
-├── map          # Map Adapter
-├── favorites    # Favorites Store
-├── detail       # Activity Detail Renderer
-├── carousel     # Carousel Controller
-└── shared       # Shared types, utilities, constants
-```
-
-**Phase 2 & 3 modules are scaffolded but disabled until those phases.**
+- Node 18+
+- pnpm 8+
+- Docker (for Postgres, Redis)
 
 ---
 
-## Step 0.1: Initialize Next.js 14 Project
-
-### 0.1.1 Create Next.js app
+## 0.1 — Initialize Root
 
 ```bash
 cd /home/user/wandr2
-npx create-next-app@14 . \
-  --typescript \
-  --tailwind \
-  --eslint \
-  --no-git \
-  --no-src-dir \
-  --import-alias '@/*'
-```
 
-**Options:**
-- TypeScript: Yes
-- Tailwind CSS: Yes
-- ESLint: Yes
-- Src directory: No (we'll use custom structure)
-- Import alias: Yes, use `@/*`
+# Create root package.json with workspaces
+cat > package.json << 'EOF'
+{
+  "name": "wandr",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@8.0.0",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "db:setup": "pnpm --filter @wandr/database migrate:dev"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "^5.0.0"
+    }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/domain/*",
+    "packages/application/*",
+    "packages/infrastructure/*",
+    "packages/contracts",
+    "packages/presets",
+    "packages/ui"
+  ]
+}
+EOF
 
-### 0.1.2 Verify structure
-
-```
-/home/user/wandr2/
-├── app/
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-├── public/
-├── package.json
-├── tsconfig.json
-├── next.config.js
-├── tailwind.config.js
-├── postcss.config.js
-├── .eslintrc.json
-└── ...
-```
-
----
-
-## Step 0.2: Configure TypeScript Strict Mode
-
-### 0.2.1 Update tsconfig.json
-
-```json
+# Create root tsconfig.json
+cat > tsconfig.json << 'EOF'
 {
   "compilerOptions": {
     "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM"],
     "module": "ESNext",
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-
-    // Strict mode - MANDATORY
+    "moduleResolution": "bundler",
     "strict": true,
     "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-
-    // Module resolution
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-
-    // Path aliases
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@wandr/domain/*": ["packages/domain/*/src"],
+      "@wandr/application/*": ["packages/application/*/src"],
+      "@wandr/infrastructure/*": ["packages/infrastructure/*/src"],
+      "@wandr/contracts": ["packages/contracts/src"],
+      "@wandr/presets": ["packages/presets/src"],
+      "@wandr/ui": ["packages/ui/src"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/dist"]
 }
+EOF
+
+# Create turbo.json
+cat > turbo.json << 'EOF'
+{
+  "globalDependencies": ["tsconfig.json"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "outputs": ["dist/**"],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "cache": true
+    },
+    "type-check": {
+      "cache": true
+    }
+  }
+}
+EOF
 ```
 
 ---
 
-## Step 0.3: Install Dependencies
-
-### 0.3.1 Core dependencies
+## 0.2 — Create Monorepo Structure
 
 ```bash
-npm install \
-  prisma @prisma/client \
-  react-query @tanstack/react-query \
-  react-hook-form \
-  zod \
-  lodash-es \
-  uuid \
-  mapbox-gl \
-  next-auth
-
-npm install -D \
-  @types/uuid \
-  @types/lodash-es \
-  @types/node \
-  jest @testing-library/react @testing-library/jest-dom \
-  @types/jest \
-  ts-jest \
-  vitest \
-  @vitest/ui
-```
-
-### 0.3.2 Verify installations
-
-```bash
-npm list prisma react-hook-form zod
+# Directories
+mkdir -p apps/web apps/api
+mkdir -p packages/domain/{activities,feed,favorites,personalization,chatbot}
+mkdir -p packages/application/{activities,feed,search,chat,favorites}
+mkdir -p packages/infrastructure/{database,search,map,llm,cache}
+mkdir -p packages/contracts packages/presets packages/ui
 ```
 
 ---
 
-## Step 0.4: Set Up Prisma & Database
-
-### 0.4.1 Initialize Prisma
+## 0.3 — Initialize Database Package
 
 ```bash
-npx prisma init
-```
+mkdir -p packages/infrastructure/database/{src,prisma}
 
-This creates:
-- `.env.local` (update with your database URL)
-- `prisma/schema.prisma`
+cat > packages/infrastructure/database/package.json << 'EOF'
+{
+  "name": "@wandr/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "generate": "prisma generate",
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.0.0"
+  }
+}
+EOF
 
-### 0.4.2 Configure `.env.local`
-
-```env
-# Database
-DATABASE_URL="postgresql://wandr:wandr@localhost:5432/wandr_dev?schema=public"
-
-# Next.js
-NEXT_PUBLIC_MAPBOX_TOKEN="your_mapbox_token_here"
-
-# LLM (for Phase 3)
-OPENAI_API_KEY="your_openai_key_here"
-```
-
-### 0.4.3 Create initial Prisma schema
-
-```prisma
-// prisma/schema.prisma
+cat > packages/infrastructure/database/prisma/schema.prisma << 'EOF'
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -198,59 +162,58 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// User model
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
+  
+  favorites Favorite[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  favorites Favorite[]
-  profile   Profile?
 }
 
-// Activity model (core for Phase 1)
 model Activity {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   title       String
-  description String   @db.Text
-  category    String   // Phase 1: simple enum string
-  images      String[] // JSON array of URLs
-  
-  location    Location @relation(fields: [locationId], references: [id])
-  locationId  String
-
+  description String  @db.Text
+  category    String
   price       Float
+  
+  locationId  String
+  location    Location @relation(fields: [locationId], references: [id])
+  
   dateStart   DateTime
   dateEnd     DateTime?
   bookingUrl  String?
   capacity    Int?
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
+  images      String[]
+  
+  viewCount   Int @default(0)
+  saveCount   Int @default(0)
+  
   favorites  Favorite[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   
   @@index([category])
   @@index([dateStart])
 }
 
-// Location model (PostGIS integration later)
 model Location {
-  id            String   @id @default(cuid())
-  address       String
-  neighborhood  String
-  latitude      Float
-  longitude     Float
+  id           String  @id @default(cuid())
+  address      String
+  neighborhood String
+  latitude     Float
+  longitude    Float
   
   activities Activity[]
   
   @@index([latitude, longitude])
 }
 
-// Favorite model
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
@@ -259,622 +222,472 @@ model Favorite {
   activity  Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
-
+  
   @@unique([userId, activityId])
   @@index([userId])
 }
+EOF
 
-// Profile model (Phase 2+)
-model Profile {
-  id       String @id @default(cuid())
-  userId   String @unique
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  avatar   String?
-  vibeLine String?
+cat > packages/infrastructure/database/src/client.ts << 'EOF'
+import { PrismaClient } from '@prisma/client'
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+let client: PrismaClient
+
+export function getClient(): PrismaClient {
+  if (!client) {
+    client = new PrismaClient()
+  }
+  return client
 }
-```
+EOF
 
-### 0.4.4 Create migrations
-
-```bash
-npx prisma migrate dev --name init
-```
-
-This creates the first migration and syncs your local database.
-
----
-
-## Step 0.5: Create Directory Structure
-
-### 0.5.1 Scaffold module directories
-
-```bash
-# Create modules directory
-mkdir -p src/modules
-
-# Phase 1 modules
-mkdir -p src/modules/{catalog,filters,search,map,favorites,detail,carousel,shared}
-
-# Phase 2 modules (scaffolded, disabled)
-mkdir -p src/modules/{flame,profile}
-
-# Phase 3 modules (scaffolded, disabled)
-mkdir -p src/modules/{chat,personalization,recommendations}
-
-# Shared subdirectories
-mkdir -p src/modules/shared/{types,utils,constants,errors}
-
-# API routes
-mkdir -p app/api/activities app/api/favorites app/api/search
-
-# Components
-mkdir -p components/home components/common components/activity-detail
-
-# Lib
-mkdir -p lib/services lib/db
-```
-
-### 0.5.2 Create test directories
-
-```bash
-for module in catalog filters search map favorites detail carousel; do
-  mkdir -p src/modules/$module/__tests__
-done
+cat > packages/infrastructure/database/src/index.ts << 'EOF'
+export { getClient } from './client'
+EOF
 ```
 
 ---
 
-## Step 0.6: Create Shared Module
+## 0.4 — Initialize Domain Packages (Phase 1)
 
-### 0.6.1 Shared types
+```bash
+# activities domain
+cat > packages/domain/activities/package.json << 'EOF'
+{
+  "name": "@wandr/domain-activities",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^0.34.0"
+  }
+}
+EOF
 
-Create `src/modules/shared/types.ts`:
-
-```typescript
-// UUID branded type
+cat > packages/domain/activities/src/activity.entity.ts << 'EOF'
 export type UUID = string & { readonly __brand: 'UUID' }
-export function createUUID(id: string): UUID {
-  return id as UUID
+
+export class Activity {
+  constructor(
+    readonly id: UUID,
+    readonly title: string,
+    readonly category: string,
+    readonly price: number,
+  ) {}
 }
+EOF
 
-// Activity types
-export type ActivityCategory = 
-  | 'Sports' | 'Dining' | 'Culture' | 'Music' 
-  | 'Entertainment' | 'Nightlife' | 'Outdoor'
+cat > packages/domain/activities/src/activity.repository.ts << 'EOF'
+import { Activity } from './activity.entity'
 
-export type Location = {
-  address: string
-  neighborhood: string
-  latitude: number
-  longitude: number
+export interface IActivityRepository {
+  findById(id: string): Promise<Activity | null>
+  findMany(filters: any[]): Promise<Activity[]>
 }
+EOF
 
-export type PriceRange = {
-  min: number
-  max: number
-  currency: string
+cat > packages/domain/activities/src/index.ts << 'EOF'
+export { Activity } from './activity.entity'
+export type { IActivityRepository } from './activity.repository'
+EOF
+
+# feed domain (similar pattern)
+cat > packages/domain/feed/package.json << 'EOF'
+{
+  "name": "@wandr/domain-feed",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@wandr/domain-activities": "workspace:*"
+  }
 }
+EOF
 
-// Activity filter types
-export type ActivityFilter = 
-  | { type: 'category'; value: ActivityCategory }
-  | { type: 'price'; min: number; max: number }
-  | { type: 'distance'; max: number }
-  | { type: 'date'; start: Date; end: Date }
-  | { type: 'indoorOutdoor'; value: 'indoor' | 'outdoor' }
-  | { type: 'free'; value: boolean }
+cat > packages/domain/feed/src/feed.entity.ts << 'EOF'
+import { Activity } from '@wandr/domain-activities'
 
-// Query types
-export type ActivitySort = 'relevance' | 'popularity' | 'price' | 'date'
-
-export type ActivityQuery = {
-  filters: ActivityFilter[]
-  sort: ActivitySort
+export type FeedQuery = {
+  filters: any[]
+  sort: 'relevance' | 'popularity' | 'price' | 'date'
   cursor?: string
   limit: number
 }
-```
 
-### 0.6.2 Shared errors
-
-Create `src/modules/shared/errors.ts`:
-
-```typescript
-export class WandrError extends Error {
-  constructor(message: string, public code: string) {
-    super(message)
-    this.name = 'WandrError'
-  }
-}
-
-export class ValidationError extends WandrError {
-  constructor(message: string) {
-    super(message, 'VALIDATION_ERROR')
-  }
-}
-
-export class NotFoundError extends WandrError {
-  constructor(resource: string, id: string) {
-    super(`${resource} with id ${id} not found`, 'NOT_FOUND')
-  }
-}
-```
-
-### 0.6.3 Shared index
-
-Create `src/modules/shared/index.ts`:
-
-```typescript
-export * from './types'
-export * from './errors'
-```
-
----
-
-## Step 0.7: Scaffold Phase 1 Modules
-
-### 0.7.1 Catalog Module
-
-Create `src/modules/catalog/types.ts`:
-
-```typescript
-import { ActivityQuery, ActivitySort, ActivityFilter } from '@/modules/shared'
-
-export type Activity = {
-  id: string
-  title: string
-  description: string
-  category: string
-  location: {
-    address: string
-    neighborhood: string
-    lat: number
-    lng: number
-  }
-  price: { min: number; max: number }
-  dateStart: Date
-  dateEnd?: Date
-  bookingUrl?: string
-  images: string[]
-  capacity?: number
-}
-
-export type CatalogQuery = ActivityQuery
-
-export type CatalogQueryResult = {
-  activities: Activity[]
+export type FeedResult = {
+  items: Activity[]
   nextCursor?: string
   totalCount: number
 }
+EOF
+
+cat > packages/domain/feed/src/index.ts << 'EOF'
+export type { FeedQuery, FeedResult } from './feed.entity'
+EOF
 ```
 
-Create `src/modules/catalog/service.ts`:
+---
 
-```typescript
-import { PrismaClient } from '@prisma/client'
-import { Activity, CatalogQuery, CatalogQueryResult } from './types'
+## 0.5 — Initialize Application Packages (Phase 1)
 
-export class CatalogService {
-  constructor(private db: PrismaClient) {}
+```bash
+cat > packages/application/feed/package.json << 'EOF'
+{
+  "name": "@wandr/application-feed",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@wandr/domain-feed": "workspace:*",
+    "@wandr/domain-activities": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^0.34.0"
+  }
+}
+EOF
 
-  async query(q: CatalogQuery): Promise<CatalogQueryResult> {
-    // Placeholder: Phase 1 implementation
-    const activities = await this.db.activity.findMany({
-      take: q.limit,
-      skip: q.cursor ? 1 : 0,
-    })
+cat > packages/application/feed/src/get-feed.usecase.ts << 'EOF'
+import { FeedQuery, FeedResult } from '@wandr/domain-feed'
+import { IActivityRepository } from '@wandr/domain-activities'
 
+export class GetFeedUseCase {
+  constructor(private repository: IActivityRepository) {}
+
+  async execute(query: FeedQuery): Promise<FeedResult> {
+    const activities = await this.repository.findMany(query.filters)
+    
+    // TODO: Apply sorting, ranking, pagination
+    
     return {
-      activities: activities as unknown as Activity[],
+      items: activities,
       totalCount: activities.length,
     }
   }
-
-  async getById(id: string): Promise<Activity | null> {
-    const activity = await this.db.activity.findUnique({
-      where: { id },
-    })
-    return activity as unknown as Activity | null
-  }
 }
-```
+EOF
 
-Create `src/modules/catalog/index.ts`:
-
-```typescript
-export type { Activity, CatalogQuery, CatalogQueryResult } from './types'
-export { CatalogService } from './service'
-```
-
-### 0.7.2 Repeat for other Phase 1 modules
-
-Create similar scaffolds for:
-- `filters/` (FilterService)
-- `search/` (SearchService)
-- `map/` (MapService)
-- `favorites/` (FavoriteService)
-- `detail/` (DetailService)
-- `carousel/` (CarouselService)
-
-Each module follows the same pattern:
-- `types.ts` (types only)
-- `service.ts` (business logic)
-- `index.ts` (public interface)
-
----
-
-## Step 0.8: Create Service Factory
-
-Create `lib/services.ts`:
-
-```typescript
-import { PrismaClient } from '@prisma/client'
-import { CatalogService } from '@/modules/catalog'
-import { FilterService } from '@/modules/filters'
-import { SearchService } from '@/modules/search'
-import { FavoriteService } from '@/modules/favorites'
-// ... import other services
-
-export type Phase = 'phase1' | 'phase2' | 'phase3'
-
-export interface Services {
-  catalog: CatalogService
-  filters: FilterService
-  search: SearchService
-  favorites: FavoriteService
-  // Phase 2+
-  flame?: any
-  profile?: any
-  // Phase 3+
-  chat?: any
-  recommendations?: any
-}
-
-export function initializeServices(db: PrismaClient, phase: Phase = 'phase1'): Services {
-  // Phase 1: Core modules
-  const catalogService = new CatalogService(db)
-  const filterService = new FilterService(catalogService)
-  const searchService = new SearchService(catalogService)
-  const favoriteService = new FavoriteService(db, catalogService)
-
-  const services: Services = {
-    catalog: catalogService,
-    filters: filterService,
-    search: searchService,
-    favorites: favoriteService,
-  }
-
-  // Phase 2+ modules would be added here
-  if (phase >= 'phase2') {
-    // services.flame = new FlameService(...)
-  }
-
-  return services
-}
-
-// Singleton instance
-let services: Services | null = null
-
-export function getServices(): Services {
-  if (!services) {
-    const db = new PrismaClient()
-    services = initializeServices(db)
-  }
-  return services
-}
+cat > packages/application/feed/src/index.ts << 'EOF'
+export { GetFeedUseCase } from './get-feed.usecase'
+EOF
 ```
 
 ---
 
-## Step 0.9: Create Example API Route
+## 0.6 — Initialize Contracts Package
 
-Create `app/api/activities/route.ts`:
-
-```typescript
-import { NextRequest, NextResponse } from 'next/server'
-import { getServices } from '@/lib/services'
-import { ValidationError } from '@/modules/shared'
-
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams
-    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 100)
-    const cursor = searchParams.get('cursor') || undefined
-
-    const services = getServices()
-    const result = await services.catalog.query({
-      filters: [],
-      sort: 'relevance',
-      cursor,
-      limit,
-    })
-
-    return NextResponse.json(result)
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-```
-
----
-
-## Step 0.10: Configure ESLint
-
-Update `.eslintrc.json`:
-
-```json
+```bash
+cat > packages/contracts/package.json << 'EOF'
 {
-  "extends": [
-    "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended"
-  ],
-  "plugins": ["@typescript-eslint"],
-  "rules": {
-    "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/no-explicit-any": "error",
-    "no-console": "warn",
-    "prefer-const": "error"
-  }
+  "name": "@wandr/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js"
 }
+EOF
+
+cat > packages/contracts/src/activity.contract.ts << 'EOF'
+export type ActivityDTO = {
+  id: string
+  title: string
+  category: string
+  price: number
+  location: string
+  imageUrl?: string
+}
+
+export type ActivityCardVM = {
+  id: string
+  title: string
+  priceDisplay: string
+  distance: string
+  isFavorited: boolean
+}
+EOF
+
+cat > packages/contracts/src/feed.contract.ts << 'EOF'
+import { ActivityDTO } from './activity.contract'
+
+export type FeedQueryDTO = {
+  filters?: any[]
+  sort?: string
+  cursor?: string
+  limit: number
+}
+
+export type FeedResultDTO = {
+  items: ActivityDTO[]
+  nextCursor?: string
+  totalCount: number
+}
+EOF
+
+cat > packages/contracts/src/index.ts << 'EOF'
+export type { ActivityDTO, ActivityCardVM } from './activity.contract'
+export type { FeedQueryDTO, FeedResultDTO } from './feed.contract'
+EOF
 ```
 
 ---
 
-## Step 0.11: Configure Testing
+## 0.7 — Initialize Presets Package
 
-### 0.11.1 Create vitest.config.ts
-
-```typescript
-import { defineConfig } from 'vitest/config'
-import path from 'path'
-
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: [],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'dist/'],
-    },
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './'),
-    },
-  },
-})
-```
-
-### 0.11.2 Create example test
-
-Create `src/modules/catalog/__tests__/service.test.ts`:
-
-```typescript
-import { describe, it, expect, beforeEach } from 'vitest'
-import { CatalogService } from '../service'
-import { PrismaClient } from '@prisma/client'
-
-describe('CatalogService', () => {
-  let service: CatalogService
-  let db: PrismaClient
-
-  beforeEach(() => {
-    db = new PrismaClient()
-    service = new CatalogService(db)
-  })
-
-  it('should query activities', async () => {
-    const result = await service.query({
-      filters: [],
-      sort: 'relevance',
-      limit: 10,
-    })
-    expect(result).toHaveProperty('activities')
-    expect(result).toHaveProperty('totalCount')
-  })
-})
-```
-
----
-
-## Step 0.12: Configure CI/CD
-
-### 0.12.1 Create .github/workflows/test.yml
-
-```yaml
-name: Tests
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: wandr_test
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linter
-        run: npm run lint
-
-      - name: Run type check
-        run: npm run type-check
-
-      - name: Run tests
-        run: npm test
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wandr_test
-```
-
-### 0.12.2 Add npm scripts to package.json
-
-```json
+```bash
+cat > packages/presets/package.json << 'EOF'
 {
+  "name": "@wandr/presets",
+  "version": "0.1.0",
+  "private": true
+}
+EOF
+
+cat > packages/presets/src/home.preset.ts << 'EOF'
+export type PagePreset = {
+  name: string
+  feed: {
+    filters: string[]
+    defaultSort: string
+    enableInfiniteScroll: boolean
+  }
+  sections: Record<string, any>
+}
+
+export const HOME_PRESET: PagePreset = {
+  name: 'home',
+  feed: {
+    filters: ['price', 'distance', 'date', 'category', 'indoorOutdoor'],
+    defaultSort: 'relevance',
+    enableInfiniteScroll: true,
+  },
+  sections: {
+    carousel: { enabled: true, count: 5 },
+    mapSection: { enabled: true, maxPins: 50 },
+    discoveryGrid: { enabled: true },
+  },
+}
+EOF
+
+cat > packages/presets/src/index.ts << 'EOF'
+export type { PagePreset } from './home.preset'
+export { HOME_PRESET } from './home.preset'
+EOF
+
+cat > packages/presets/package.json << 'EOF'
+{
+  "name": "@wandr/presets",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts"
+}
+EOF
+```
+
+---
+
+## 0.8 — Initialize Web App
+
+```bash
+cat > apps/web/package.json << 'EOF'
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:generate": "prisma generate"
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@wandr/application-feed": "workspace:*",
+    "@wandr/contracts": "workspace:*",
+    "@wandr/presets": "workspace:*",
+    "@wandr/database": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^18.2.0",
+    "@types/node": "^20.0.0"
   }
 }
+EOF
+
+cat > apps/web/next.config.js << 'EOF'
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  transpilePackages: [
+    '@wandr/domain-activities',
+    '@wandr/domain-feed',
+    '@wandr/application-feed',
+    '@wandr/contracts',
+    '@wandr/presets',
+  ],
+}
+
+module.exports = nextConfig
+EOF
+
+cat > apps/web/tsconfig.json << 'EOF'
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+EOF
+
+mkdir -p apps/web/app
+cat > apps/web/app/layout.tsx << 'EOF'
+export const metadata = {
+  title: 'Wandr',
+  description: 'Discover activities in Montreal',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
+EOF
+
+cat > apps/web/app/page.tsx << 'EOF'
+export default function Home() {
+  return (
+    <main>
+      <h1>Wandr</h1>
+      <p>Discover activities in Montreal</p>
+    </main>
+  )
+}
+EOF
 ```
 
 ---
 
-## Step 0.13: Create Documentation
+## 0.9 — Environment Setup
 
-### 0.13.1 Create MODULE_TEMPLATE.md
+```bash
+cat > .env.local << 'EOF'
+# Database
+DATABASE_URL="postgresql://wandr:wandr@localhost:5432/wandr_dev"
 
-This template is used when creating new modules:
+# App
+NEXT_PUBLIC_API_URL="http://localhost:3000"
+EOF
 
-```markdown
-# [Module Name] Module
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
 
-## Purpose
-[What does this module do?]
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: wandr_dev
+      POSTGRES_USER: wandr
+      POSTGRES_PASSWORD: wandr
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-## Public Interface
-- [Method 1]: [Description]
-- [Method 2]: [Description]
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
 
-## Dependencies
-- [Module 1]
-- [Module 2]
-
-## Data Models
-[Any Prisma models or types specific to this module]
-
-## Design Notes
-[Implementation decisions, trade-offs, etc.]
-
-## Testing
-[Overview of test strategy for this module]
-```
-
-### 0.13.2 Create ARCHITECTURE.md
-
-```markdown
-# Wandr Architecture Overview
-
-## Modular Monolith Structure
-
-Wandr follows a modular monolith architecture with the following principles:
-
-1. **Module Independence** — Each module is independently testable
-2. **Clear Interfaces** — Modules communicate via typed contracts
-3. **No Circular Dependencies** — Modules form a DAG (directed acyclic graph)
-4. **Layered Services** — Queries → Services → API Routes
-
-## Module Dependency Graph (Phase 1)
-
-```
-catalog ← filters, search, favorites, detail
-↑
-└── map, carousel (no dependencies)
-```
-
-## API Contracts
-
-All API contracts are defined in module `types.ts` files and documented in `CLAUDE.md`.
-
-See PRD_Phase1.md, PRD_Phase2.md, PRD_Phase3.md for full specifications.
+volumes:
+  postgres_data:
+EOF
 ```
 
 ---
 
-## Step 0.14: Verify the Skeleton
-
-### 0.14.1 Type check
+## 0.10 — Install & Verify
 
 ```bash
-npm run type-check
+# Install dependencies
+pnpm install
+
+# Generate Prisma client
+pnpm db:setup
+
+# Start dev server
+pnpm dev
+
+# In another terminal, verify web is running
+open http://localhost:3000
 ```
-
-Expected: No errors
-
-### 0.14.2 Run linter
-
-```bash
-npm run lint
-```
-
-Expected: No critical errors (warnings OK)
-
-### 0.14.3 Start dev server
-
-```bash
-npm run dev
-```
-
-Expected: Server running at http://localhost:3000
-
-### 0.14.4 Verify Prisma
-
-```bash
-npx prisma studio
-```
-
-Expected: Prisma Studio opens, showing your database
 
 ---
 
-## Step 0.15: Commit Skeleton
+## 0.11 — Type Check & Lint
+
+```bash
+# TypeScript
+pnpm type-check
+
+# ESLint (after setup)
+pnpm lint
+
+# Both should pass
+```
+
+---
+
+## 0.12 — Commit Skeleton
 
 ```bash
 git add -A
-git commit -m "Step Zero: Create modular monolith skeleton
+git commit -m "Step Zero: Initialize clean architecture monorepo
 
-- Initialize Next.js 14 with TypeScript and Tailwind
-- Set up Prisma + PostgreSQL schema
-- Scaffold Phase 1 module directories (catalog, filters, search, map, favorites, detail, carousel)
-- Create shared types and error definitions
-- Set up service factory and dependency injection
-- Configure ESLint, TypeScript strict mode
-- Add Vitest configuration for unit testing
-- Create CI/CD pipeline (GitHub Actions)
-- Add example API route for activities
+- Root package.json with workspaces
+- Turborepo configuration
+- Domain packages: activities, feed, favorites
+- Application packages: feed, activities, search
+- Infrastructure packages: database (Prisma)
+- Contracts, presets, UI packages
+- Next.js web app with transpilation
+- Docker Compose for local Postgres/Redis
+- TypeScript strict mode, ESLint ready
 
-All Phase 1 modules have:
-- types.ts (public types)
-- service.ts (placeholder implementation)
-- index.ts (public interface)
-- __tests__/ directory
+Ready for Phase 1 implementation."
+```
 
-Next: Phase 1 Implementation (see STEP_ONE.md)
+---
 
-https://claude.ai/code/session_01WqRKUKgqhAKTWHeVjoa625"
+## Key Points
+
+1. **Workspaces:** Monorepo with single node_modules, shared config
+2. **Layer separation:** Domain has no deps. Application depends on domain. Infrastructure implements domain ports.
+3. **Contracts:** DTOs in separate package, shared at boundaries
+4. **Presets:** Configuration-driven pages, no per-page packages
+5. **Database:** Infrastructure layer, accessed via repositories
+6. **Transpilation:** Web app transpiles workspace packages for Next.js
+
+**Next:** STEP_ONE.md — Phase 1 implementation (catalog, filters, search, feed engine)
+
+---
+
+**Duration:** ~2 hours  
+**Result:** Production-ready monorepo, zero runtime errors, ready for feature work

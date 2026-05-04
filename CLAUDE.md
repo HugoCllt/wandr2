@@ -1,725 +1,486 @@
-# CLAUDE.md — Wandr Modular Monolith Architecture Rules
+# CLAUDE.md — Wandr Architecture Guardrails
 
-This document defines architectural rules and guardrails for Wandr development. All code changes must follow these principles to maintain a clean, modular, monolithic codebase.
+**Pattern:** Domain-Driven Design + Clean Architecture + Selective Hexagonal
 
----
-
-## Architecture Vision
-
-**Wandr is a modular monolith:**
-- Single Next.js codebase (frontend + API routes)
-- Single PostgreSQL database
-- Modules with clear boundaries and stable interfaces
-- Modules communicate via typed contracts, not direct imports
-- No circular dependencies
-- Each module is independently testable
-
-**Goal:** Keep the codebase organized, maintainable, and ready for extraction to microservices if needed in the future.
+AI agents building Wandr must enforce these boundaries. Violations compound; early enforcement prevents refactoring debt.
 
 ---
 
-## Module Structure
+## Fundamental Rules
 
-### Directory Layout
-
-```
-src/
-├── modules/                    # Core domain modules
-│   ├── catalog/                # Activity Catalog Module
-│   │   ├── index.ts            # Public interface
-│   │   ├── types.ts            # Module types
-│   │   ├── service.ts          # Business logic
-│   │   ├── queries.ts          # Database queries (Prisma)
-│   │   └── __tests__/          # Unit tests for module
-│   ├── filters/                # Filter Engine Module
-│   ├── search/                 # Smart Search Parser Module
-│   ├── map/                    # Map Adapter Module
-│   ├── favorites/              # Favorites Store Module
-│   ├── detail/                 # Activity Detail Renderer Module
-│   ├── carousel/               # Carousel Controller Module
-│   ├── flame/                  # Trend Flame Scorer Module (Phase 2+)
-│   ├── profile/                # Profile & Stats Aggregator Module (Phase 2+)
-│   ├── chat/                   # Chat Orchestrator Module (Phase 3+)
-│   ├── personalization/        # Personalization Engine Module (Phase 3+)
-│   ├── recommendations/        # Recommendation Ranker Module (Phase 3+)
-│   └── shared/                 # Shared utilities, types, and constants
-│       ├── types.ts            # Cross-module types
-│       ├── constants.ts        # Global constants
-│       ├── utils.ts            # Utility functions
-│       └── errors.ts           # Error definitions
-├── pages/api/                  # Next.js API routes (dispatch to modules)
-├── components/                 # UI components (organized by feature)
-└── lib/                        # Shared frontend utilities
+### 1. Strict Layer Isolation
 
 ```
-
-### Module Anatomy (Template)
-
-Each module should follow this structure:
-
+Allowed Dependencies (upward only):
+  web/ → application/ → domain/
+  infrastructure/ → domain/ (implements ports)
+  contracts/ → (no deps, shared at boundaries)
+  
+Forbidden (violations cause tight coupling):
+  ❌ domain/ → application/
+  ❌ domain/ → infrastructure/
+  ❌ web/ → infrastructure/ directly
+  ❌ application/ → web/
 ```
-src/modules/[module-name]/
-├── index.ts                    # MANDATORY: Public interface (exports only)
-├── types.ts                    # MANDATORY: TypeScript types (no implementation)
-├── service.ts                  # MANDATORY: Business logic (pure functions where possible)
-├── queries.ts                  # Database queries (Prisma client calls)
-├── api.ts                      # (Optional) API endpoint handlers that delegate to service
-├── __tests__/
-│   ├── service.test.ts         # Unit tests for service (pure functions)
-│   ├── integration.test.ts     # Integration tests
-│   └── fixtures.ts             # Test data
-└── README.md                   # Module documentation
 
-```
+**Enforcement:** TypeScript paths must prevent sideways/downward imports. Use linting rules.
 
 ---
 
-## Module Interface Rules
+### 2. Domain Layer — Pure Business Logic
 
-### Rule 1: Public Interface Only
+**Scope:** Entities, value objects, ports, business rules. No frameworks, no side effects.
 
-**Every module MUST have an `index.ts` that exports its public interface.**
+**What belongs:**
+- `Activity`, `User`, `Favorite` entities
+- `FeedQuery`, `FeedResult` value objects
+- Port interfaces: `IActivityRepository`, `ISearchProvider`, `ILLMProvider`
+- Business rules: `Activity.isAvailable()`, scoring logic
+- Domain errors: `ActivityNotFoundError`
 
+**What does NOT:**
+- Prisma, HTTP, React, framework-specific code
+- Transport DTOs (those are in contracts/)
+- Infrastructure details
+
+**Example:**
 ```typescript
-// src/modules/catalog/index.ts
-export type { Activity, ActivityQuery, ActivityFilter } from './types'
-export { CatalogService } from './service'
-export { CatalogError } from './errors'
+// ✅ GOOD: Pure domain
+export class Activity {
+  constructor(
+    readonly id: UUID,
+    readonly title: string,
+    readonly category: ActivityCategory,
+  ) {}
+  
+  isAvailable(): boolean {
+    // Pure function, testable in isolation
+    return true
+  }
+}
+
+// ❌ BAD: Infrastructure leaking into domain
+export class Activity {
+  async save(): Promise<void> {
+    await prisma.activity.update(...)  // Domain shouldn't know Prisma exists
+  }
+}
 ```
 
-**DO NOT import from internal files directly.** Always import from the module root:
-
-```typescript
-// ✅ GOOD
-import { CatalogService } from '@/modules/catalog'
-
-// ❌ BAD
-import { CatalogService } from '@/modules/catalog/service'
-```
+**Test:** Unit tests only, no mocks, pure assertions.
 
 ---
 
-### Rule 2: Clear Type Boundaries
+### 3. Application Layer — Use Case Orchestration
 
-**Module types go in `types.ts`. No business logic in types.**
+**Scope:** Implement use cases, compose domain + infrastructure, handle errors.
 
+**What belongs:**
+- `GetFeedUseCase`, `SearchActivitiesUseCase`, `ChatWithActivitiesUseCase`
+- Orchestration: fetch from repo, apply ranking, paginate
+- Error mapping: domain errors → application exceptions
+- Dependency injection wiring
+
+**What does NOT:**
+- Business logic (belongs in domain)
+- Direct database calls (call repos via ports)
+- HTTP handling (that's web's job)
+- UI rendering (that's web/components)
+
+**Example:**
 ```typescript
-// src/modules/catalog/types.ts
-export type Activity = {
+// ✅ GOOD: Application orchestration
+export class GetFeedUseCase {
+  constructor(
+    private activityRepo: IActivityRepository,  // Port, not implementation
+    private ranker: IRanker,
+  ) {}
+  
+  async execute(query: FeedQuery): Promise<FeedResult> {
+    const activities = await this.activityRepo.findMany(query.filters)
+    const ranked = await this.ranker.rank(activities)
+    return this.paginate(ranked, query.cursor, query.limit)
+  }
+}
+
+// ❌ BAD: Application doing infrastructure work
+export class GetFeedUseCase {
+  async execute(query: FeedQuery) {
+    const result = await prisma.activity.findMany(...)  // Direct DB access
+    return result
+  }
+}
+```
+
+**Test:** Integration tests with mocked ports.
+
+---
+
+### 4. Infrastructure Layer — Adapter Implementations
+
+**Scope:** Implement ports, external integrations (DB, search, LLM, cache).
+
+**What belongs:**
+- `PrismaActivityRepository` implements `IActivityRepository`
+- `ElasticsearchAdapter` implements `ISearchProvider`
+- `MapboxAdapter` implements `IMapProvider`
+- `OpenAIAdapter` implements `ILLMProvider`
+- `RedisCache` implements `ICache`
+
+**What does NOT:**
+- Business logic
+- Orchestration
+- API routing
+- UI logic
+
+**Example:**
+```typescript
+// ✅ GOOD: Infrastructure adapter
+export class PrismaActivityRepository implements IActivityRepository {
+  constructor(private db: PrismaClient) {}
+  
+  async findMany(filters: Filter[]): Promise<Activity[]> {
+    const records = await this.db.activity.findMany({
+      where: this.buildWhere(filters),
+    })
+    // Convert DB record → Domain entity
+    return records.map(r => new Activity(r.id, r.title, ...))
+  }
+}
+
+// ❌ BAD: Exposing infrastructure details
+export class ActivityRepository {
+  async findMany(): Promise<PrismaActivity[]> {
+    // Returns Prisma type, not domain entity
+    return this.db.activity.findMany(...)
+  }
+}
+```
+
+**Test:** Integration tests with real/containerized services (testcontainers).
+
+---
+
+### 5. Contracts — Transport-Safe Types
+
+**Scope:** DTOs, view models, API shapes. Single source of truth for boundaries.
+
+**What belongs:**
+- `ActivityDTO` — for API transport
+- `ActivityCardVM` — for UI rendering
+- `FeedQueryDTO` — request shape
+- `FeedResultDTO` — response shape
+- Error contracts: `{ error: string; code: string }`
+
+**What does NOT:**
+- Domain entity classes (those are in domain/)
+- Infrastructure details
+- Business logic
+
+**Separation principle:**
+```typescript
+// Three separate shapes, same source data:
+
+// Domain (in packages/domain/)
+export class Activity {
   id: UUID
   title: string
   category: ActivityCategory
-  location: Location
-  price: PriceRange
-  // ... other fields
+  // ... pure business
 }
 
-export type ActivityQuery = {
-  filters: ActivityFilter[]
-  sort: 'relevance' | 'popularity' | 'price' | 'date'
-  cursor?: string
-  limit: number
+// API DTO (in packages/contracts/)
+export type ActivityDTO = {
+  id: string
+  title: string
+  category: string
+  // ... transport-safe
 }
 
-export type ActivityFilter = 
-  | { type: 'category'; value: ActivityCategory }
-  | { type: 'price'; min: number; max: number }
-  // ... other filter types
+// UI View Model (in packages/contracts/)
+export type ActivityCardVM = {
+  id: string
+  title: string
+  priceDisplay: string  // Formatted for UI
+  distanceDisplay: string
+}
 ```
+
+**Test:** Contract tests validate mapping between shapes.
 
 ---
 
-### Rule 3: Service Layer is the Module's Brain
+### 6. Error Handling — Cross-Layer Responsibility
 
-**All business logic lives in the service. Services are pure when possible.**
-
-```typescript
-// src/modules/catalog/service.ts
-export class CatalogService {
-  constructor(private db: PrismaClient) {}
-
-  async query(q: ActivityQuery): Promise<{ activities: Activity[]; nextCursor?: string }> {
-    // Business logic here
-    // Call queries layer for DB access
-    const activities = await this.queries.getActivities(q)
-    return { activities, nextCursor: activities[activities.length - 1]?.id }
-  }
-
-  scoreRelevance(activity: Activity, query: ActivityQuery): number {
-    // Pure function: same input → same output
-    // No side effects
-    return activity.views * 0.4 + activity.saves * 0.6
-  }
-}
-```
-
----
-
-### Rule 4: Stable, Narrow Interfaces
-
-**Services expose a small, stable interface. Hide complexity inside.**
+**Domain errors** → **Application mapping** → **HTTP response**
 
 ```typescript
-// ✅ GOOD: Narrow, stable interface
-export class CatalogService {
-  async query(q: ActivityQuery): Promise<QueryResult>
-  async getById(id: UUID): Promise<Activity>
-}
-
-// ❌ BAD: Leaky, unstable
-export class CatalogService {
-  async rawQuery(sql: string): any  // Exposes SQL
-  async getCatalogInternalState(): any  // Exposes internals
-  async querySlow(...manyOverloadedParams): any  // Too many signatures
-}
-```
-
----
-
-### Rule 5: No Cross-Module Imports (Except via Public Interface)
-
-**Modules MUST NOT import from internal files of other modules.**
-
-```typescript
-// ✅ GOOD: Import via public interface
-import { CatalogService, Activity } from '@/modules/catalog'
-
-// ❌ BAD: Importing internal files
-import { CatalogService } from '@/modules/catalog/service'
-import { queries } from '@/modules/catalog/queries'
-```
-
----
-
-### Rule 6: Module Dependencies Must Be Explicit
-
-**Modules that depend on other modules must declare it in their `index.ts` comments and accept injected dependencies.**
-
-```typescript
-// src/modules/filters/index.ts
-/**
- * Filter Engine Module
- * 
- * Dependencies: Catalog (for filtering activity queries)
- * Public Interface: FilterService
- */
-export { FilterService } from './service'
-
-// src/modules/filters/service.ts
-export class FilterService {
-  constructor(
-    private catalogService: CatalogService,  // Injected
-  ) {}
-
-  async applyFilter(filter: Filter): Promise<Activity[]> {
-    // Delegates to Catalog, doesn't duplicate logic
-    const query = this.buildQuery(filter)
-    return this.catalogService.query(query)
-  }
-}
-```
-
----
-
-### Rule 7: Errors Are Module-Scoped
-
-**Each module defines its own error types. Errors are exported from `index.ts`.**
-
-```typescript
-// src/modules/catalog/errors.ts
-export class CatalogError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'CatalogError'
+// Domain (packages/domain/activities/)
+export class ActivityNotFoundError extends Error {
+  constructor(id: UUID) {
+    super(`Activity ${id} not found`)
   }
 }
 
-export class ActivityNotFoundError extends CatalogError {}
-
-// src/modules/catalog/index.ts
-export { CatalogError, ActivityNotFoundError } from './errors'
-```
-
-**API handlers catch module errors and translate to HTTP responses:**
-
-```typescript
-// src/pages/api/activities/[id].ts
-try {
-  const activity = await catalogService.getById(id)
-  res.json(activity)
-} catch (error) {
-  if (error instanceof ActivityNotFoundError) {
-    res.status(404).json({ error: 'Activity not found' })
-  } else if (error instanceof CatalogError) {
-    res.status(400).json({ error: error.message })
-  } else {
-    res.status(500).json({ error: 'Internal server error' })
-  }
-}
-```
-
----
-
-### Rule 8: Database Queries in Queries Layer
-
-**All Prisma calls go in `queries.ts`. Services call queries, never Prisma directly.**
-
-```typescript
-// src/modules/catalog/queries.ts
-export class CatalogQueries {
-  constructor(private db: PrismaClient) {}
-
-  async getActivities(q: ActivityQuery): Promise<Activity[]> {
-    const where = this.buildWhereClause(q.filters)
-    return this.db.activity.findMany({
-      where,
-      orderBy: this.buildOrderBy(q.sort),
-      take: q.limit,
-      skip: q.cursor ? 1 : 0,
-      cursor: q.cursor ? { id: q.cursor } : undefined,
-    })
-  }
-
-  private buildWhereClause(filters: ActivityFilter[]): Prisma.ActivityWhereInput {
-    // Query building logic
+// Application (packages/application/activities/)
+export class GetActivityUseCase {
+  async execute(id: UUID): Promise<ActivityDTO> {
+    try {
+      const activity = await this.repo.findById(id)
+      return this.map(activity)  // Domain → DTO
+    } catch (error) {
+      if (error instanceof ActivityNotFoundError) {
+        throw new NotFoundException(error.message)  // Application exception
+      }
+      throw error
+    }
   }
 }
 
-// src/modules/catalog/service.ts
-export class CatalogService {
-  constructor(
-    private queries: CatalogQueries,
-  ) {}
-
-  async query(q: ActivityQuery): Promise<QueryResult> {
-    return this.queries.getActivities(q)
-  }
-}
-```
-
----
-
-## API Endpoint Rules
-
-### Rule 9: API Routes Delegate to Services
-
-**API routes (`src/pages/api/`) are thin adapters. They parse requests, call services, and format responses.**
-
-```typescript
-// src/pages/api/activities/index.ts
-import { NextApiRequest, NextApiResponse } from 'next'
-import { CatalogService } from '@/modules/catalog'
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Parse request
-  const { filters, sort, cursor, limit } = req.query
-
-  // Validate
-  if (!limit || limit > 100) {
-    return res.status(400).json({ error: 'Invalid limit' })
-  }
-
-  // Delegate to service
+// Web (apps/web/app/api/activities/[id]/route.ts)
+export async function GET(req: NextRequest, { params }: Context) {
   try {
-    const result = await catalogService.query({
-      filters: parseFilters(filters),
-      sort: sort as any,
-      cursor: cursor as string,
-      limit: parseInt(limit as string),
-    })
-    res.json(result)
+    const dto = await useCase.execute(params.id)
+    return NextResponse.json(dto)
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' })
-  }
-}
-```
-
-**NOT:**
-
-```typescript
-// ❌ BAD: Business logic in API route
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const activities = await db.activity.findMany(...)
-  const filtered = activities.filter(...)
-  const sorted = filtered.sort(...)
-  res.json(sorted)
-}
-```
-
----
-
-### Rule 10: API Contracts Are Defined
-
-**Every API endpoint has a documented contract (request/response types).**
-
-```typescript
-// src/modules/catalog/types.ts
-export type ActivityQueryRequest = {
-  filters?: ActivityFilter[]
-  sort?: 'relevance' | 'popularity' | 'price' | 'date'
-  cursor?: string
-  limit: number
-}
-
-export type ActivityQueryResponse = {
-  activities: Activity[]
-  nextCursor?: string
-  totalCount: number
-}
-
-// src/pages/api/activities/index.ts
-// GET /api/activities
-// Request: query params matching ActivityQueryRequest
-// Response: ActivityQueryResponse
-```
-
----
-
-## Testing Rules
-
-### Rule 11: Unit Tests for Services
-
-**Services are pure functions (or pure-ish). Unit tests verify business logic in isolation.**
-
-```typescript
-// src/modules/catalog/__tests__/service.test.ts
-describe('CatalogService', () => {
-  let service: CatalogService
-  let mockQueries: jest.Mocked<CatalogQueries>
-
-  beforeEach(() => {
-    mockQueries = createMockQueries()
-    service = new CatalogService(mockQueries)
-  })
-
-  describe('scoreRelevance', () => {
-    it('weights views 40% and saves 60%', () => {
-      const activity = { views: 100, saves: 100, ... }
-      const score = service.scoreRelevance(activity)
-      expect(score).toBe(100 * 0.4 + 100 * 0.6)
-    })
-  })
-
-  describe('query', () => {
-    it('calls queries.getActivities with correct filter', async () => {
-      await service.query({ filters: [...], sort: 'popularity', limit: 10 })
-      expect(mockQueries.getActivities).toHaveBeenCalledWith(...)
-    })
-  })
-})
-```
-
-### Rule 12: Integration Tests for Compositions
-
-**Integration tests verify that modules work together correctly.**
-
-```typescript
-// src/modules/filters/__tests__/integration.test.ts
-describe('Filters + Catalog Integration', () => {
-  let filterService: FilterService
-  let catalogService: CatalogService
-  let db: PrismaClient
-
-  beforeEach(async () => {
-    db = new PrismaClient()
-    catalogService = new CatalogService(new CatalogQueries(db))
-    filterService = new FilterService(catalogService)
-  })
-
-  it('applies filters correctly', async () => {
-    const results = await filterService.applyFilter({
-      type: 'category',
-      value: 'Sports',
-    })
-    expect(results.every(a => a.category === 'Sports')).toBe(true)
-  })
-})
-```
-
----
-
-## Shared Code Rules
-
-### Rule 13: Shared Code in `shared/` Module
-
-**Code used by multiple modules goes in `src/modules/shared/`.**
-
-```typescript
-// src/modules/shared/types.ts
-export type UUID = string & { readonly __brand: 'UUID' }
-export type Location = { lat: number; lng: number; address: string }
-export type ActivityCategory = 'Sports' | 'Dining' | 'Culture' | ...
-
-// src/modules/catalog/types.ts
-import { UUID, ActivityCategory } from '@/modules/shared/types'
-
-export type Activity = {
-  id: UUID
-  category: ActivityCategory
-  ...
-}
-```
-
----
-
-### Rule 14: No Shared Business Logic Across Modules
-
-**Each module owns its business logic. Don't create shared "utils" for logic.**
-
-```typescript
-// ❌ BAD: Shared business logic utility
-// src/modules/shared/scoring.ts
-export function scoreActivity(activity: Activity): number {
-  // This is Catalog business logic, not shared
-  return activity.views * 0.4 + activity.saves * 0.6
-}
-
-// ✅ GOOD: Business logic in its owning module
-// src/modules/catalog/service.ts
-export class CatalogService {
-  scoreRelevance(activity: Activity): number {
-    return activity.views * 0.4 + activity.saves * 0.6
-  }
-}
-```
-
----
-
-## Dependency Injection
-
-### Rule 15: Constructor Injection, Not Service Locator
-
-**Modules are initialized with dependencies injected via constructor.**
-
-```typescript
-// ✅ GOOD: Constructor injection
-const catalogQueries = new CatalogQueries(prismaClient)
-const catalogService = new CatalogService(catalogQueries)
-const filterService = new FilterService(catalogService)
-
-// ❌ BAD: Service locator / global state
-// src/modules/filters/service.ts
-const catalogService = getServiceFromGlobalRegistry('catalog')
-```
-
-**Setup in a root service factory:**
-
-```typescript
-// src/lib/services.ts
-export function initializeServices(db: PrismaClient) {
-  // Layer 1: Queries
-  const catalogQueries = new CatalogQueries(db)
-  const favoriteQueries = new FavoriteQueries(db)
-
-  // Layer 2: Services that only depend on queries
-  const catalogService = new CatalogService(catalogQueries)
-  const favoriteService = new FavoriteService(favoriteQueries)
-
-  // Layer 3: Services that depend on other services
-  const filterService = new FilterService(catalogService)
-  const detailService = new DetailService(catalogService, favoriteService)
-
-  return {
-    catalog: catalogService,
-    favorites: favoriteService,
-    filters: filterService,
-    detail: detailService,
+    return handleError(error)  // Application exception → HTTP
   }
 }
 
-// src/pages/api/[...route].ts
-const services = initializeServices(prisma)
-export default async function handler(req, res) {
-  // Use services.catalog, services.filters, etc.
+// Middleware (apps/web/lib/error-handler.ts)
+function handleError(error: Error): NextResponse {
+  if (error instanceof NotFoundException) {
+    return NextResponse.json({ error: error.message }, { status: 404 })
+  }
+  return NextResponse.json({ error: 'Internal error' }, { status: 500 })
 }
 ```
 
 ---
 
-## Phase-Based Module Activation
+### 7. Ports & Adapters (Selective Hexagonal)
 
-### Rule 16: Modules Aligned to Phases
+**Apply hexagonal (ports + adapters) ONLY to modules with external dependencies:**
 
-**Modules are organized by PRD phase. Disable Phase 2/3 modules in Phase 1 deployments.**
+**Use ports for:**
+- Database (IActivityRepository, IUserRepository)
+- Search (ISearchProvider)
+- Map (IMapProvider)
+- LLM (ILLMProvider)
+- Cache (ICache)
 
-```
-Phase 1 Modules (Active):
-├── catalog
-├── filters
-├── search
-├── map
-├── favorites
-├── detail
-├── carousel
-└── shared
+**Skip ports for:**
+- Filters, sorting, ranking (pure domain logic)
+- Favorites, detail, carousel (not external deps)
 
-Phase 2 Modules (Inactive in Phase 1):
-├── flame        // Commented out until Phase 2
-├── profile      // Commented out until Phase 2
-└── ...
-
-Phase 3 Modules (Inactive in Phase 1/2):
-├── chat         // Commented out until Phase 3
-├── personalization
-├── recommendations
-└── ...
-```
-
-**In `src/lib/services.ts`:**
-
+**Port definition pattern:**
 ```typescript
-export function initializeServices(db: PrismaClient, phase: 'phase1' | 'phase2' | 'phase3') {
-  // Core modules (always active)
-  const catalogService = new CatalogService(...)
-  const filterService = new FilterService(...)
+// In domain/
+export interface IActivityRepository {
+  findById(id: UUID): Promise<Activity>
+  findMany(filters: Filter[]): Promise<Activity[]>
+}
 
-  // Phase 2+ modules
-  const flameService = phase >= 'phase2' 
-    ? new FlameService(...)
-    : null
+// In infrastructure/database/
+export class PrismaActivityRepository implements IActivityRepository {
+  // Implementation
+}
 
-  // Phase 3+ modules
-  const chatService = phase >= 'phase3'
-    ? new ChatService(...)
-    : null
-
-  return { catalogService, filterService, flameService, chatService, ... }
+// In infrastructure/search/ (alternative provider)
+export class ElasticsearchRepository implements IActivityRepository {
+  // Different implementation, same interface
 }
 ```
 
 ---
 
-## Code Style & Conventions
+### 8. Module Dependency Rules
 
-### Rule 17: Consistent File Naming
+**Dependencies form a DAG (directed acyclic graph). No cycles.**
 
 ```
-service.ts          # Service class
-queries.ts          # Database query class
-types.ts            # TypeScript types only
-errors.ts           # Error definitions
-index.ts            # Public interface
-api.ts              # API endpoint handlers (optional)
-__tests__/          # All test files
+Valid: A → B → C (straight line)
+Invalid: A → B → C → A (cycle)
+
+Check: packages/domain/* have zero dependencies on other packages
+Check: packages/application/* depend only on domain/
+Check: packages/infrastructure/* depend only on domain/
+Check: apps/web depends on application/ and contracts/
 ```
 
-### Rule 18: TypeScript Strict Mode
+**Enforcement:** Use `madge` or ESLint to detect cycles.
 
-**All files compile with `strict: true`.**
+---
 
+### 9. Feed Engine — Application Orchestration Only
+
+**The feed engine is NOT a framework. It is the GetFeedUseCase.**
+
+**Its job:**
+- Merge preset + user filters
+- Query repository
+- Apply rankers (trending, personalization)
+- Paginate
+- Return DTO
+
+**NOT its job:**
+- Section rendering
+- Layout logic
+- Search parsing
+- Chat prompt generation
+- Map clustering
+
+**Example:**
 ```typescript
-// tsconfig.json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+// ✅ GOOD: Focused orchestration
+export class GetFeedUseCase {
+  async execute(query: FeedQuery): Promise<FeedResult> {
+    const activities = await this.repository.findMany(query.filters)
+    const ranked = await this.ranker.rank(activities, query.context)
+    return this.paginate(ranked, query.cursor, query.limit)
   }
 }
-```
 
-### Rule 19: ESLint & Prettier
-
-**All code formatted by Prettier, linted by ESLint.**
-
-- No import loops (eslint-plugin-import)
-- No unused variables
-- Consistent indentation (2 spaces)
-- Semicolons required
-- Single quotes for strings
-
----
-
-## Documentation Rules
-
-### Rule 20: Module Documentation
-
-**Every module has a `README.md`:**
-
-```markdown
-# Catalog Module
-
-## Purpose
-Single source of truth for activities. Handles fetching, filtering, sorting, caching.
-
-## Public Interface
-- `CatalogService.query(q: ActivityQuery) → QueryResult`
-- `CatalogService.getById(id: UUID) → Activity`
-
-## Dependencies
-None (only depends on Prisma)
-
-## Design Notes
-- Geo-distance computed in the database (PostGIS)
-- Results are paginated via cursor (not offset)
-
-## Testing
-- Unit tests verify scoring logic
-- Integration tests verify pagination
+// ❌ BAD: God module
+export class FeedEngine {
+  parseSearch() { }
+  generateChatPrompt() { }
+  renderSections() { }
+  clusterMapPins() { }
+  // ... 50 other methods
+}
 ```
 
 ---
 
-## Guardrails for AI Agents
+### 10. Presets — Configuration, Not Code
 
-### Rule 21: Enforce Module Boundaries
+**Presets define page behavior, they do NOT contain logic.**
 
-**When implementing a feature:**
+```typescript
+// ✅ GOOD: Pure configuration
+export const HOME_PRESET: PagePreset = {
+  name: 'home',
+  feed: {
+    filters: ['price', 'distance', 'date', 'category'],
+    defaultSort: 'relevance',
+    enableInfiniteScroll: true,
+  },
+  sections: {
+    carousel: { enabled: true, count: 5 },
+    mapSection: { enabled: true },
+    discoveryGrid: { enabled: true },
+  },
+}
 
-1. ✅ **DO:** Create a new module in `src/modules/[name]/`
-2. ✅ **DO:** Export types and service from `index.ts`
-3. ✅ **DO:** Write unit tests in `__tests__/`
-4. ✅ **DO:** Depend on other modules via their public interfaces only
-5. ✅ **DO:** Inject dependencies in constructor
-6. ✅ **DO:** Keep services pure when possible
+// ❌ BAD: Preset with logic
+export const HOME_PRESET = {
+  getActivities: async () => {
+    // Logic here; breaks the pattern
+    return db.activity.findMany(...)
+  },
+}
+```
 
-**DO NOT:**
+---
 
-- ❌ Mutate state across modules
-- ❌ Import from internal files (`/service.ts`, `/queries.ts`)
-- ❌ Create circular dependencies
-- ❌ Store logic in shared "utils"
-- ❌ Access another module's database directly
-- ❌ Hardcode dependencies (use injection)
-- ❌ Expose module internals in public API
+### 11. Testing — Layer-Specific Strategy
 
-### Rule 22: Code Review Checklist (for AI)
+| Layer | Scope | Approach | Mocks |
+|-------|-------|----------|-------|
+| **Domain** | Pure functions, entities | Unit tests | None |
+| **Application** | Orchestration | Integration tests | Port mocks |
+| **Infrastructure** | Adapters | Integration tests | Real/containerized services |
+| **Web** | Pages, hooks, API routes | E2E tests | Real backend |
 
-Before submitting code, verify:
+**Coverage targets:**
+- Domain: 90%+
+- Application: 80%+
+- Infrastructure: 70%+
+- E2E: Critical paths only
 
-- [ ] Module has `index.ts` exporting public interface
-- [ ] No imports from internal module files elsewhere
-- [ ] Service class is testable in isolation
-- [ ] Unit tests exist for pure functions
-- [ ] Errors are module-scoped and exported
-- [ ] Dependencies are injected, not hardcoded
-- [ ] TypeScript compiles with `strict: true`
-- [ ] ESLint passes, Prettier formatted
-- [ ] No console.log (use logger instead)
-- [ ] No TODO comments without issues
-- [ ] Module documentation (README.md) is complete
+---
+
+### 12. Naming Conventions
+
+**Consistency prevents confusion.**
+
+```
+Entities:        Activity, User, Favorite (nouns, singular)
+Repositories:    IActivityRepository, IUserRepository (port interface)
+Adapters:        PrismaActivityRepository, ElasticsearchRepository
+Use Cases:       GetActivityUseCase, SearchActivitiesUseCase
+Services:        NOT used; use use cases + adapters
+DTOs:            ActivityDTO, FeedQueryDTO (suffixed with DTO or Request/Response)
+View Models:     ActivityCardVM (suffixed with VM)
+Presets:         HOME_PRESET, SPORT_PRESET (CONSTANT_CASE)
+Errors:          ActivityNotFoundError (extends Error, suffixed with Error)
+```
+
+---
+
+### 13. Code Review Checklist (AI Agent)
+
+Before proposing code:
+
+**Domain:**
+- [ ] No framework imports (Prisma, HTTP, React)
+- [ ] Pure functions where possible
+- [ ] Domain errors defined, not generic exceptions
+- [ ] Unit tests exist, no mocks
+
+**Application:**
+- [ ] Uses ports, not direct infrastructure
+- [ ] Orchestrates domain + infrastructure
+- [ ] Maps errors appropriately
+- [ ] Integration tests with mocked ports
+
+**Infrastructure:**
+- [ ] Implements one port, does one job
+- [ ] Converts between DTO ↔ Entity
+- [ ] No business logic
+- [ ] Integration tests with real service
+
+**Web:**
+- [ ] Components are presentational (accept DTOs/VMs)
+- [ ] Hooks call use cases
+- [ ] No business logic
+- [ ] API routes are thin adapters
+
+**Contracts:**
+- [ ] Separate shapes: DTO, VM, domain model
+- [ ] No business logic
+- [ ] Types are transport-safe (no classes, no methods)
+
+---
+
+## Violations & Their Consequences
+
+| Violation | Consequence | Fix |
+|-----------|-------------|-----|
+| Domain imports Prisma | Can't unit test domain | Move to infrastructure adapter |
+| Application imports web/ | Circular dependency risk | Pass dependency via constructor |
+| Infrastructure duplicates business logic | Multiple sources of truth | Move logic to domain |
+| Web calls infrastructure directly | Tightly coupled, hard to test | Call use case, which calls repo |
+| Contracts contain methods | Type inflation, can't serialize | Use pure types, helper functions in app/ |
+| Feed engine grows to 1000 lines | Becomes unmaintainable, hard to test | Split into smaller use cases |
 
 ---
 
 ## Summary
 
-**Modular Monolith Principles:**
+**The architecture works because:**
 
-1. **Clear Boundaries** — Modules are isolated by directory and public interface
-2. **Stable Interfaces** — Small, versioned, rarely-changing public APIs
-3. **No Coupling** — Modules depend on abstractions, not implementations
-4. **Testability** — Each module is unit-testable in isolation
-5. **Scalability** — Modules can be extracted to microservices if needed
-6. **Single Deployment** — One codebase, one deployment artifact
-7. **Team Independence** — Teams can work on different modules without merge conflicts
+1. Domain has zero dependencies → testable in isolation
+2. Application orchestrates domain + infrastructure → logic is clear
+3. Infrastructure is replaceable → swap Postgres for MongoDB without touching logic
+4. Web is thin → almost no business logic, just routing + rendering
+5. Contracts are clear → APIs are self-documenting
+
+**Guard these principles.** They compound in value as the codebase grows.
 
 ---
 
 **Last Updated:** 2026-05-04  
-**Architecture Version:** Modular Monolith v1  
-**Applies to:** Phase 1, Phase 2, Phase 3
+**Version:** Clean Architecture v1  
+**Authority:** Domain-Driven Design, Clean Architecture (Martin, Evans)
