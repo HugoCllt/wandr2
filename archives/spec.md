@@ -22,7 +22,6 @@ A discovery surface for Montréal activities where the entire navigable surface 
 - An events calendar. Wandr is curated, not exhaustive.
 - A social network. No comments, no follows.
 - A mobile app. Web only.
-- i18n at launch. POC ships in one locale.
 
 ---
 
