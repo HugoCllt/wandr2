@@ -7,10 +7,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Stage 0 placeholder — Stage 1 expands this with full Activity/Source/etc.
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now())
+  id         String                 @id @default(cuid())
+  email      String                 @unique
+  name       String
+  createdAt  DateTime               @default(now())
+  affinities UserCategoryAffinity[]
+}
+
+model Source {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  activities Activity[]
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ActivityKind {
+  EVENT
+  PLACE
+}
+
+enum ActivityCategory {
+  SPORT
+  ROMANTIC
+  FOOD
+  CULTURE
+  OUTDOOR
+  NIGHTLIFE
+}
+
+model Activity {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  title         String
+  description   String
+  imageUrl      String
+  imageCredit   String?
+  kind          ActivityKind
+  category      ActivityCategory
+  address       String
+  neighborhood  String?
+  latitude      Float
+  longitude     Float
+  dateStart     DateTime?
+  dateEnd       DateTime?
+  priceMinCents Int
+  priceMaxCents Int?
+  externalUrl   String?
+  indoor        Boolean          @default(false)
+  outdoor       Boolean          @default(false)
+  isFeatured    Boolean          @default(false)
+  status        ActivityStatus   @default(PUBLISHED)
+  sourceId      String
+  externalId    String?
+  source        Source           @relation(fields: [sourceId], references: [id])
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([sourceId, externalId])
+  @@index([status, isFeatured, dateStart])
+  @@index([category, dateStart])
+  @@index([kind, dateStart])
+  @@index([neighborhood])
+}
+
+model UserCategoryAffinity {
+  id        String           @id @default(cuid())
+  userId    String
+  category  ActivityCategory
+  score     Int
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@unique([userId, category])
 }
