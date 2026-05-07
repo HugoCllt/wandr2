@@ -116,6 +116,18 @@ export class PrismaActivityRepository implements IActivityRepository {
 
     return activity !== null;
   }
+
+  async listNeighborhoods(): Promise<string[]> {
+    const rows = await this.prisma.activity.findMany({
+      where: { status: 'PUBLISHED', neighborhood: { not: null } },
+      select: { neighborhood: true },
+      distinct: ['neighborhood'],
+      orderBy: { neighborhood: 'asc' },
+    });
+    return rows
+      .map((r) => r.neighborhood)
+      .filter((n): n is string => n !== null);
+  }
 }
 
 function toActivity(activity: PrismaActivityModel): Activity {

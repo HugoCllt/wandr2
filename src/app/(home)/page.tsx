@@ -1,8 +1,57 @@
-export default function HomePage() {
+import { listNeighborhoods } from '../../modules/activities/web/listNeighborhoods';
+import { loadFeedDTO } from '../../modules/feed/web/feedRoute';
+import { FilterBarController } from '../../modules/filters/web/FilterBarController';
+import { parseFilters } from '../../modules/filters/application/url-codec';
+import { serializeFilters } from '../../modules/filters/application/url-codec';
+import { HOME_PRESET } from '../../shared/presets/HOME_PRESET';
+import { FeedGrid } from '../../shared/ui/FeedGrid';
+import { PageShell } from '../../shared/ui/PageShell';
+
+export const dynamic = 'force-dynamic';
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = toURLSearchParams(searchParams);
+  const filters = parseFilters(params);
+
+  const [initialFeed, neighborhoods] = await Promise.all([
+    loadFeedDTO(params),
+    listNeighborhoods(),
+  ]);
+
+  const filterQueryString = serializeFilters(filters).toString();
+
   return (
-    <main style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>Wandr — v0.1</h1>
-      <p>Stage 0 placeholder. Home feed lands in Stage 5.</p>
-    </main>
+    <PageShell
+      preset={HOME_PRESET}
+      filters={<FilterBarController value={filters} neighborhoods={neighborhoods} />}
+      feed={
+        <FeedGrid
+          key={filterQueryString}
+          initialItems={initialFeed.items}
+          initialCursor={initialFeed.nextCursor}
+          filterQueryString={filterQueryString}
+          variant={HOME_PRESET.gridVariant}
+        />
+      }
+    />
   );
+}
+
+function toURLSearchParams(searchParams: SearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      if (value.length > 0) params.set(key, value[0]);
+    } else {
+      params.set(key, value);
+    }
+  }
+  return params;
 }

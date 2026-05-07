@@ -7,4 +7,5 @@ export interface IActivityRepository {
   findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]>;
   getOrCreateSourceIdByName(name: string): Promise<string>;
   slugExists(slug: string): Promise<boolean>;
+  listNeighborhoods(): Promise<string[]>;
 }
