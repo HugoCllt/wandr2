@@ -16,6 +16,7 @@ export type GetFeedInput = {
   affinityMap: Map<ActivityCategory, number>;
   now: Date;
   baseFilters?: FilterValue;
+  activityIds?: string[];
 };
 
 export class GetFeedUseCase {
@@ -25,6 +26,9 @@ export class GetFeedUseCase {
     const limit = input.limit ?? DEFAULT_FEED_LIMIT;
     const merged = mergeFilters(input.baseFilters ?? {}, input.filters);
     const criteria = toCriteria(merged, input.now);
+    if (input.activityIds !== undefined) {
+      criteria.activityIds = input.activityIds;
+    }
 
     const candidates = await this.activities.findCandidates(criteria);
     const ranked = rank(candidates, input.affinityMap, input.now);

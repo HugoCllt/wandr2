@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../contracts/ActivityDTO';
+import { FavoriteButton } from './FavoriteButton';
 import { formatDateTimeInTZ } from './format/formatInTZ';
 
 const CATEGORY_LABEL: Record<ActivityDTO['category'], string> = {
@@ -12,7 +13,13 @@ const CATEGORY_LABEL: Record<ActivityDTO['category'], string> = {
   NIGHTLIFE: 'Nightlife',
 };
 
-export function ActivityDetail({ activity }: { activity: ActivityDTO }): ReactElement {
+export function ActivityDetail({
+  activity,
+  isFavorited,
+}: {
+  activity: ActivityDTO;
+  isFavorited: boolean;
+}): ReactElement {
   return (
     <article style={styles.article}>
       <figure style={styles.hero}>
@@ -23,14 +30,21 @@ export function ActivityDetail({ activity }: { activity: ActivityDTO }): ReactEl
       </figure>
 
       <header style={styles.header}>
-        <div style={styles.badges}>
-          {activity.kind === 'PLACE' ? (
-            <span style={styles.badge} data-testid="kind-badge">
-              Lieu
-            </span>
-          ) : null}
-          <span style={styles.categoryBadge}>{CATEGORY_LABEL[activity.category]}</span>
-          {activity.isFeatured ? <span style={styles.featuredBadge}>Featured</span> : null}
+        <div style={styles.titleRow}>
+          <div style={styles.badges}>
+            {activity.kind === 'PLACE' ? (
+              <span style={styles.badge} data-testid="kind-badge">
+                Lieu
+              </span>
+            ) : null}
+            <span style={styles.categoryBadge}>{CATEGORY_LABEL[activity.category]}</span>
+            {activity.isFeatured ? <span style={styles.featuredBadge}>Featured</span> : null}
+          </div>
+          <FavoriteButton
+            activityId={activity.id}
+            initialFavorited={isFavorited}
+            variant="detail"
+          />
         </div>
         <h1 style={styles.title}>{activity.title}</h1>
       </header>
@@ -140,11 +154,18 @@ const styles: Record<string, React.CSSProperties> = {
   header: {
     marginTop: '1.5rem',
   },
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    marginBottom: '0.75rem',
+  },
   badges: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '0.5rem',
-    marginBottom: '0.75rem',
+    flex: 1,
+    minWidth: 0,
   },
   badge: {
     display: 'inline-block',

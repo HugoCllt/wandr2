@@ -13,6 +13,7 @@ model User {
   name       String
   createdAt  DateTime               @default(now())
   affinities UserCategoryAffinity[]
+  favorites  Favorite[]
 }
 
 model Source {
@@ -66,6 +67,7 @@ model Activity {
   sourceId      String
   externalId    String?
   source        Source           @relation(fields: [sourceId], references: [id])
+  favorites     Favorite[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
@@ -85,4 +87,16 @@ model UserCategoryAffinity {
   user      User             @relation(fields: [userId], references: [id])
 
   @@unique([userId, category])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  activityId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  activity   Activity @relation(fields: [activityId], references: [id])
+
+  @@unique([userId, activityId])
+  @@index([userId, createdAt])
 }

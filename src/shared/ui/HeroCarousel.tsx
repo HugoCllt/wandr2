@@ -6,13 +6,19 @@ import { Carousel } from './Carousel';
 
 type HeroCarouselProps = {
   items: ActivityDTO[];
+  favoritedIds?: ReadonlySet<string>;
 };
 
-export function HeroCarousel({ items }: HeroCarouselProps): ReactElement | null {
+export function HeroCarousel({ items, favoritedIds }: HeroCarouselProps): ReactElement | null {
   if (items.length === 0) return null;
 
   const slides = items.map((activity) => (
-    <ActivityCard key={activity.id} activity={activity} variant="hero" />
+    <ActivityCard
+      key={activity.id}
+      activity={activity}
+      variant="hero"
+      isFavorited={favoritedIds ? favoritedIds.has(activity.id) : undefined}
+    />
   ));
 
   return <Carousel slides={slides} interval={5000} pauseOnHover ariaLabel="Featured activities" />;

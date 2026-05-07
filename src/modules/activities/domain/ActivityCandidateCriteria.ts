@@ -11,4 +11,5 @@ export type ActivityCandidateCriteria = {
   free?: true;
   paid?: true;
   eventDateWindow?: { from: Date; to: Date };
+  activityIds?: string[];
 };

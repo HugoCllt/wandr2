@@ -1,36 +1,29 @@
-import { listFeaturedActivities } from '../../modules/activities/web/listFeaturedActivities';
 import { listNeighborhoods } from '../../modules/activities/web/listNeighborhoods';
-import { loadCurrentUserFavoritedIds } from '../../modules/favorites/web/loadFavoritedIds';
-import { loadFeedDTO } from '../../modules/feed/web/feedRoute';
+import { loadFavoritesFeedDTO } from '../../modules/favorites/web/favoritesFeedRoute';
 import { FilterBarController } from '../../modules/filters/web/FilterBarController';
-import { parseFilters } from '../../modules/filters/application/url-codec';
-import { serializeFilters } from '../../modules/filters/application/url-codec';
-import { HOME_PRESET } from '../../shared/presets/HOME_PRESET';
+import { parseFilters, serializeFilters } from '../../modules/filters/application/url-codec';
+import { FAVORITES_PRESET } from '../../shared/presets/FAVORITES_PRESET';
 import { FeedGrid } from '../../shared/ui/FeedGrid';
-import { HeroCarousel } from '../../shared/ui/HeroCarousel';
 import { PageShell } from '../../shared/ui/PageShell';
 
 export const dynamic = 'force-dynamic';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
+export default async function FavoritesPage({ searchParams }: { searchParams: SearchParams }) {
   const params = toURLSearchParams(searchParams);
   const filters = parseFilters(params);
 
-  const [initialFeed, neighborhoods, featured, favoritedIds] = await Promise.all([
-    loadFeedDTO(params),
+  const [initialFeed, neighborhoods] = await Promise.all([
+    loadFavoritesFeedDTO(params),
     listNeighborhoods(),
-    listFeaturedActivities(3),
-    loadCurrentUserFavoritedIds(),
   ]);
 
   const filterQueryString = serializeFilters(filters).toString();
 
   return (
     <PageShell
-      preset={HOME_PRESET}
-      hero={<HeroCarousel items={featured} favoritedIds={favoritedIds} />}
+      preset={FAVORITES_PRESET}
       filters={<FilterBarController value={filters} neighborhoods={neighborhoods} />}
       feed={
         <FeedGrid
@@ -38,7 +31,9 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
           initialItems={initialFeed.items}
           initialCursor={initialFeed.nextCursor}
           filterQueryString={filterQueryString}
-          variant={HOME_PRESET.gridVariant}
+          variant={FAVORITES_PRESET.gridVariant}
+          feedApiPath="/api/favorites/feed"
+          emptyMessage="You haven't favorited anything yet. Tap the heart on a card to save it."
         />
       }
     />

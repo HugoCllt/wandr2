@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { CSSProperties, ReactElement } from 'react';
 
 import type { ActivityDTO } from '../contracts/ActivityDTO';
+import { FavoriteButton } from './FavoriteButton';
 import { formatDateTimeInTZ } from './format/formatInTZ';
 
 const CATEGORY_LABEL: Record<ActivityDTO['category'], string> = {
@@ -18,13 +19,17 @@ export type ActivityCardVariant = 'standard' | 'compact' | 'hero';
 type ActivityCardProps = {
   activity: ActivityDTO;
   variant?: ActivityCardVariant;
+  isFavorited?: boolean;
 };
 
 export function ActivityCard({
   activity,
   variant = 'standard',
+  isFavorited,
 }: ActivityCardProps): ReactElement {
-  if (variant === 'hero') return <HeroActivityCard activity={activity} />;
+  if (variant === 'hero') {
+    return <HeroActivityCard activity={activity} isFavorited={isFavorited} />;
+  }
 
   const dateLabel = buildDateLabel(activity);
   const priceLabel = buildPriceLabel(activity);
@@ -35,13 +40,11 @@ export function ActivityCard({
   return (
     <Link href={href} style={styles.card} aria-label={activity.title}>
       <div style={styles.imageWrap}>
-        <img
-          src={activity.imageUrl}
-          alt={activity.title}
-          loading="lazy"
-          style={styles.image}
-        />
+        <img src={activity.imageUrl} alt={activity.title} loading="lazy" style={styles.image} />
         {activity.isFeatured ? <span style={styles.featuredBadge}>Featured</span> : null}
+        {isFavorited !== undefined ? (
+          <FavoriteButton activityId={activity.id} initialFavorited={isFavorited} variant="card" />
+        ) : null}
       </div>
       <div style={styles.body}>
         <div style={styles.metaTop}>
@@ -63,20 +66,24 @@ export function ActivityCard({
   );
 }
 
-function HeroActivityCard({ activity }: { activity: ActivityDTO }): ReactElement {
+function HeroActivityCard({
+  activity,
+  isFavorited,
+}: {
+  activity: ActivityDTO;
+  isFavorited?: boolean;
+}): ReactElement {
   const categoryLabel = CATEGORY_LABEL[activity.category];
   const dateLabel = buildDateLabel(activity);
   const href = `/activity/${activity.slug}`;
 
   return (
     <Link href={href} style={heroStyles.card} aria-label={activity.title}>
-      <img
-        src={activity.imageUrl}
-        alt={activity.title}
-        loading="lazy"
-        style={heroStyles.image}
-      />
+      <img src={activity.imageUrl} alt={activity.title} loading="lazy" style={heroStyles.image} />
       <div style={heroStyles.scrim} aria-hidden="true" />
+      {isFavorited !== undefined ? (
+        <FavoriteButton activityId={activity.id} initialFavorited={isFavorited} variant="hero" />
+      ) : null}
       <div style={heroStyles.body}>
         <div style={heroStyles.metaTop}>
           <span style={heroStyles.category}>{categoryLabel}</span>

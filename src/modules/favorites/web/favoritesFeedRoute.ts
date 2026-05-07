@@ -3,19 +3,20 @@ import { NextResponse } from 'next/server';
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { GetUserAffinityMapUseCase } from '../../affinity/application/GetUserAffinityMapUseCase';
 import { PrismaAffinityRepository } from '../../affinity/infra/PrismaAffinityRepository';
-import { PrismaFavoriteRepository } from '../../favorites/infra/PrismaFavoriteRepository';
+import { GetFeedUseCase } from '../../feed/application/GetFeedUseCase';
+import { DEFAULT_FEED_LIMIT } from '../../feed/domain/FeedQuery';
 import { parseFilters } from '../../filters/application/url-codec';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { prisma } from '../../../shared/db/prisma';
-import { HOME_PRESET } from '../../../shared/presets/HOME_PRESET';
-import { GetFeedUseCase } from '../application/GetFeedUseCase';
-import { DEFAULT_FEED_LIMIT } from '../domain/FeedQuery';
+import { FAVORITES_PRESET } from '../../../shared/presets/FAVORITES_PRESET';
+import { ListFavoritesUseCase } from '../application/ListFavoritesUseCase';
+import { PrismaFavoriteRepository } from '../infra/PrismaFavoriteRepository';
 
 const MAX_FEED_LIMIT = 50;
 
-export async function loadFeedDTO(searchParams: URLSearchParams): Promise<FeedResultDTO> {
+export async function loadFavoritesFeedDTO(searchParams: URLSearchParams): Promise<FeedResultDTO> {
   const filters = parseFilters(searchParams);
   const cursor = searchParams.get('cursor');
   const limit = parseLimit(searchParams.get('limit'));
@@ -24,18 +25,20 @@ export async function loadFeedDTO(searchParams: URLSearchParams): Promise<FeedRe
   const affinityMap = await new GetUserAffinityMapUseCase(
     new PrismaAffinityRepository(prisma),
   ).execute(user.id);
-  const favoritedIds = new Set(
-    await new PrismaFavoriteRepository(prisma).listActivityIdsForUser(user.id),
-  );
 
-  const useCase = new GetFeedUseCase(new PrismaActivityRepository(prisma));
+  const favoriteRepo = new PrismaFavoriteRepository(prisma);
+  const useCase = new ListFavoritesUseCase(
+    favoriteRepo,
+    new GetFeedUseCase(new PrismaActivityRepository(prisma)),
+  );
   const result = await useCase.execute({
+    userId: user.id,
     filters,
     cursor,
     limit,
     affinityMap,
     now: new Date(),
-    baseFilters: HOME_PRESET.baseFilters,
+    baseFilters: FAVORITES_PRESET.baseFilters,
   });
 
   return {
@@ -43,15 +46,17 @@ export async function loadFeedDTO(searchParams: URLSearchParams): Promise<FeedRe
       (item): FeedItemDTO => ({
         ...toActivityDTO(item),
         matchScore: item.matchScore,
-        isFavorited: favoritedIds.has(item.id),
+        isFavorited: true,
       }),
     ),
     nextCursor: result.nextCursor,
   };
 }
 
-export async function feedRouteHandler(searchParams: URLSearchParams): Promise<NextResponse> {
-  const dto = await loadFeedDTO(searchParams);
+export async function favoritesFeedRouteHandler(
+  searchParams: URLSearchParams,
+): Promise<NextResponse> {
+  const dto = await loadFavoritesFeedDTO(searchParams);
   return NextResponse.json(dto);
 }
 

@@ -10,6 +10,8 @@ type FeedGridProps = {
   initialCursor: string | null;
   filterQueryString: string;
   variant?: ActivityCardVariant;
+  feedApiPath?: string;
+  emptyMessage?: string;
 };
 
 export function FeedGrid({
@@ -17,6 +19,8 @@ export function FeedGrid({
   initialCursor,
   filterQueryString,
   variant = 'standard',
+  feedApiPath = '/api/feed',
+  emptyMessage = 'No activities match your filters.',
 }: FeedGridProps): ReactElement {
   const [items, setItems] = useState<FeedItemDTO[]>(initialItems);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
@@ -51,7 +55,7 @@ export function FeedGrid({
       try {
         const params = new URLSearchParams(filterQueryString);
         params.set('cursor', cursor);
-        const res = await fetch(`/api/feed?${params.toString()}`, { cache: 'no-store' });
+        const res = await fetch(`${feedApiPath}?${params.toString()}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`feed request failed: ${res.status}`);
         const dto: FeedResultDTO = await res.json();
         setItems((prev) => [...prev, ...dto.items]);
@@ -62,10 +66,10 @@ export function FeedGrid({
         setLoading(false);
       }
     }
-  }, [cursor, loading, filterQueryString]);
+  }, [cursor, loading, filterQueryString, feedApiPath]);
 
   if (items.length === 0) {
-    return <p style={emptyStyle}>No activities match your filters.</p>;
+    return <p style={emptyStyle}>{emptyMessage}</p>;
   }
 
   return (
@@ -73,7 +77,7 @@ export function FeedGrid({
       <div style={gridStyle} role="list" aria-label="Activities">
         {items.map((item) => (
           <div role="listitem" key={item.id}>
-            <ActivityCard activity={item} variant={variant} />
+            <ActivityCard activity={item} variant={variant} isFavorited={item.isFavorited} />
           </div>
         ))}
       </div>

@@ -72,6 +72,10 @@ export class PrismaActivityRepository implements IActivityRepository {
     if (criteria.paid === true) {
       and.push({ priceMinCents: { gt: 0 } });
     }
+    if (criteria.activityIds) {
+      if (criteria.activityIds.length === 0) return [];
+      where.id = { in: criteria.activityIds };
+    }
     if (criteria.eventDateWindow) {
       and.push({
         OR: [
@@ -124,9 +128,7 @@ export class PrismaActivityRepository implements IActivityRepository {
       distinct: ['neighborhood'],
       orderBy: { neighborhood: 'asc' },
     });
-    return rows
-      .map((r) => r.neighborhood)
-      .filter((n): n is string => n !== null);
+    return rows.map((r) => r.neighborhood).filter((n): n is string => n !== null);
   }
 
   async listFeatured(limit: number): Promise<Activity[]> {
