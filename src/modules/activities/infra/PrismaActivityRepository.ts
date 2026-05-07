@@ -1,7 +1,8 @@
-import type { Activity as PrismaActivityModel } from '@prisma/client';
+import type { Activity as PrismaActivityModel, Prisma } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 
 import type { Activity, ActivityCreateInput } from '../domain/Activity';
+import type { ActivityCandidateCriteria } from '../domain/ActivityCandidateCriteria';
 import type { IActivityRepository } from '../domain/IActivityRepository';
 
 export class PrismaActivityRepository implements IActivityRepository {
@@ -41,6 +42,59 @@ export class PrismaActivityRepository implements IActivityRepository {
   async findBySlug(slug: string): Promise<Activity | null> {
     const activity = await this.prisma.activity.findUnique({ where: { slug } });
     return activity ? toActivity(activity) : null;
+  }
+
+  async findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]> {
+    const where: Prisma.ActivityWhereInput = { status: criteria.status };
+    const and: Prisma.ActivityWhereInput[] = [];
+
+    if (criteria.kinds && criteria.kinds.length > 0) {
+      where.kind = { in: criteria.kinds };
+    }
+    if (criteria.categories && criteria.categories.length > 0) {
+      where.category = { in: criteria.categories };
+    }
+    if (criteria.neighborhoods && criteria.neighborhoods.length > 0) {
+      where.neighborhood = { in: criteria.neighborhoods };
+    }
+    if (criteria.priceMaxCents !== undefined) {
+      and.push({ priceMinCents: { lte: criteria.priceMaxCents } });
+    }
+    if (criteria.indoor === true) {
+      where.indoor = true;
+    }
+    if (criteria.outdoor === true) {
+      where.outdoor = true;
+    }
+    if (criteria.free === true) {
+      and.push({ priceMinCents: 0 });
+    }
+    if (criteria.paid === true) {
+      and.push({ priceMinCents: { gt: 0 } });
+    }
+    if (criteria.eventDateWindow) {
+      and.push({
+        OR: [
+          { kind: 'PLACE' },
+          {
+            AND: [
+              { kind: 'EVENT' },
+              {
+                dateStart: {
+                  gte: criteria.eventDateWindow.from,
+                  lte: criteria.eventDateWindow.to,
+                },
+              },
+            ],
+          },
+        ],
+      });
+    }
+
+    if (and.length > 0) where.AND = and;
+
+    const activities = await this.prisma.activity.findMany({ where });
+    return activities.map(toActivity);
   }
 
   async getOrCreateSourceIdByName(name: string): Promise<string> {
