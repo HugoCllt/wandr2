@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id         String                 @id @default(cuid())
-  email      String                 @unique
-  name       String
-  createdAt  DateTime               @default(now())
-  affinities UserCategoryAffinity[]
-  favorites  Favorite[]
+  id              String                 @id @default(cuid())
+  email           String                 @unique
+  name            String
+  createdAt       DateTime               @default(now())
+  affinities      UserCategoryAffinity[]
+  favorites       Favorite[]
+  calendarEntries CalendarEntry[]
 }
 
 model Source {
@@ -66,10 +67,11 @@ model Activity {
   status        ActivityStatus   @default(PUBLISHED)
   sourceId      String
   externalId    String?
-  source        Source           @relation(fields: [sourceId], references: [id])
-  favorites     Favorite[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  source          Source           @relation(fields: [sourceId], references: [id])
+  favorites       Favorite[]
+  calendarEntries CalendarEntry[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@unique([sourceId, externalId])
   @@index([status, isFeatured, dateStart])
@@ -99,4 +101,18 @@ model Favorite {
 
   @@unique([userId, activityId])
   @@index([userId, createdAt])
+}
+
+model CalendarEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  activityId  String
+  scheduledAt DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  activity    Activity @relation(fields: [activityId], references: [id])
+
+  @@unique([userId, activityId, scheduledAt])
+  @@index([userId, scheduledAt])
 }

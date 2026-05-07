@@ -31,6 +31,17 @@ class FakeActivityRepository implements IActivityRepository {
     return this.bySlug.get(slug) ?? null;
   }
 
+  async findById(id: string): Promise<Activity | null> {
+    for (const activity of this.bySlug.values()) {
+      if (activity.id === id) return activity;
+    }
+    return null;
+  }
+
+  async findByIds(ids: ReadonlyArray<string>): Promise<Activity[]> {
+    return Array.from(this.bySlug.values()).filter((a) => ids.includes(a.id));
+  }
+
   async findCandidates(): Promise<Activity[]> {
     return Array.from(this.bySlug.values());
   }

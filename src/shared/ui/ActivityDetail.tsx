@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../contracts/ActivityDTO';
+import { AddToCalendarButton } from './AddToCalendarButton';
 import { FavoriteButton } from './FavoriteButton';
 import { formatDateTimeInTZ } from './format/formatInTZ';
 
@@ -40,11 +41,18 @@ export function ActivityDetail({
             <span style={styles.categoryBadge}>{CATEGORY_LABEL[activity.category]}</span>
             {activity.isFeatured ? <span style={styles.featuredBadge}>Featured</span> : null}
           </div>
-          <FavoriteButton
-            activityId={activity.id}
-            initialFavorited={isFavorited}
-            variant="detail"
-          />
+          <div style={styles.detailActions}>
+            <AddToCalendarButton
+              activityId={activity.id}
+              activityTitle={activity.title}
+              variant="detail"
+            />
+            <FavoriteButton
+              activityId={activity.id}
+              initialFavorited={isFavorited}
+              variant="detail"
+            />
+          </div>
         </div>
         <h1 style={styles.title}>{activity.title}</h1>
       </header>
@@ -166,6 +174,11 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.5rem',
     flex: 1,
     minWidth: 0,
+  },
+  detailActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
   },
   badge: {
     display: 'inline-block',

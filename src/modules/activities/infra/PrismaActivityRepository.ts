@@ -44,6 +44,19 @@ export class PrismaActivityRepository implements IActivityRepository {
     return activity ? toActivity(activity) : null;
   }
 
+  async findById(id: string): Promise<Activity | null> {
+    const activity = await this.prisma.activity.findUnique({ where: { id } });
+    return activity ? toActivity(activity) : null;
+  }
+
+  async findByIds(ids: ReadonlyArray<string>): Promise<Activity[]> {
+    if (ids.length === 0) return [];
+    const activities = await this.prisma.activity.findMany({
+      where: { id: { in: [...ids] } },
+    });
+    return activities.map(toActivity);
+  }
+
   async findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]> {
     const where: Prisma.ActivityWhereInput = { status: criteria.status };
     const and: Prisma.ActivityWhereInput[] = [];

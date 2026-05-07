@@ -13,6 +13,12 @@ class FakeActivityRepository implements IActivityRepository {
   async findBySlug(_slug: string): Promise<Activity | null> {
     return null;
   }
+  async findById(_id: string): Promise<Activity | null> {
+    return null;
+  }
+  async findByIds(_ids: ReadonlyArray<string>): Promise<Activity[]> {
+    return [];
+  }
   async findCandidates(): Promise<Activity[]> {
     return [];
   }

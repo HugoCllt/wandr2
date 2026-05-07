@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { CSSProperties, ReactElement } from 'react';
 
 import type { ActivityDTO } from '../contracts/ActivityDTO';
+import { AddToCalendarButton } from './AddToCalendarButton';
 import { FavoriteButton } from './FavoriteButton';
 import { formatDateTimeInTZ } from './format/formatInTZ';
 
@@ -42,6 +43,11 @@ export function ActivityCard({
       <div style={styles.imageWrap}>
         <img src={activity.imageUrl} alt={activity.title} loading="lazy" style={styles.image} />
         {activity.isFeatured ? <span style={styles.featuredBadge}>Featured</span> : null}
+        <AddToCalendarButton
+          activityId={activity.id}
+          activityTitle={activity.title}
+          variant="card"
+        />
         {isFavorited !== undefined ? (
           <FavoriteButton activityId={activity.id} initialFavorited={isFavorited} variant="card" />
         ) : null}
@@ -81,6 +87,7 @@ function HeroActivityCard({
     <Link href={href} style={heroStyles.card} aria-label={activity.title}>
       <img src={activity.imageUrl} alt={activity.title} loading="lazy" style={heroStyles.image} />
       <div style={heroStyles.scrim} aria-hidden="true" />
+      <AddToCalendarButton activityId={activity.id} activityTitle={activity.title} variant="hero" />
       {isFavorited !== undefined ? (
         <FavoriteButton activityId={activity.id} initialFavorited={isFavorited} variant="hero" />
       ) : null}
