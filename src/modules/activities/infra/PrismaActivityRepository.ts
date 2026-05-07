@@ -128,6 +128,19 @@ export class PrismaActivityRepository implements IActivityRepository {
       .map((r) => r.neighborhood)
       .filter((n): n is string => n !== null);
   }
+
+  async listFeatured(limit: number): Promise<Activity[]> {
+    const activities = await this.prisma.activity.findMany({
+      where: { isFeatured: true, status: 'PUBLISHED' },
+      orderBy: [
+        { dateStart: { sort: 'asc', nulls: 'last' } },
+        { createdAt: 'desc' },
+        { id: 'asc' },
+      ],
+      take: limit,
+    });
+    return activities.map(toActivity);
+  }
 }
 
 function toActivity(activity: PrismaActivityModel): Activity {

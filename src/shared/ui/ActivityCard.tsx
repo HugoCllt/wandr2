@@ -13,7 +13,7 @@ const CATEGORY_LABEL: Record<ActivityDTO['category'], string> = {
   NIGHTLIFE: 'Nightlife',
 };
 
-export type ActivityCardVariant = 'standard' | 'compact';
+export type ActivityCardVariant = 'standard' | 'compact' | 'hero';
 
 type ActivityCardProps = {
   activity: ActivityDTO;
@@ -24,6 +24,8 @@ export function ActivityCard({
   activity,
   variant = 'standard',
 }: ActivityCardProps): ReactElement {
+  if (variant === 'hero') return <HeroActivityCard activity={activity} />;
+
   const dateLabel = buildDateLabel(activity);
   const priceLabel = buildPriceLabel(activity);
   const categoryLabel = CATEGORY_LABEL[activity.category];
@@ -56,6 +58,36 @@ export function ActivityCard({
           </span>
           <span style={styles.price}>{priceLabel}</span>
         </div>
+      </div>
+    </Link>
+  );
+}
+
+function HeroActivityCard({ activity }: { activity: ActivityDTO }): ReactElement {
+  const categoryLabel = CATEGORY_LABEL[activity.category];
+  const dateLabel = buildDateLabel(activity);
+  const href = `/activity/${activity.slug}`;
+
+  return (
+    <Link href={href} style={heroStyles.card} aria-label={activity.title}>
+      <img
+        src={activity.imageUrl}
+        alt={activity.title}
+        loading="lazy"
+        style={heroStyles.image}
+      />
+      <div style={heroStyles.scrim} aria-hidden="true" />
+      <div style={heroStyles.body}>
+        <div style={heroStyles.metaTop}>
+          <span style={heroStyles.category}>{categoryLabel}</span>
+          {activity.neighborhood ? (
+            <span style={heroStyles.neighborhood}>· {activity.neighborhood}</span>
+          ) : null}
+          {activity.isFeatured ? <span style={heroStyles.featuredBadge}>Featured</span> : null}
+        </div>
+        <h2 style={heroStyles.title}>{activity.title}</h2>
+        <p style={heroStyles.description}>{activity.description}</p>
+        <span style={heroStyles.dateLabel}>{dateLabel}</span>
       </div>
     </Link>
   );
@@ -166,6 +198,94 @@ const standardStyles: Record<string, CSSProperties> = {
   price: {
     fontWeight: 500,
     color: '#0E0F12',
+  },
+};
+
+const heroStyles: Record<string, CSSProperties> = {
+  card: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    minHeight: 360,
+    borderRadius: 20,
+    overflow: 'hidden',
+    color: '#FFFFFF',
+    textDecoration: 'none',
+    background: '#0E0F12',
+    fontFamily: 'system-ui, sans-serif',
+    isolation: 'isolate',
+  },
+  image: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+    zIndex: 0,
+  },
+  scrim: {
+    position: 'absolute',
+    inset: 0,
+    background:
+      'linear-gradient(180deg, rgba(14,15,18,0) 35%, rgba(14,15,18,0.55) 70%, rgba(14,15,18,0.85) 100%)',
+    zIndex: 1,
+  },
+  body: {
+    position: 'relative',
+    zIndex: 2,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    padding: '1.5rem',
+  },
+  metaTop: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.85)',
+  },
+  category: {},
+  neighborhood: {
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontWeight: 500,
+  },
+  featuredBadge: {
+    marginLeft: 'auto',
+    padding: '0.25rem 0.625rem',
+    borderRadius: 9999,
+    background: '#FF7A33',
+    color: '#FFFFFF',
+    fontSize: '0.6875rem',
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+  },
+  title: {
+    margin: 0,
+    fontSize: '1.75rem',
+    lineHeight: 1.15,
+    fontWeight: 600,
+  },
+  description: {
+    margin: 0,
+    fontSize: '0.9375rem',
+    lineHeight: 1.4,
+    color: 'rgba(255,255,255,0.85)',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  },
+  dateLabel: {
+    fontSize: '0.8125rem',
+    color: 'rgba(255,255,255,0.75)',
+    letterSpacing: '0.02em',
   },
 };
 

@@ -25,6 +25,9 @@ class FakeActivityRepository implements IActivityRepository {
   async listNeighborhoods(): Promise<string[]> {
     return this.neighborhoods;
   }
+  async listFeatured(_limit: number): Promise<Activity[]> {
+    return [];
+  }
 }
 
 describe('ListNeighborhoodsUseCase', () => {

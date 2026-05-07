@@ -35,5 +35,5 @@ export const HOME_PRESET: PagePreset = {
     'free-paid',
   ],
   gridVariant: 'standard',
-  sections: { hero: false, map: false },
+  sections: { hero: true, map: false },
 };

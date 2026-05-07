@@ -54,6 +54,12 @@ class FakeActivityRepository implements IActivityRepository {
     }
     return Array.from(set).sort();
   }
+
+  async listFeatured(limit: number): Promise<Activity[]> {
+    return Array.from(this.bySlug.values())
+      .filter((a) => a.isFeatured)
+      .slice(0, limit);
+  }
 }
 
 function activityFixture(overrides: Partial<Activity> = {}): Activity {

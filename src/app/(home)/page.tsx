@@ -1,3 +1,4 @@
+import { listFeaturedActivities } from '../../modules/activities/web/listFeaturedActivities';
 import { listNeighborhoods } from '../../modules/activities/web/listNeighborhoods';
 import { loadFeedDTO } from '../../modules/feed/web/feedRoute';
 import { FilterBarController } from '../../modules/filters/web/FilterBarController';
@@ -5,6 +6,7 @@ import { parseFilters } from '../../modules/filters/application/url-codec';
 import { serializeFilters } from '../../modules/filters/application/url-codec';
 import { HOME_PRESET } from '../../shared/presets/HOME_PRESET';
 import { FeedGrid } from '../../shared/ui/FeedGrid';
+import { HeroCarousel } from '../../shared/ui/HeroCarousel';
 import { PageShell } from '../../shared/ui/PageShell';
 
 export const dynamic = 'force-dynamic';
@@ -19,9 +21,10 @@ export default async function HomePage({
   const params = toURLSearchParams(searchParams);
   const filters = parseFilters(params);
 
-  const [initialFeed, neighborhoods] = await Promise.all([
+  const [initialFeed, neighborhoods, featured] = await Promise.all([
     loadFeedDTO(params),
     listNeighborhoods(),
+    listFeaturedActivities(3),
   ]);
 
   const filterQueryString = serializeFilters(filters).toString();
@@ -29,6 +32,7 @@ export default async function HomePage({
   return (
     <PageShell
       preset={HOME_PRESET}
+      hero={<HeroCarousel items={featured} />}
       filters={<FilterBarController value={filters} neighborhoods={neighborhoods} />}
       feed={
         <FeedGrid

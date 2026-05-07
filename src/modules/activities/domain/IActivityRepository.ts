@@ -8,4 +8,5 @@ export interface IActivityRepository {
   getOrCreateSourceIdByName(name: string): Promise<string>;
   slugExists(slug: string): Promise<boolean>;
   listNeighborhoods(): Promise<string[]>;
+  listFeatured(limit: number): Promise<Activity[]>;
 }
