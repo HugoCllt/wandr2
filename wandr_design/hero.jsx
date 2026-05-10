@@ -15,7 +15,7 @@ const Hero = () => {
             <p className="hero-sub">{slide.sub}</p>
           </div>
           <div className="hero-cta-row">
-            <button className="btn-primary">
+            <button className="btn-primary" onClick={() => window.openActivity(toActivity({ title: slide.title, img: slide.img, when: "Featured this week", where: "Montreal", price: "From $45" }))}>
               Explore Now
               <Icon name="arrow-right" size={15} />
             </button>
@@ -32,7 +32,7 @@ const Hero = () => {
 
       <div className="hero-side">
         {HERO_SIDE.map((c) => (
-          <button key={c.title} className="side-card">
+          <button key={c.title} className="side-card" onClick={() => window.openActivity(toActivity(c))}>
             <div className="side-card-img" style={{ backgroundImage: `url(${c.img})` }} />
             <div className="side-card-body">
               <h4>{c.title.split("\n").map((l, i) => <div key={i}>{l}</div>)}</h4>

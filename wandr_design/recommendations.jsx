@@ -32,12 +32,12 @@ const Recommendations = () => {
 
       <div className="rec-grid">
         {RECS.map((r, i) => (
-          <article key={r.title} className="rec-card">
+          <article key={r.title} className="rec-card" onClick={() => window.openActivity(toActivity(r))}>
             <div className="rec-img" style={{ backgroundImage: `url(${r.img})` }} />
             <span className={"rec-badge " + r.badge.kind}>{r.badge.label}</span>
             <button
               className={"rec-save " + (saved[i] ? "saved" : "")}
-              onClick={() => toggleSave(i)}
+              onClick={(e) => { e.stopPropagation(); toggleSave(i); }}
               aria-label={saved[i] ? "Saved" : "Save"}
             >
               <Icon name="fire" size={14} />

@@ -90,7 +90,7 @@ const MapSection = () => (
         </div>
         <div className="from-map-grid">
           {FROM_MAP.map((c) => (
-            <button key={c.title} className="fm-card">
+            <button key={c.title} className="fm-card" onClick={() => window.openActivity(toActivity(c))}>
               <div className="fm-img" style={{ backgroundImage: `url(${c.img})` }} />
               <div className="fm-body">
                 <div className="fm-title">{c.title.split("\n").map((l, i) => <div key={i}>{l}</div>)}</div>

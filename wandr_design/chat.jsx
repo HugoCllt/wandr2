@@ -87,7 +87,7 @@ const ChatPage = () => {
                 <p>{m.text}</p>
                 <div className="chat-cards">
                   {m.cards.map((c) => (
-                    <button key={c.title} className="chat-card">
+                    <button key={c.title} className="chat-card" onClick={() => window.openActivity(toActivity({ title: c.title, img: c.img, where: c.meta, price: c.price, flames: 3 }))}>
                       <div className="chat-card-img" style={{ backgroundImage: `url(${c.img})` }}/>
                       <div className="chat-card-body">
                         <div className="chat-card-title">{c.title}</div>

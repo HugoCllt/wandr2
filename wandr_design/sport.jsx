@@ -62,7 +62,8 @@ const SportPage = () => {
         </div>
         <div className="live-row">
           {LIVE.map((l, i) => (
-            <article key={l.title} className="live-card" style={{ minHeight: i === 0 ? 320 : 240 }}>
+            <article key={l.title} className="live-card" style={{ minHeight: i === 0 ? 320 : 240, cursor: "pointer" }}
+              onClick={() => window.openActivity(toActivity({ title: l.title, img: l.img, when: l.when, where: l.venue, price: "$45+", flames: 4 }))}>
               <div className="live-img" style={{ backgroundImage: `url(${l.img})` }} />
               {l.live && <span className="live-pill"><span className="pulse" /> Live tonight</span>}
               <div className="live-content">
@@ -85,7 +86,7 @@ const SportPage = () => {
         </div>
         <div className="play-grid">
           {PLAY.map((p) => (
-            <button key={p.title} className="play-card">
+            <button key={p.title} className="play-card" onClick={() => window.openActivity(toActivity({ title: p.title, img: p.img, where: p.area, price: p.price, flames: 3 }))}>
               <div className="play-img" style={{ backgroundImage: `url(${p.img})` }}>
                 {p.deal && <span className="play-deal">{p.deal}</span>}
               </div>
@@ -111,7 +112,7 @@ const SportPage = () => {
         </div>
         <div className="classes-grid">
           {CLASSES.map((c) => (
-            <button key={c.title} className="class-card">
+            <button key={c.title} className="class-card" onClick={() => window.openActivity(toActivity({ title: c.title, img: c.img, when: c.when, where: c.who, price: c.tag, flames: 3 }))}>
               <div className="class-img" style={{ backgroundImage: `url(${c.img})` }} />
               <div className="class-body">
                 <h4 className="class-title">{c.title}</h4>

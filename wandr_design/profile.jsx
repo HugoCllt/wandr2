@@ -98,7 +98,7 @@ const ProfilePage = () => (
     <section className="activity-list">
       <h3>Recent Activity</h3>
       {ACTIVITY_HISTORY.map((a) => (
-        <div key={a.title} className="activity-row">
+        <div key={a.title} className="activity-row" style={{ cursor: "pointer" }} onClick={() => window.openActivity(toActivity({ title: a.title, img: a.img, where: a.meta, when: a.date, flames: 3 }))}>
           <div className="activity-thumb" style={{ backgroundImage: `url(${a.img})` }}/>
           <div>
             <div className="activity-title">{a.title}</div>
