@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../../shared/ui/icons/Icon';
-import { useOpenActivity } from './helpers';
+import { coverImageUrl, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -17,7 +17,7 @@ export function HeroActivityCard({ activity, eyebrow }: Props): ReactElement {
 
   return (
     <article className="hero-card">
-      <div className="hero-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="hero-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       <div className="hero-content">
         <div>
           <div className="hero-eyebrow">{eyebrow ?? 'FEATURED THIS WEEK'}</div>

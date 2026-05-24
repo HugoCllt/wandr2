@@ -5,7 +5,7 @@ import type { ReactElement } from 'react';
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { FlameRow } from '../../../../shared/ui/icons/FlameRow';
 import { Icon } from '../../../../shared/ui/icons/Icon';
-import { formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
+import { coverImageUrl, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -25,7 +25,7 @@ export function ClassActivityCard({
 
   return (
     <button type="button" className="class-card" onClick={() => open(activity)}>
-      <div className="class-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="class-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       <div className="class-body">
         <h4 className="class-title">
           {titleLines.map((l, i) => (

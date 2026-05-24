@@ -81,7 +81,7 @@ model Activity {
   slug          String           @unique
   title         String
   description   String
-  imageUrl      String
+  imageUrl      String?
   imageCredit   String?
   kind          ActivityKind
   category      ActivityCategory

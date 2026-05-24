@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { FlameRow } from '../../../../shared/ui/icons/FlameRow';
-import { useOpenActivity } from './helpers';
+import { coverImageUrl, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -17,7 +17,7 @@ export function SideActivityCard({ activity, flames = 4 }: Props): ReactElement 
 
   return (
     <button type="button" className="side-card" onClick={() => open(activity)}>
-      <div className="side-card-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="side-card-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       <div className="side-card-body">
         <h4>
           {lines.map((l, i) => (

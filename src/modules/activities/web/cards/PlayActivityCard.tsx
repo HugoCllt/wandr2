@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { FlameRow } from '../../../../shared/ui/icons/FlameRow';
-import { formatActivityPrice, formatActivityWhere, useOpenActivity } from './helpers';
+import { coverImageUrl, formatActivityPrice, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -18,7 +18,7 @@ export function PlayActivityCard({ activity, deal, flames = 3 }: Props): ReactEl
 
   return (
     <button type="button" className="play-card" onClick={() => open(activity)}>
-      <div className="play-img" style={{ backgroundImage: `url(${activity.imageUrl})` }}>
+      <div className="play-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }}>
         {deal && <span className="play-deal">{deal}</span>}
       </div>
       <div className="play-body">

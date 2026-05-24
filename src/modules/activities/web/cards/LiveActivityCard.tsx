@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
-import { formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
+import { coverImageUrl, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -18,7 +18,7 @@ export function LiveActivityCard({ activity, live = false, size = 'sm' }: Props)
 
   return (
     <article className="live-card" style={style} onClick={() => open(activity)}>
-      <div className="live-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="live-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       {live && (
         <span className="live-pill">
           <span className="pulse" /> Live tonight

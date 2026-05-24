@@ -6,7 +6,7 @@ import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { AddToCalendarButton } from '../../../calendar/web/AddToCalendarButton';
 import { FavoriteButton } from '../../../favorites/web/FavoriteButton';
 import { Icon } from '../../../../shared/ui/icons/Icon';
-import { formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
+import { coverImageUrl, formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Badge = { label: string; kind: 'trending' | 'popular' | 'hot' | 'new' };
 
@@ -32,7 +32,7 @@ export function RecActivityCard({ activity, isFavorited, badge }: Props): ReactE
       onClick={() => open(activity)}
       style={{ cursor: 'pointer' }}
     >
-      <div className="rec-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="rec-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       {activeBadge && (
         <span className={'rec-badge ' + activeBadge.kind}>{activeBadge.label}</span>
       )}

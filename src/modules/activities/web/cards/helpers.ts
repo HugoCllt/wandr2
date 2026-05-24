@@ -5,6 +5,8 @@ import { useCallback } from 'react';
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { useActivityContext } from '../ActivityModal/ActivityProvider';
 
+export { coverImageUrl } from './coverImage';
+
 export function formatActivityPrice(activity: ActivityDTO): string {
   if (activity.priceMinCents <= 0 && (activity.priceMaxCents === null || activity.priceMaxCents === 0)) {
     return 'Free';

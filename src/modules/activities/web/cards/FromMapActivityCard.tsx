@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { FlameRow } from '../../../../shared/ui/icons/FlameRow';
-import { formatActivityPrice, formatActivityWhere, useOpenActivity } from './helpers';
+import { coverImageUrl, formatActivityPrice, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -22,7 +22,7 @@ export function FromMapActivityCard({
 
   return (
     <button type="button" className="fm-card" onClick={() => open(activity)}>
-      <div className="fm-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="fm-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       <div className="fm-body">
         <div className="fm-title">
           {lines.map((l, i) => (

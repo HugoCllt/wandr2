@@ -247,7 +247,6 @@ describe('ingestActivity handler', () => {
       payload: {
         title: 'St-Viateur Bagel',
         description: 'Warm bagels.',
-        imageUrl: 'https://images.example.com/bagel.jpg',
         kind: 'PLACE',
         category: 'FOOD',
         address: '263 Rue Saint-Viateur O',
@@ -263,9 +262,24 @@ describe('ingestActivity handler', () => {
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
+      expect(parsed.data.payload.imageUrl).toBeNull();
       expect(parsed.data.payload.dateStart).toBeNull();
       expect(parsed.data.payload.imageCredit).toBeNull();
       expect(parsed.data.payload.priceMaxCents).toBeNull();
     }
+  });
+
+  it('PROMOTED: an activity with no image (imageUrl omitted) is still created', async () => {
+    const { deps, writer } = build();
+
+    const result = await ingestActivity(deps, {
+      citySlug: 'montreal',
+      payload: payload({ imageUrl: null }),
+      meta: meta(),
+    });
+
+    expect(result.outcome).toBe('PROMOTED');
+    expect(writer.created).toHaveLength(1);
+    expect(writer.created[0].imageUrl).toBeNull();
   });
 });

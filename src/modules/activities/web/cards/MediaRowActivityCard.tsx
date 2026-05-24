@@ -5,7 +5,7 @@ import type { ReactElement } from 'react';
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { AddToCalendarButton } from '../../../calendar/web/AddToCalendarButton';
 import { FavoriteButton } from '../../../favorites/web/FavoriteButton';
-import { formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
+import { coverImageUrl, formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
@@ -26,7 +26,7 @@ export function MediaRowActivityCard({
 
   return (
     <article className={className} onClick={() => open(activity)}>
-      <div className="media-row-img" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+      <div className="media-row-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       <div className="media-row-body">
         <div className="media-row-eyebrow">{eyebrow ?? 'IN THE SPOTLIGHT'}</div>
         <h3 className="media-row-title">

@@ -12,7 +12,7 @@ import { PrismaCityRepository } from '../infra/PrismaCityRepository';
 const AdminActivitySchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
-  imageUrl: z.string().url(),
+  imageUrl: z.string().url().nullable().optional(),
   imageCredit: z.string().min(1).nullable().optional(),
   kind: z.enum(ActivityKinds),
   category: z.enum(ActivityCategories),
@@ -53,7 +53,7 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
   const activity = await useCase.execute({
     title: body.title,
     description: body.description,
-    imageUrl: body.imageUrl,
+    imageUrl: body.imageUrl ?? null,
     imageCredit: body.imageCredit ?? null,
     kind: body.kind,
     category: body.category,

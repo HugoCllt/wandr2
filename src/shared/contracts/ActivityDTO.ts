@@ -9,7 +9,7 @@ export type ActivityDTO = {
   slug: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: string | null;
   imageCredit: string | null;
   kind: ActivityKind;
   category: ActivityCategory;

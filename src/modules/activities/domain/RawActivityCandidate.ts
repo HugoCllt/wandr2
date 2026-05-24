@@ -10,7 +10,7 @@ export type CandidateStatus = (typeof CandidateStatuses)[number];
 export type ExtractedActivityPayload = {
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: string | null;
   imageCredit: string | null;
   kind: ActivityKind;
   category: ActivityCategory;

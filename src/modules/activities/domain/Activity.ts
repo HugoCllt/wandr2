@@ -19,7 +19,7 @@ export type Activity = {
   slug: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: string | null;
   imageCredit: string | null;
   kind: ActivityKind;
   category: ActivityCategory;
@@ -62,7 +62,6 @@ export function validateActivity(input: ActivityCreateInput | Activity): void {
   assertNonEmpty(input.slug, 'slug');
   assertNonEmpty(input.title, 'title');
   assertNonEmpty(input.description, 'description');
-  assertNonEmpty(input.imageUrl, 'imageUrl');
   assertNonEmpty(input.address, 'address');
   assertNonEmpty(input.cityId, 'cityId');
   assertNonEmpty(input.dedupeKey, 'dedupeKey');

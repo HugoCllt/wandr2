@@ -6,6 +6,7 @@ import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { Icon, type IconName } from '../../../../shared/ui/icons/Icon';
 import { FlameRow } from '../../../../shared/ui/icons/FlameRow';
 import { MapView } from '../Map/MapView';
+import { coverImageUrl } from '../cards/coverImage';
 
 type ActivityModalProps = {
   activity: ActivityDTO;
@@ -37,7 +38,7 @@ function formatWhen(a: ActivityDTO): string | null {
 
 export function ActivityModal({ activity, onClose }: ActivityModalProps) {
   const a = activity;
-  const gallery = [a.imageUrl];
+  const gallery = [coverImageUrl(a)];
   const [main, setMain] = useState(0);
 
   const when = formatWhen(a);
