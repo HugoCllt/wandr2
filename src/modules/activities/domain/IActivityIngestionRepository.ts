@@ -9,6 +9,12 @@ export type FreshnessUpdate = {
 export interface IActivityIngestionRepository {
   findByCityAndDedupeKey(cityId: string, dedupeKey: string): Promise<Activity | null>;
   refreshFreshness(id: string, update: FreshnessUpdate): Promise<void>;
-  findDueForRecheck(cityId: string, now: Date): Promise<Activity[]>;
+  /**
+   * Due = PUBLISHED in `cityId` with `recheckAfter <= now`. Ordered
+   * `recheckAfter asc, id asc` (the id tiebreaker keeps pagination stable when
+   * deadlines tie). `recheckAfter <= now` already excludes `null` deadlines.
+   * `limit` (when given) bounds the result to the N oldest-due rows.
+   */
+  findDueForRecheck(cityId: string, now: Date, limit?: number): Promise<Activity[]>;
   archive(id: string): Promise<void>;
 }

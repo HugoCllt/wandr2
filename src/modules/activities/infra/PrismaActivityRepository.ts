@@ -194,9 +194,11 @@ export class PrismaActivityRepository
     });
   }
 
-  async findDueForRecheck(cityId: string, now: Date): Promise<Activity[]> {
+  async findDueForRecheck(cityId: string, now: Date, limit?: number): Promise<Activity[]> {
     const activities = await this.prisma.activity.findMany({
       where: { cityId, status: 'PUBLISHED', recheckAfter: { lte: now } },
+      orderBy: [{ recheckAfter: 'asc' }, { id: 'asc' }],
+      take: limit,
     });
     return activities.map(toActivity);
   }
