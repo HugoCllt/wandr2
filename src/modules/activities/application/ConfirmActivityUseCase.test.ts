@@ -45,11 +45,12 @@ function build(map: Map<string, Activity>) {
 }
 
 describe('ConfirmActivityUseCase', () => {
-  it('refreshes freshness and recomputes recheckAfter (+90d) for a PLACE', async () => {
+  it('refreshes freshness, recomputes recheckAfter (+90d), and returns it for a PLACE', async () => {
     const { useCase, ingestion } = build(new Map([['a', activity('a', 'PLACE')]]));
 
-    await useCase.execute({ activityId: 'a', now: NOW });
+    const result = await useCase.execute({ activityId: 'a', now: NOW });
 
+    expect(result).toEqual({ recheckAfter: new Date('2026-08-21T12:00:00.000Z') });
     expect(ingestion.refreshed).toEqual([
       {
         id: 'a',
@@ -62,11 +63,12 @@ describe('ConfirmActivityUseCase', () => {
     ]);
   });
 
-  it('sets recheckAfter null for an EVENT', async () => {
+  it('returns recheckAfter null for an EVENT', async () => {
     const { useCase, ingestion } = build(new Map([['e', activity('e', 'EVENT')]]));
 
-    await useCase.execute({ activityId: 'e', now: NOW });
+    const result = await useCase.execute({ activityId: 'e', now: NOW });
 
+    expect(result).toEqual({ recheckAfter: null });
     expect(ingestion.refreshed[0].update.recheckAfter).toBeNull();
   });
 

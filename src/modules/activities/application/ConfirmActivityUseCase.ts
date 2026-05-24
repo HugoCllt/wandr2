@@ -19,16 +19,20 @@ export class ConfirmActivityUseCase {
     private readonly ingestion: IActivityIngestionRepository,
   ) {}
 
-  async execute(input: ConfirmActivityInput): Promise<void> {
+  async execute(input: ConfirmActivityInput): Promise<{ recheckAfter: Date | null }> {
     const activity = await this.activities.findById(input.activityId);
     if (!activity) {
       throw new Error(`Activity ${input.activityId} not found.`);
     }
 
+    const recheckAfter = computeRecheckAfter({ kind: activity.kind, lastSeenAt: input.now });
+
     await this.ingestion.refreshFreshness(activity.id, {
       lastSeenAt: input.now,
       lastVerifiedAt: input.now,
-      recheckAfter: computeRecheckAfter({ kind: activity.kind, lastSeenAt: input.now }),
+      recheckAfter,
     });
+
+    return { recheckAfter };
   }
 }
