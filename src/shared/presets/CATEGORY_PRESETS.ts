@@ -1,0 +1,111 @@
+import type { FilterValueDTO } from '../contracts/FilterValueDTO';
+import type { IconName } from '../ui/icons/Icon';
+import type { FilterKey, PagePreset } from './HOME_PRESET';
+
+export type CategoryKey = 'dining' | 'culture' | 'outdoor' | 'nightlife' | 'romantic';
+
+export type CategoryPresetConfig = {
+  key: CategoryKey;
+  label: string;
+  icon: IconName;
+  eyebrow: string;
+  heroTitle: string;
+  heroSub: string;
+  heroImage: string;
+  baseFilters: FilterValueDTO;
+  visibleFilters: FilterKey[];
+};
+
+const SHARED_FILTERS: FilterKey[] = [
+  'kind',
+  'neighborhood',
+  'date',
+  'price',
+  'indoor-outdoor',
+  'free-paid',
+];
+
+export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
+  dining: {
+    key: 'dining',
+    label: 'Dining',
+    icon: 'fork',
+    eyebrow: 'EAT IN MONTREAL',
+    heroTitle: 'Tables worth\nshowing up for.',
+    heroSub: 'Plates from chefs the city is talking about — bistros, terrasses, late-night counters.',
+    heroImage:
+      'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1600&q=80',
+    baseFilters: { category: ['FOOD'] },
+    visibleFilters: SHARED_FILTERS,
+  },
+  culture: {
+    key: 'culture',
+    label: 'Culture',
+    icon: 'culture',
+    eyebrow: 'CULTURE IN MONTREAL',
+    heroTitle: 'Galleries, stages,\nlate-night sets.',
+    heroSub: 'Music, museums, mural festivals — the parts of the city that hold a story.',
+    heroImage:
+      'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1600&q=80',
+    baseFilters: { category: ['CULTURE'] },
+    visibleFilters: SHARED_FILTERS,
+  },
+  outdoor: {
+    key: 'outdoor',
+    label: 'Outdoor',
+    icon: 'leaf',
+    eyebrow: 'OUTDOOR IN MONTREAL',
+    heroTitle: 'Open sky, all\nseason long.',
+    heroSub: 'Trails, parks, waterfront runs and rooftop sails when the city steps outside.',
+    heroImage:
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80',
+    baseFilters: { category: ['OUTDOOR'] },
+    visibleFilters: SHARED_FILTERS,
+  },
+  nightlife: {
+    key: 'nightlife',
+    label: 'Nightlife',
+    icon: 'moon',
+    eyebrow: 'NIGHTLIFE IN MONTREAL',
+    heroTitle: "When the city\nturns the lights down.",
+    heroSub: 'Rooftop DJ sets, basement jazz, late-night counters and the steady glow of the Plateau.',
+    heroImage:
+      'https://images.unsplash.com/photo-1542315192-1f61a1792f33?auto=format&fit=crop&w=1600&q=80',
+    baseFilters: { category: ['NIGHTLIFE'] },
+    visibleFilters: SHARED_FILTERS,
+  },
+  romantic: {
+    key: 'romantic',
+    label: 'Romantic',
+    icon: 'heart',
+    eyebrow: 'ROMANTIC IN MONTREAL',
+    heroTitle: 'Plans for two,\nbeautifully made.',
+    heroSub: 'Hidden courtyards, candle-lit tables, sunset sails — slow Montréal at its most cinematic.',
+    heroImage:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
+    baseFilters: { category: ['ROMANTIC'] },
+    visibleFilters: SHARED_FILTERS,
+  },
+};
+
+export const CATEGORY_KEYS: CategoryKey[] = [
+  'dining',
+  'culture',
+  'outdoor',
+  'nightlife',
+  'romantic',
+];
+
+export function isCategoryKey(value: string): value is CategoryKey {
+  return (CATEGORY_KEYS as string[]).includes(value);
+}
+
+export function categoryPresetAsPage(key: CategoryKey): PagePreset {
+  const cfg = CATEGORY_PRESETS[key];
+  return {
+    baseFilters: cfg.baseFilters,
+    visibleFilters: cfg.visibleFilters,
+    gridVariant: 'standard',
+    sections: { hero: true, map: false },
+  };
+}

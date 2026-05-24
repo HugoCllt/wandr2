@@ -9,13 +9,30 @@ import { getCurrentUser } from '../../../shared/auth/current-user';
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { prisma } from '../../../shared/db/prisma';
+import type { FilterValueDTO } from '../../../shared/contracts/FilterValueDTO';
+import { CATEGORY_PRESETS, isCategoryKey } from '../../../shared/presets/CATEGORY_PRESETS';
 import { HOME_PRESET } from '../../../shared/presets/HOME_PRESET';
+import { SPORT_PRESET } from '../../../shared/presets/SPORT_PRESET';
 import { GetFeedUseCase } from '../application/GetFeedUseCase';
 import { DEFAULT_FEED_LIMIT } from '../domain/FeedQuery';
 
+function resolveBaseFiltersFromParams(searchParams: URLSearchParams): FilterValueDTO | null {
+  const preset = searchParams.get('preset');
+  if (preset === 'sport') return SPORT_PRESET.baseFilters;
+  if (preset && isCategoryKey(preset)) {
+    return CATEGORY_PRESETS[preset].baseFilters;
+  }
+  return null;
+}
+
 const MAX_FEED_LIMIT = 50;
 
-export async function loadFeedDTO(searchParams: URLSearchParams): Promise<FeedResultDTO> {
+export async function loadFeedDTO(
+  searchParams: URLSearchParams,
+  baseFiltersOverride?: FilterValueDTO,
+): Promise<FeedResultDTO> {
+  const baseFilters =
+    baseFiltersOverride ?? resolveBaseFiltersFromParams(searchParams) ?? HOME_PRESET.baseFilters;
   const filters = parseFilters(searchParams);
   const cursor = searchParams.get('cursor');
   const limit = parseLimit(searchParams.get('limit'));
@@ -35,7 +52,7 @@ export async function loadFeedDTO(searchParams: URLSearchParams): Promise<FeedRe
     limit,
     affinityMap,
     now: new Date(),
-    baseFilters: HOME_PRESET.baseFilters,
+    baseFilters,
   });
 
   return {

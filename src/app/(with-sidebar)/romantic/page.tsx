@@ -1,0 +1,215 @@
+import { loadCategoryFeedDTO } from '../../../modules/feed/web/loadCategoryFeed';
+import { CATEGORY_PRESETS } from '../../../shared/presets/CATEGORY_PRESETS';
+import { ClassActivityCard } from '../../../modules/activities/web/cards/ClassActivityCard';
+import { FromMapActivityCard } from '../../../modules/activities/web/cards/FromMapActivityCard';
+import { HeroActivityCard } from '../../../modules/activities/web/cards/HeroActivityCard';
+import { LiveActivityCard } from '../../../modules/activities/web/cards/LiveActivityCard';
+import { MediaRowActivityCard } from '../../../modules/activities/web/cards/MediaRowActivityCard';
+import { PlayActivityCard } from '../../../modules/activities/web/cards/PlayActivityCard';
+import { RecActivityCard } from '../../../modules/activities/web/cards/RecActivityCard';
+import { SideActivityCard } from '../../../modules/activities/web/cards/SideActivityCard';
+
+export const dynamic = 'force-dynamic';
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const DEAL_LABELS = ['20% off', 'Date-night menu', 'Sunset rate', 'Two-for-one'];
+const TAG_LABELS: Array<{ tag: string; tagKind: 'deal' | '' }> = [
+  { tag: 'Tonight', tagKind: '' },
+  { tag: '30% off', tagKind: 'deal' },
+  { tag: 'Drop-in', tagKind: '' },
+  { tag: 'Sold out soon', tagKind: 'deal' },
+  { tag: 'New', tagKind: '' },
+  { tag: 'Couples', tagKind: '' },
+];
+
+export default async function RomanticPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = toURLSearchParams(searchParams);
+  const feed = await loadCategoryFeedDTO('romantic', params);
+  const cfg = CATEGORY_PRESETS.romantic;
+  const titleLines = cfg.heroTitle.split('\n');
+  const items = feed.items;
+
+  const pick = (start: number, n: number) => {
+    if (items.length === 0) return [];
+    return Array.from({ length: n }, (_, i) => items[(start + i) % items.length]);
+  };
+
+  const heroItem = items[0];
+  const sideItems = pick(1, 3);
+  const mediaRows = pick(0, 3);
+  const liveItems = pick(1, 3);
+  const playItems = pick(0, 4);
+  const tileItems = pick(2, 4);
+  const compactItems = pick(1, 4);
+  const classItems = pick(0, 6);
+
+  return (
+    <>
+      <div className="sport-hero">
+        <div className="sport-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
+        <div className="sport-hero-inner">
+          <div className="hero-eyebrow">{cfg.eyebrow}</div>
+          <h1>
+            {titleLines.map((l, i) => (
+              <div key={i}>{l}</div>
+            ))}
+          </h1>
+          <p>{cfg.heroSub}</p>
+        </div>
+      </div>
+
+      {heroItem && (
+        <section className="hero">
+          <HeroActivityCard activity={heroItem} eyebrow="ROMANTIC PICK OF THE WEEK" />
+          {sideItems.length > 0 && (
+            <div className="hero-side">
+              {sideItems.map((a, i) => (
+                <SideActivityCard key={`side-${i}-${a.id}`} activity={a} flames={4} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {mediaRows.length > 0 && (
+        <section className="sport-section">
+          <div className="section-head">
+            <div>
+              <h2>In the Spotlight</h2>
+              <p>Editorial picks worth a longer look.</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {mediaRows.map((a, i) => (
+              <MediaRowActivityCard
+                key={`mr-${i}-${a.id}`}
+                activity={a}
+                side={i % 2 === 0 ? 'left' : 'right'}
+                eyebrow={i === 0 ? 'EDITOR’S NOTE' : 'STILL ON OUR LIST'}
+                isFavorited={a.isFavorited}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {liveItems.length > 0 && (
+        <section className="sport-section">
+          <div className="section-head">
+            <div>
+              <h2>Tonight in Montréal</h2>
+              <p>Cinematic plans happening after sundown.</p>
+            </div>
+          </div>
+          <div className="live-row">
+            {liveItems.map((a, i) => (
+              <LiveActivityCard
+                key={`live-${i}-${a.id}`}
+                activity={a}
+                live={i === 0}
+                size={i === 0 ? 'lg' : 'sm'}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {playItems.length > 0 && (
+        <section className="sport-section">
+          <div className="section-head">
+            <div>
+              <h2>Book the Night</h2>
+              <p>Tables, sails, suites — reserve before the city beats you to it.</p>
+            </div>
+          </div>
+          <div className="play-grid">
+            {playItems.map((a, i) => (
+              <PlayActivityCard
+                key={`play-${i}-${a.id}`}
+                activity={a}
+                deal={i < DEAL_LABELS.length ? DEAL_LABELS[i] : undefined}
+                flames={3}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tileItems.length > 0 && (
+        <section className="sport-section">
+          <div className="section-head">
+            <div>
+              <h2>Slow Montréal</h2>
+              <p>Long-lingering rooms and rooftops.</p>
+            </div>
+          </div>
+          <div className="rec-grid">
+            {tileItems.map((a, i) => (
+              <RecActivityCard key={`rec-${i}-${a.id}`} activity={a} isFavorited={a.isFavorited} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {compactItems.length > 0 && (
+        <section className="sport-section">
+          <div className="section-head">
+            <div>
+              <h2>Near Your Table</h2>
+              <p>Quick walks between a drink and a view.</p>
+            </div>
+          </div>
+          <div className="from-map-grid">
+            {compactItems.map((a, i) => (
+              <FromMapActivityCard
+                key={`fm-${i}-${a.id}`}
+                activity={a}
+                distanceLabel="0.4 mi"
+                flames={3}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {classItems.length > 0 && (
+        <section className="sport-section">
+          <div className="section-head">
+            <div>
+              <h2>Two-Person Workshops</h2>
+              <p>Hands-on plans, with somebody.</p>
+            </div>
+          </div>
+          <div className="classes-grid">
+            {classItems.map((a, i) => {
+              const t = TAG_LABELS[i % TAG_LABELS.length];
+              return (
+                <ClassActivityCard
+                  key={`cls-${i}-${a.id}`}
+                  activity={a}
+                  tag={t.tag}
+                  tagKind={t.tagKind}
+                  flames={3}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+function toURLSearchParams(searchParams: SearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      if (value.length > 0) params.set(key, value[0]);
+    } else {
+      params.set(key, value);
+    }
+  }
+  return params;
+}

@@ -3,7 +3,6 @@ const Nav = ({ route, setRoute }) => {
   const links = [
     { name: "Home", icon: "home", id: "home" },
     { name: "Sport", icon: "sport", id: "sport" },
-    { name: "Calendar", icon: "calendar", id: "calendar" },
     { name: "Chat", icon: "chat", id: "chat" },
     { name: "Profile", icon: "profile", id: "profile" },
   ];

@@ -1,5 +1,7 @@
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { getCurrentUser } from '../../../shared/auth/current-user';
+import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
+import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { dayKeyInTZ } from '../../../shared/ui/format/formatInTZ';
 import { prisma } from '../../../shared/db/prisma';
 import { ListCalendarEntriesUseCase } from '../application/ListCalendarEntriesUseCase';
@@ -11,12 +13,7 @@ export type CalendarMonthEntry = {
   scheduledAt: string;
   notes: string | null;
   dayKey: string;
-  activity: {
-    id: string;
-    slug: string;
-    title: string;
-    kind: 'EVENT' | 'PLACE';
-  };
+  activity: ActivityDTO;
 };
 
 export type CalendarMonthData = {
@@ -56,12 +53,7 @@ export async function loadCalendarMonth(
         scheduledAt: entry.scheduledAt.toISOString(),
         notes: entry.notes,
         dayKey: dayKeyInTZ(entry.scheduledAt),
-        activity: {
-          id: activity.id,
-          slug: activity.slug,
-          title: activity.title,
-          kind: activity.kind,
-        },
+        activity: toActivityDTO(activity),
       },
     ];
   });

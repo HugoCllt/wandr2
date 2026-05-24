@@ -16,7 +16,7 @@ const App = () => {
   React.useEffect(() => {
     const onHash = () => {
       const r = window.location.hash.replace("#", "");
-      if (["home","sport","chat","profile","calendar"].includes(r)) setRoute(r);
+      if (["home","sport","chat","profile"].includes(r)) setRoute(r);
     };
     onHash();
     window.addEventListener("hashchange", onHash);
@@ -51,11 +51,6 @@ const App = () => {
       {route === "profile" && (
         <div className="shell" style={{ gridTemplateColumns: "1fr" }}>
           <main className="main"><ProfilePage /></main>
-        </div>
-      )}
-      {route === "calendar" && (
-        <div className="shell" style={{ gridTemplateColumns: "1fr" }}>
-          <main className="main"><CalendarPage /></main>
         </div>
       )}
     </div>

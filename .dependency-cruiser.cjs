@@ -64,9 +64,25 @@ module.exports = {
     {
       name: 'shared-no-upward',
       severity: 'error',
-      comment: 'shared/* must not depend on modules or app.',
+      comment:
+        'shared/* may reference domain types (§5 DAG: shared/* → domain) but must not depend on application, infra, web, or app.',
       from: { path: '^src/shared' },
-      to: { path: ['^src/modules', '^src/app'] },
+      to: {
+        path: [
+          '^src/modules/[^/]+/application',
+          '^src/modules/[^/]+/infra',
+          '^src/modules/[^/]+/web',
+          '^src/app',
+        ],
+      },
+    },
+    {
+      name: 'shared-ui-no-dto',
+      severity: 'error',
+      comment:
+        'shared/ui holds DTO-free primitives only. A component that consumes a DTO belongs to its capability (modules/<cap>/web). See CLAUDE.md §6.',
+      from: { path: '^src/shared/ui' },
+      to: { path: '^src/shared/contracts' },
     },
     {
       name: 'no-orphans',
@@ -85,6 +101,9 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
+    // Track type-only imports too. DTOs cross seams as `import type`, so the
+    // layer rules (esp. shared-ui-no-dto) are toothless without this.
+    tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {
       exportsFields: ['exports'],
