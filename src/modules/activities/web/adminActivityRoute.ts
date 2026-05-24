@@ -7,6 +7,7 @@ import { prisma } from '../../../shared/db/prisma';
 import { CreateActivityUseCase } from '../application/CreateActivityUseCase';
 import { ActivityCategories, ActivityKinds, ActivityStatuses } from '../domain/Activity';
 import { PrismaActivityRepository } from '../infra/PrismaActivityRepository';
+import { PrismaCityRepository } from '../infra/PrismaCityRepository';
 
 const AdminActivitySchema = z.object({
   title: z.string().min(1),
@@ -30,6 +31,8 @@ const AdminActivitySchema = z.object({
   status: z.enum(ActivityStatuses).optional(),
   externalId: z.string().min(1).nullable().optional(),
   slug: z.string().min(1).optional(),
+  citySlug: z.string().min(1).optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export async function postAdminActivity(request: Request): Promise<NextResponse> {
@@ -38,6 +41,13 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
   }
 
   const body = AdminActivitySchema.parse(await request.json());
+
+  const citySlug = body.citySlug ?? 'montreal';
+  const city = await new PrismaCityRepository(prisma).findBySlug(citySlug);
+  if (!city) {
+    return NextResponse.json({ error: `Unknown city: ${citySlug}` }, { status: 400 });
+  }
+
   const useCase = new CreateActivityUseCase(new PrismaActivityRepository(prisma));
 
   const activity = await useCase.execute({
@@ -62,6 +72,8 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
     status: body.status ?? 'PUBLISHED',
     externalId: body.externalId ?? null,
     slug: body.slug,
+    cityId: city.id,
+    tags: body.tags ?? [],
   });
 
   return NextResponse.json(toActivityDTO(activity), { status: 201 });

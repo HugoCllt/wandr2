@@ -26,6 +26,7 @@ export function toActivityDTO(activity: Activity): ActivityDTO {
     status: activity.status,
     sourceId: activity.sourceId,
     externalId: activity.externalId,
+    tags: activity.tags,
     createdAt: activity.createdAt.toISOString(),
     updatedAt: activity.updatedAt.toISOString(),
   };

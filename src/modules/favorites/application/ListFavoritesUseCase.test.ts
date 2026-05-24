@@ -41,6 +41,7 @@ class FakeActivityRepository implements IActivityRepository {
 
   async findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]> {
     return Array.from(this.bySlug.values()).filter((a) => {
+      if (a.cityId !== criteria.cityId) return false;
       if (a.status !== criteria.status) return false;
       if (criteria.activityIds) {
         if (!criteria.activityIds.includes(a.id)) return false;
@@ -126,6 +127,13 @@ function activity(overrides: Partial<Activity>): Activity {
     status: 'PUBLISHED',
     sourceId: 'source_1',
     externalId: null,
+    cityId: 'city_mtl',
+    tags: [],
+    dedupeKey: id,
+    expiresAt: null,
+    lastSeenAt: createdAt,
+    lastVerifiedAt: null,
+    recheckAfter: null,
     createdAt,
     updatedAt: createdAt,
     ...overrides,
@@ -147,6 +155,7 @@ describe('ListFavoritesUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items).toEqual([]);
@@ -170,6 +179,7 @@ describe('ListFavoritesUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items.map((i) => i.id)).toEqual(['b', 'a']);
@@ -198,6 +208,7 @@ describe('ListFavoritesUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items.map((i) => i.id)).toEqual(['a']);

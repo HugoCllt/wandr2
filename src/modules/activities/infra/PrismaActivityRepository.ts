@@ -3,9 +3,15 @@ import type { PrismaClient } from '@prisma/client';
 
 import type { Activity, ActivityCreateInput } from '../domain/Activity';
 import type { ActivityCandidateCriteria } from '../domain/ActivityCandidateCriteria';
+import type {
+  FreshnessUpdate,
+  IActivityIngestionRepository,
+} from '../domain/IActivityIngestionRepository';
 import type { IActivityRepository } from '../domain/IActivityRepository';
 
-export class PrismaActivityRepository implements IActivityRepository {
+export class PrismaActivityRepository
+  implements IActivityRepository, IActivityIngestionRepository
+{
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(input: ActivityCreateInput): Promise<Activity> {
@@ -33,6 +39,13 @@ export class PrismaActivityRepository implements IActivityRepository {
         status: input.status,
         sourceId: input.sourceId,
         externalId: input.externalId,
+        cityId: input.cityId,
+        tags: input.tags,
+        dedupeKey: input.dedupeKey,
+        expiresAt: input.expiresAt,
+        lastSeenAt: input.lastSeenAt,
+        lastVerifiedAt: input.lastVerifiedAt,
+        recheckAfter: input.recheckAfter,
       },
     });
 
@@ -58,7 +71,7 @@ export class PrismaActivityRepository implements IActivityRepository {
   }
 
   async findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]> {
-    const where: Prisma.ActivityWhereInput = { status: criteria.status };
+    const where: Prisma.ActivityWhereInput = { status: criteria.status, cityId: criteria.cityId };
     const and: Prisma.ActivityWhereInput[] = [];
 
     if (criteria.kinds && criteria.kinds.length > 0) {
@@ -105,6 +118,12 @@ export class PrismaActivityRepository implements IActivityRepository {
             ],
           },
         ],
+      });
+    }
+
+    if (criteria.notExpiredAsOf) {
+      and.push({
+        OR: [{ expiresAt: null }, { expiresAt: { gt: criteria.notExpiredAsOf } }],
       });
     }
 
@@ -156,6 +175,35 @@ export class PrismaActivityRepository implements IActivityRepository {
     });
     return activities.map(toActivity);
   }
+
+  async findByCityAndDedupeKey(cityId: string, dedupeKey: string): Promise<Activity | null> {
+    const activity = await this.prisma.activity.findUnique({
+      where: { cityId_dedupeKey: { cityId, dedupeKey } },
+    });
+    return activity ? toActivity(activity) : null;
+  }
+
+  async refreshFreshness(id: string, update: FreshnessUpdate): Promise<void> {
+    await this.prisma.activity.update({
+      where: { id },
+      data: {
+        lastSeenAt: update.lastSeenAt,
+        lastVerifiedAt: update.lastVerifiedAt,
+        recheckAfter: update.recheckAfter,
+      },
+    });
+  }
+
+  async findDueForRecheck(cityId: string, now: Date): Promise<Activity[]> {
+    const activities = await this.prisma.activity.findMany({
+      where: { cityId, status: 'PUBLISHED', recheckAfter: { lte: now } },
+    });
+    return activities.map(toActivity);
+  }
+
+  async archive(id: string): Promise<void> {
+    await this.prisma.activity.update({ where: { id }, data: { status: 'ARCHIVED' } });
+  }
 }
 
 function toActivity(activity: PrismaActivityModel): Activity {
@@ -183,6 +231,13 @@ function toActivity(activity: PrismaActivityModel): Activity {
     status: activity.status,
     sourceId: activity.sourceId,
     externalId: activity.externalId,
+    cityId: activity.cityId,
+    tags: activity.tags,
+    dedupeKey: activity.dedupeKey,
+    expiresAt: activity.expiresAt,
+    lastSeenAt: activity.lastSeenAt,
+    lastVerifiedAt: activity.lastVerifiedAt,
+    recheckAfter: activity.recheckAfter,
     createdAt: activity.createdAt,
     updatedAt: activity.updatedAt,
   };

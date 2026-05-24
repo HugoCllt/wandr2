@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
 import { env } from '../src/shared/config/env';
+import { computeDedupeKey } from '../src/modules/activities/domain/computeDedupeKey';
+import { computeExpiresAt, computeRecheckAfter } from '../src/modules/activities/domain/freshness';
 
 const prisma = new PrismaClient();
 
@@ -703,12 +705,37 @@ const affinities = [
 ];
 
 async function main() {
+  const montreal = await prisma.city.upsert({
+    where: { slug: 'montreal' },
+    update: {},
+    create: {
+      slug: 'montreal',
+      name: 'Montréal',
+      country: 'CA',
+      timezone: 'America/Toronto',
+      centerLat: 45.5019,
+      centerLng: -73.5674,
+      bboxMinLat: 45.4,
+      bboxMinLng: -73.98,
+      bboxMaxLat: 45.71,
+      bboxMaxLng: -73.47,
+    },
+  });
+
   const user = await prisma.user.upsert({
     where: { email: env.SEED_USER_EMAIL },
-    update: { name: env.SEED_USER_NAME },
+    update: {
+      name: env.SEED_USER_NAME,
+      cityId: montreal.id,
+      gender: 'MALE',
+      birthDate: new Date('2000-06-28'),
+    },
     create: {
       email: env.SEED_USER_EMAIL,
       name: env.SEED_USER_NAME,
+      cityId: montreal.id,
+      gender: 'MALE',
+      birthDate: new Date('2000-06-28'),
     },
   });
 
@@ -718,7 +745,18 @@ async function main() {
     create: { name: 'manual' },
   });
 
+  const seedNow = new Date();
   for (const activity of [...eventActivities, ...placeActivities]) {
+    const dedupeKey = computeDedupeKey({
+      kind: activity.kind,
+      title: activity.title,
+      dateStart: activity.dateStart,
+      latitude: activity.latitude,
+      longitude: activity.longitude,
+    });
+    const expiresAt = computeExpiresAt({ kind: activity.kind, dateEnd: activity.dateEnd });
+    const recheckAfter = computeRecheckAfter({ kind: activity.kind, lastSeenAt: seedNow });
+
     await prisma.activity.upsert({
       where: {
         sourceId_externalId: {
@@ -747,11 +785,25 @@ async function main() {
         outdoor: activity.outdoor,
         isFeatured: activity.isFeatured,
         status: 'PUBLISHED',
+        cityId: montreal.id,
+        tags: [],
+        dedupeKey,
+        expiresAt,
+        lastSeenAt: seedNow,
+        lastVerifiedAt: seedNow,
+        recheckAfter,
       },
       create: {
         ...activity,
         status: 'PUBLISHED',
         sourceId: source.id,
+        cityId: montreal.id,
+        tags: [],
+        dedupeKey,
+        expiresAt,
+        lastSeenAt: seedNow,
+        lastVerifiedAt: seedNow,
+        recheckAfter,
       },
     });
   }

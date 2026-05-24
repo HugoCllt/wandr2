@@ -38,6 +38,7 @@ export async function loadFavoritesFeedDTO(searchParams: URLSearchParams): Promi
     limit,
     affinityMap,
     now: new Date(),
+    cityId: user.cityId,
     baseFilters: FAVORITES_PRESET.baseFilters,
   });
 

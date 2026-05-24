@@ -38,6 +38,13 @@ export type Activity = {
   status: ActivityStatus;
   sourceId: string;
   externalId: string | null;
+  cityId: string;
+  tags: string[];
+  dedupeKey: string;
+  expiresAt: Date | null;
+  lastSeenAt: Date;
+  lastVerifiedAt: Date | null;
+  recheckAfter: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -57,6 +64,8 @@ export function validateActivity(input: ActivityCreateInput | Activity): void {
   assertNonEmpty(input.description, 'description');
   assertNonEmpty(input.imageUrl, 'imageUrl');
   assertNonEmpty(input.address, 'address');
+  assertNonEmpty(input.cityId, 'cityId');
+  assertNonEmpty(input.dedupeKey, 'dedupeKey');
 
   if (!SLUG_PATTERN.test(input.slug)) {
     throw new Error('Activity slug must contain only lowercase letters, numbers, and hyphens.');
@@ -101,6 +110,19 @@ export function validateActivity(input: ActivityCreateInput | Activity): void {
 
   if (!Number.isFinite(input.latitude) || !Number.isFinite(input.longitude)) {
     throw new Error('Activity coordinates must be finite numbers.');
+  }
+
+  if (input.kind === 'PLACE' && input.expiresAt !== null) {
+    throw new Error('PLACE activities must not have expiresAt.');
+  }
+
+  if (input.kind === 'EVENT') {
+    if (input.expiresAt === null) {
+      throw new Error('EVENT activities require expiresAt.');
+    }
+    if (input.dateEnd && input.expiresAt.getTime() !== input.dateEnd.getTime()) {
+      throw new Error('EVENT expiresAt must equal dateEnd.');
+    }
   }
 }
 

@@ -28,6 +28,7 @@ export type ActivityDTO = {
   status: ActivityStatus;
   sourceId: string;
   externalId: string | null;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 };

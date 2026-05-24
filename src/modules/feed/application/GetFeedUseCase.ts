@@ -15,6 +15,7 @@ export type GetFeedInput = {
   limit?: number;
   affinityMap: Map<ActivityCategory, number>;
   now: Date;
+  cityId: string;
   baseFilters?: FilterValue;
   activityIds?: string[];
 };
@@ -25,7 +26,7 @@ export class GetFeedUseCase {
   async execute(input: GetFeedInput): Promise<FeedResult> {
     const limit = input.limit ?? DEFAULT_FEED_LIMIT;
     const merged = mergeFilters(input.baseFilters ?? {}, input.filters);
-    const criteria = toCriteria(merged, input.now);
+    const criteria = toCriteria(merged, input.now, input.cityId);
     if (input.activityIds !== undefined) {
       criteria.activityIds = input.activityIds;
     }
@@ -50,8 +51,12 @@ function mergeFilters(base: FilterValue, override: FilterValue): FilterValue {
   return { ...base, ...override };
 }
 
-function toCriteria(filters: FilterValue, now: Date): ActivityCandidateCriteria {
-  const criteria: ActivityCandidateCriteria = { status: 'PUBLISHED' };
+function toCriteria(filters: FilterValue, now: Date, cityId: string): ActivityCandidateCriteria {
+  const criteria: ActivityCandidateCriteria = {
+    status: 'PUBLISHED',
+    cityId,
+    notExpiredAsOf: now,
+  };
 
   if (filters.kind) criteria.kinds = [filters.kind];
   if (filters.category && filters.category.length > 0) criteria.categories = filters.category;

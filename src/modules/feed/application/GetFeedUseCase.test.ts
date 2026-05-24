@@ -40,6 +40,14 @@ class FakeActivityRepository implements IActivityRepository {
   async findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]> {
     const all = Array.from(this.bySlug.values());
     return all.filter((a) => {
+      if (a.cityId !== criteria.cityId) return false;
+      if (
+        criteria.notExpiredAsOf &&
+        a.expiresAt !== null &&
+        a.expiresAt.getTime() <= criteria.notExpiredAsOf.getTime()
+      ) {
+        return false;
+      }
       if (a.status !== criteria.status) return false;
       if (criteria.kinds && !criteria.kinds.includes(a.kind)) return false;
       if (criteria.categories && !criteria.categories.includes(a.category)) return false;
@@ -118,6 +126,13 @@ function activity(overrides: Partial<Activity>): Activity {
     status: 'PUBLISHED',
     sourceId: 'source_1',
     externalId: null,
+    cityId: 'city_mtl',
+    tags: [],
+    dedupeKey: id,
+    expiresAt: null,
+    lastSeenAt: createdAt,
+    lastVerifiedAt: null,
+    recheckAfter: null,
     createdAt,
     updatedAt: createdAt,
     ...overrides,
@@ -136,6 +151,7 @@ describe('GetFeedUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items).toEqual([]);
@@ -161,6 +177,7 @@ describe('GetFeedUseCase', () => {
       cursor: null,
       affinityMap: aff,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items.map((i) => i.id)).toEqual(['b', 'a', 'c']);
@@ -185,6 +202,7 @@ describe('GetFeedUseCase', () => {
       limit: 2,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
     expect(page1.items).toHaveLength(2);
     expect(page1.nextCursor).not.toBeNull();
@@ -195,6 +213,7 @@ describe('GetFeedUseCase', () => {
       limit: 2,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
     expect(page2.items).toHaveLength(2);
     const seenIds = new Set([...page1.items.map((i) => i.id), ...page2.items.map((i) => i.id)]);
@@ -207,6 +226,7 @@ describe('GetFeedUseCase', () => {
       limit: 2,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
     expect(page3.items).toHaveLength(1);
     expect(page3.nextCursor).toBeNull();
@@ -231,6 +251,7 @@ describe('GetFeedUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
       baseFilters: { kind: 'EVENT' },
     });
 
@@ -257,6 +278,7 @@ describe('GetFeedUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items.every((i) => i.kind === 'EVENT')).toBe(true);
@@ -290,6 +312,7 @@ describe('GetFeedUseCase', () => {
       cursor: null,
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     const ids = result.items.map((i) => i.id).sort();
@@ -306,8 +329,37 @@ describe('GetFeedUseCase', () => {
       cursor: 'garbage-not-base64',
       affinityMap: EMPTY_AFFINITY,
       now: NOW,
+      cityId: 'city_mtl',
     });
 
     expect(result.items).toHaveLength(2);
+  });
+
+  it('scopes to the cityId and hides expired events', async () => {
+    const repo = new FakeActivityRepository();
+    repo.seed([
+      activity({ id: 'mtl_live', slug: 'mtl_live', cityId: 'city_mtl', expiresAt: null }),
+      activity({
+        id: 'mtl_expired',
+        slug: 'mtl_expired',
+        cityId: 'city_mtl',
+        kind: 'EVENT',
+        dateStart: new Date('2026-05-01T19:00:00.000Z'),
+        dateEnd: new Date('2026-05-01T21:00:00.000Z'),
+        expiresAt: new Date('2026-05-01T21:00:00.000Z'),
+      }),
+      activity({ id: 'other_city', slug: 'other_city', cityId: 'city_qc', expiresAt: null }),
+    ]);
+    const useCase = new GetFeedUseCase(repo);
+
+    const result = await useCase.execute({
+      filters: {},
+      cursor: null,
+      affinityMap: EMPTY_AFFINITY,
+      now: NOW,
+      cityId: 'city_mtl',
+    });
+
+    expect(result.items.map((i) => i.id)).toEqual(['mtl_live']);
   });
 });

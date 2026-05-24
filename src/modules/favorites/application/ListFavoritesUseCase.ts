@@ -11,6 +11,7 @@ export type ListFavoritesInput = {
   limit?: number;
   affinityMap: Map<ActivityCategory, number>;
   now: Date;
+  cityId: string;
   baseFilters?: FilterValue;
 };
 
@@ -30,6 +31,7 @@ export class ListFavoritesUseCase {
       limit: input.limit,
       affinityMap: input.affinityMap,
       now: input.now,
+      cityId: input.cityId,
       baseFilters: input.baseFilters,
       activityIds: ids,
     });

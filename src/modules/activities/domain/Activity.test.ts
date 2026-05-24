@@ -29,6 +29,13 @@ function baseActivity(overrides: Partial<ActivityCreateInput> = {}): ActivityCre
     status: 'PUBLISHED',
     sourceId: 'source_1',
     externalId: 'event_mural',
+    cityId: 'city_mtl',
+    tags: [],
+    dedupeKey: 'mural-festival|2026-06-15|45.516,-73.583',
+    expiresAt: eventEnd,
+    lastSeenAt: eventStart,
+    lastVerifiedAt: eventStart,
+    recheckAfter: null,
     ...overrides,
   };
 }
@@ -56,6 +63,7 @@ describe('Activity', () => {
           kind: 'PLACE',
           dateStart: eventStart,
           dateEnd: eventEnd,
+          expiresAt: null,
         }),
       ),
     ).toThrow(/PLACE/);
@@ -69,6 +77,7 @@ describe('Activity', () => {
           kind: 'PLACE',
           dateStart: null,
           dateEnd: null,
+          expiresAt: null,
         }),
       ),
     ).not.toThrow();
@@ -82,5 +91,33 @@ describe('Activity', () => {
 
   it('rejects slugs outside the public URL shape', () => {
     expect(() => createActivity(baseActivity({ slug: 'MURAL Festival!' }))).toThrow(/slug/);
+  });
+
+  it('requires a cityId', () => {
+    expect(() => createActivity(baseActivity({ cityId: '' }))).toThrow(/cityId/);
+  });
+
+  it('requires a dedupeKey', () => {
+    expect(() => createActivity(baseActivity({ dedupeKey: '' }))).toThrow(/dedupeKey/);
+  });
+
+  it('rejects a PLACE that carries an expiresAt', () => {
+    expect(() =>
+      createActivity(
+        baseActivity({
+          slug: 'mount-royal-lookout',
+          kind: 'PLACE',
+          dateStart: null,
+          dateEnd: null,
+          expiresAt: eventEnd,
+        }),
+      ),
+    ).toThrow(/expiresAt/);
+  });
+
+  it('rejects an EVENT whose expiresAt does not equal dateEnd', () => {
+    expect(() =>
+      createActivity(baseActivity({ expiresAt: new Date('2026-06-15T22:00:00.000Z') })),
+    ).toThrow(/expiresAt/);
   });
 });

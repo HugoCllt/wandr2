@@ -52,6 +52,7 @@ export async function loadFeedDTO(
     limit,
     affinityMap,
     now: new Date(),
+    cityId: user.cityId,
     baseFilters,
   });
 
