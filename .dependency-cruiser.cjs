@@ -94,6 +94,7 @@ module.exports = {
           '\\.d\\.ts$',
           '^src/app/',
           '\\.test\\.(?:ts|tsx)$',
+          '^src/mcp/server\\.ts$',
         ],
       },
       to: {},
