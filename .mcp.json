@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "wandr-ingestion": {
+      "command": "cmd",
+      "args": ["/c", "pnpm", "tsx", "--env-file=.env", "src/mcp/server.ts"]
+    }
+  }
+}
