@@ -1,10 +1,8 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
-import { AddToCalendarButton } from '../../../calendar/web/AddToCalendarButton';
-import { FavoriteButton } from '../../../favorites/web/FavoriteButton';
 import { Icon } from '../../../../shared/ui/icons/Icon';
 import { coverImageUrl, formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
@@ -12,8 +10,9 @@ type Badge = { label: string; kind: 'trending' | 'popular' | 'hot' | 'new' };
 
 type Props = {
   activity: ActivityDTO;
-  isFavorited?: boolean;
   badge?: Badge;
+  favoriteSlot?: ReactNode;
+  calendarSlot?: ReactNode;
 };
 
 function deriveBadge(activity: ActivityDTO): Badge | null {
@@ -21,7 +20,7 @@ function deriveBadge(activity: ActivityDTO): Badge | null {
   return null;
 }
 
-export function RecActivityCard({ activity, isFavorited, badge }: Props): ReactElement {
+export function RecActivityCard({ activity, badge, favoriteSlot, calendarSlot }: Props): ReactElement {
   const open = useOpenActivity();
   const activeBadge = badge ?? deriveBadge(activity);
   const lines = activity.title.split('\n');
@@ -36,9 +35,7 @@ export function RecActivityCard({ activity, isFavorited, badge }: Props): ReactE
       {activeBadge && (
         <span className={'rec-badge ' + activeBadge.kind}>{activeBadge.label}</span>
       )}
-      {isFavorited !== undefined && (
-        <FavoriteButton activityId={activity.id} initialFavorited={isFavorited} />
-      )}
+      {favoriteSlot}
       <div className="rec-content">
         <h3 className="rec-title">
           {lines.map((l, i) => (
@@ -58,7 +55,7 @@ export function RecActivityCard({ activity, isFavorited, badge }: Props): ReactE
           <Icon name="pin" size={13} />
           View on Map
         </span>
-        <AddToCalendarButton activityId={activity.id} activityTitle={activity.title} />
+        {calendarSlot}
       </div>
     </article>
   );

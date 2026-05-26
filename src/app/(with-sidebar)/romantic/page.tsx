@@ -1,5 +1,7 @@
 import { loadCategoryFeedDTO } from '../../../modules/feed/web/loadCategoryFeed';
 import { CATEGORY_PRESETS } from '../../../shared/presets/CATEGORY_PRESETS';
+import { AddToCalendarButton } from '../../../modules/calendar/web/AddToCalendarButton';
+import { FavoriteButton } from '../../../modules/favorites/web/FavoriteButton';
 import { ClassActivityCard } from '../../../modules/activities/web/cards/ClassActivityCard';
 import { FromMapActivityCard } from '../../../modules/activities/web/cards/FromMapActivityCard';
 import { HeroActivityCard } from '../../../modules/activities/web/cards/HeroActivityCard';
@@ -87,7 +89,8 @@ export default async function RomanticPage({ searchParams }: { searchParams: Sea
                 activity={a}
                 side={i % 2 === 0 ? 'left' : 'right'}
                 eyebrow={i === 0 ? 'EDITOR’S NOTE' : 'STILL ON OUR LIST'}
-                isFavorited={a.isFavorited}
+                favoriteSlot={<FavoriteButton activityId={a.id} initialFavorited={a.isFavorited} />}
+                calendarSlot={<AddToCalendarButton activityId={a.id} activityTitle={a.title} />}
               />
             ))}
           </div>
@@ -146,7 +149,12 @@ export default async function RomanticPage({ searchParams }: { searchParams: Sea
           </div>
           <div className="rec-grid">
             {tileItems.map((a, i) => (
-              <RecActivityCard key={`rec-${i}-${a.id}`} activity={a} isFavorited={a.isFavorited} />
+              <RecActivityCard
+                key={`rec-${i}-${a.id}`}
+                activity={a}
+                favoriteSlot={<FavoriteButton activityId={a.id} initialFavorited={a.isFavorited} />}
+                calendarSlot={<AddToCalendarButton activityId={a.id} activityTitle={a.title} />}
+              />
             ))}
           </div>
         </section>

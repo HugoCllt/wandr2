@@ -62,6 +62,14 @@ module.exports = {
       to: { path: '^src/modules/chat' },
     },
     {
+      name: 'activities-no-sibling',
+      severity: 'error',
+      comment:
+        'activities is the core noun (§5). feed/calendar/favorites/chat/profile depend on it; it must never depend back. Inject sibling UI (FavoriteButton, AddToCalendarButton) as props from the consumer instead.',
+      from: { path: '^src/modules/activities' },
+      to: { path: '^src/modules/(feed|calendar|favorites|chat|profile)(/|$)' },
+    },
+    {
       name: 'shared-no-upward',
       severity: 'error',
       comment:

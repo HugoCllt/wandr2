@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { RecActivityCard } from '../../activities/web/cards/RecActivityCard';
 import { FromMapActivityCard } from '../../activities/web/cards/FromMapActivityCard';
+import { AddToCalendarButton } from '../../calendar/web/AddToCalendarButton';
+import { FavoriteButton } from '../../favorites/web/FavoriteButton';
 
 export type FeedGridVariant = 'standard' | 'compact';
 
@@ -85,7 +87,15 @@ export function FeedGrid({
             {variant === 'compact' ? (
               <FromMapActivityCard activity={item} />
             ) : (
-              <RecActivityCard activity={item} isFavorited={item.isFavorited} />
+              <RecActivityCard
+                activity={item}
+                favoriteSlot={
+                  <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
+                }
+                calendarSlot={
+                  <AddToCalendarButton activityId={item.id} activityTitle={item.title} />
+                }
+              />
             )}
           </div>
         ))}

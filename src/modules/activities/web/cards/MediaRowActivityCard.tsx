@@ -1,24 +1,24 @@
 'use client';
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
-import { AddToCalendarButton } from '../../../calendar/web/AddToCalendarButton';
-import { FavoriteButton } from '../../../favorites/web/FavoriteButton';
 import { coverImageUrl, formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
   activity: ActivityDTO;
   side?: 'left' | 'right';
   eyebrow?: string;
-  isFavorited?: boolean;
+  favoriteSlot?: ReactNode;
+  calendarSlot?: ReactNode;
 };
 
 export function MediaRowActivityCard({
   activity,
   side = 'left',
   eyebrow,
-  isFavorited,
+  favoriteSlot,
+  calendarSlot,
 }: Props): ReactElement {
   const open = useOpenActivity();
   const titleLines = activity.title.split('\n');
@@ -43,10 +43,8 @@ export function MediaRowActivityCard({
         <div className="media-row-foot">
           <span className="media-row-price">{formatActivityPrice(activity)}</span>
           <span className="media-row-actions">
-            {isFavorited !== undefined && (
-              <FavoriteButton activityId={activity.id} initialFavorited={isFavorited} />
-            )}
-            <AddToCalendarButton activityId={activity.id} activityTitle={activity.title} />
+            {favoriteSlot}
+            {calendarSlot}
           </span>
         </div>
       </div>
