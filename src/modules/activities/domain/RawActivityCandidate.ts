@@ -1,4 +1,5 @@
 import type { ActivityCategory, ActivityKind } from './Activity';
+import type { ActivityCategorySet } from './ActivityCategorySet';
 
 export const CandidateStatuses = ['PENDING', 'PROMOTED', 'REJECTED', 'DUPLICATE'] as const;
 export type CandidateStatus = (typeof CandidateStatuses)[number];
@@ -11,9 +12,8 @@ export type ExtractedActivityPayload = {
   title: string;
   description: string;
   imageUrl: string | null;
-  imageCredit: string | null;
   kind: ActivityKind;
-  category: ActivityCategory;
+  categories: ActivityCategorySet;
   address: string;
   neighborhood: string | null;
   latitude: number;
@@ -25,7 +25,6 @@ export type ExtractedActivityPayload = {
   externalUrl: string | null;
   indoor: boolean;
   outdoor: boolean;
-  tags: string[];
 };
 
 export type RawActivityCandidate = {
