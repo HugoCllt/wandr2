@@ -20,7 +20,7 @@ async function seedPlace(id: string, recheckAfter: Date | null): Promise<void> {
       description: 'd',
       imageUrl: 'https://example.com/x.jpg',
       kind: 'PLACE',
-      category: 'FOOD',
+      categories: { primary: 'FOOD', secondary: [] },
       address: 'a',
       latitude: 45.5,
       longitude: -73.6,

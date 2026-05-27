@@ -2,6 +2,7 @@ import type { Activity as PrismaActivityModel, Prisma } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 
 import type { Activity, ActivityCreateInput } from '../domain/Activity';
+import type { ActivityCategorySet } from '../domain/ActivityCategorySet';
 import type { ActivityCandidateCriteria } from '../domain/ActivityCandidateCriteria';
 import type {
   FreshnessUpdate,
@@ -21,9 +22,8 @@ export class PrismaActivityRepository
         title: input.title,
         description: input.description,
         imageUrl: input.imageUrl,
-        imageCredit: input.imageCredit,
         kind: input.kind,
-        category: input.category,
+        categories: input.categories as unknown as Prisma.InputJsonValue,
         address: input.address,
         neighborhood: input.neighborhood,
         latitude: input.latitude,
@@ -38,9 +38,7 @@ export class PrismaActivityRepository
         isFeatured: input.isFeatured,
         status: input.status,
         sourceId: input.sourceId,
-        externalId: input.externalId,
         cityId: input.cityId,
-        tags: input.tags,
         dedupeKey: input.dedupeKey,
         expiresAt: input.expiresAt,
         lastSeenAt: input.lastSeenAt,
@@ -78,7 +76,13 @@ export class PrismaActivityRepository
       where.kind = { in: criteria.kinds };
     }
     if (criteria.categories && criteria.categories.length > 0) {
-      where.category = { in: criteria.categories };
+      const cats = criteria.categories;
+      and.push({
+        OR: [
+          ...cats.map((c) => ({ categories: { path: ['primary'], equals: c } })),
+          ...cats.map((c) => ({ categories: { path: ['secondary'], array_contains: c } })),
+        ],
+      });
     }
     if (criteria.neighborhoods && criteria.neighborhoods.length > 0) {
       where.neighborhood = { in: criteria.neighborhoods };
@@ -215,9 +219,8 @@ function toActivity(activity: PrismaActivityModel): Activity {
     title: activity.title,
     description: activity.description,
     imageUrl: activity.imageUrl,
-    imageCredit: activity.imageCredit,
     kind: activity.kind,
-    category: activity.category,
+    categories: activity.categories as unknown as ActivityCategorySet,
     address: activity.address,
     neighborhood: activity.neighborhood,
     latitude: activity.latitude,
@@ -232,9 +235,7 @@ function toActivity(activity: PrismaActivityModel): Activity {
     isFeatured: activity.isFeatured,
     status: activity.status,
     sourceId: activity.sourceId,
-    externalId: activity.externalId,
     cityId: activity.cityId,
-    tags: activity.tags,
     dedupeKey: activity.dedupeKey,
     expiresAt: activity.expiresAt,
     lastSeenAt: activity.lastSeenAt,
