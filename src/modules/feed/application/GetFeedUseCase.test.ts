@@ -50,7 +50,10 @@ class FakeActivityRepository implements IActivityRepository {
       }
       if (a.status !== criteria.status) return false;
       if (criteria.kinds && !criteria.kinds.includes(a.kind)) return false;
-      if (criteria.categories && !criteria.categories.includes(a.category)) return false;
+      if (criteria.categories) {
+        const set = [a.categories.primary, ...a.categories.secondary];
+        if (!criteria.categories.some((c) => set.includes(c))) return false;
+      }
       if (criteria.neighborhoods) {
         if (!a.neighborhood || !criteria.neighborhoods.includes(a.neighborhood)) return false;
       }
@@ -108,9 +111,8 @@ function activity(overrides: Partial<Activity>): Activity {
     title: 'Activity',
     description: 'Description',
     imageUrl: 'https://images.unsplash.com/x',
-    imageCredit: 'Photo on Unsplash',
     kind: 'PLACE',
-    category: 'CULTURE',
+    categories: { primary: 'CULTURE', secondary: [] },
     address: 'Montreal',
     neighborhood: 'Plateau',
     latitude: 45.5,
@@ -125,9 +127,7 @@ function activity(overrides: Partial<Activity>): Activity {
     isFeatured: false,
     status: 'PUBLISHED',
     sourceId: 'source_1',
-    externalId: null,
     cityId: 'city_mtl',
-    tags: [],
     dedupeKey: id,
     expiresAt: null,
     lastSeenAt: createdAt,
@@ -161,9 +161,9 @@ describe('GetFeedUseCase', () => {
   it('returns ranked items respecting featured and matchScore', async () => {
     const repo = new FakeActivityRepository();
     repo.seed([
-      activity({ id: 'a', slug: 'a', category: 'FOOD', isFeatured: false }),
-      activity({ id: 'b', slug: 'b', category: 'SPORT', isFeatured: true }),
-      activity({ id: 'c', slug: 'c', category: 'NIGHTLIFE', isFeatured: false }),
+      activity({ id: 'a', slug: 'a', categories: { primary: 'FOOD', secondary: [] }, isFeatured: false }),
+      activity({ id: 'b', slug: 'b', categories: { primary: 'SPORT', secondary: [] }, isFeatured: true }),
+      activity({ id: 'c', slug: 'c', categories: { primary: 'NIGHTLIFE', secondary: [] }, isFeatured: false }),
     ]);
     const aff = new Map<ActivityCategory, number>([
       ['FOOD', 9],
