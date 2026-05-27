@@ -10,11 +10,16 @@ Deferrals captured per `CLAUDE.md` §3.1. Nothing speculative ships in code; eve
 - **Event expiry compares in UTC.** `City.timezone` is stored but unused until tz-aware "is it past?" logic is needed. — spec §4.1.
 - **No authorization on the ingestion MCP server.** stdio = OS-process isolation, no network surface to protect (spec plan-2 Q4). Revisit (bearer token) only if the server is ever exposed over HTTP/remote. — `src/mcp/server.ts`.
 - **Dedicated Prisma client in `src/mcp/db.ts`.** The MCP process does not reuse the shared `src/shared/db/prisma.ts` singleton because its string-form `log` writes to stdout (corrupts JSON-RPC). Reconcile the two clients if/when the `apps/web` + `apps/mcp` split happens. — `src/mcp/db.ts`, spec plan-2 §3.
+- **Feed ranking is a weighted average of affinity over the category set** (primary ×1, each secondary ×0.5, normalized by `1 + 0.5·|secondary|`). Anonymous users (empty affinity) score `DEFAULT_MATCH_SCORE` regardless of set size. — `src/modules/feed/application/ranking/p1.ts`, spec `2026-05-25-multi-category-activities-design.md` §2.
+- **Cross-scout `DUPLICATE` keeps the first ingester's category set** (no merge); `computeDedupeKey` ignores category, so a duplicate only refreshes freshness. Cross-scout consistency is steered by the scout prompt's classification rule, not by code. — `PromoteCandidateUseCase.ts`, `.claude/agents/wandr-theme-scout.md`, spec §6 decision #6.
+- **`cursor-codec` `matchScore` is a bounded float** (`z.number().min(0).max(10)`, was `.int()`) to carry the weighted score; the same computed float is the sort key and the cursor key. — `src/modules/feed/application/cursor-codec.ts`, spec §2.
+- **Seed upserts on `cityId_dedupeKey`** (since `externalId` was dropped); `dedupeKey` is computed in the loop. — `prisma/seed.ts`, spec §5.
 
 ## Future changes
 
 - **Wire the profile page to the DB.** `User.gender`/`User.birthDate` are now persisted (initial user: Hugo Coeuillet, Montréal, MALE, 2000-06-28) **but nothing reads them yet** — `ProfilePage`/`GetProfileViewUseCase` still use `MockProfileRepository` (hardcoded "Étienne Lavoie"). Build a `PrismaProfileRepository` that reads the real user (name, city, gender, computed age) and surface those fields in `UserProfile`/`ProfileViewDTO`. Also do **not** add `gender`/`birthDate` to `CurrentUser`/`getCurrentUser` until a reader exists. — `src/modules/profile/infra/MockProfileRepository.ts`, `UserProfile.ts`, `src/shared/auth/current-user.ts`.
-- **Expose city in `ActivityDTO`** (`{ slug, name }`, not the opaque `cityId`) once a multi-city UI / city switcher exists. Today the city flows server-side from the connected user; the DTO carries only `tags`.
+- **Expose city in `ActivityDTO`** (`{ slug, name }`, not the opaque `cityId`) once a multi-city UI / city switcher exists. Today the city flows server-side from the connected user; the DTO does not carry city at all.
+- **Attribute `UserCategoryAffinity` to the primary category** when user actions (favorite/calendar) start writing affinity. No code writes affinity today (only `seed.ts`), so this is parked until a writer exists. — spec `2026-05-25-multi-category-activities-design.md` §6.
 - **Split monorepo `apps/web` + `apps/mcp`.** The ingestion MCP server ships in `src/mcp/` for now (spec plan-2 Q2); reconcile with `CLAUDE.md` §4's `apps/web` naming when a real second deploy target exists. — `src/mcp/`.
 - **Rename `listActivitiesDueForRecheck` → `listPlacesDueForRecheck`.** Today it only ever returns PLACEs (EVENTs have no `recheckAfter`); keep the generic name unless EVENT re-verification is ever added, then rename for clarity. — `src/mcp/tools/listActivitiesDueForRecheck.ts`.
 - **Return `structuredContent` from the MCP tools.** Currently tools return JSON in a text content block (uniform across tools; the array-returning `listActivitiesDueForRecheck` would otherwise need an `{items:[]}` wrapper). Add `structuredContent` + `outputSchema` if a client benefits from typed structured output. — `src/mcp/runTool.ts`.
@@ -31,7 +36,8 @@ Deferrals captured per `CLAUDE.md` §3.1. Nothing speculative ships in code; eve
 
 - **`RECHECK_INTERVAL_DAYS = 90`** for PLACE re-verification cadence. — `src/modules/activities/domain/freshness.ts`, spec §6.
 - **Default city slug `'montreal'`** in the admin create route when `citySlug` is omitted. — `adminActivityRoute.ts`.
-- **`tags: []`** on every seeded activity (no theme tagging yet; agents will populate later). — `prisma/seed.ts`.
+- **No GIN index on `Activity.categories Json`.** The feed query ORs JSON-path filters (`primary equals` / `secondary array_contains`); fine at POC scale. Add a GIN index (and revisit the where-clause) if data grows. — `PrismaActivityRepository.findCandidates`, `prisma/schema.prisma`, spec §4.
+- **`SPORT` is absent from `CATEGORY_PRESETS`** (5 keys, no `sport`); SPORT lives in a separate `SPORT_PRESET` + `/sport` page. Flagged, not actioned — surfaced for the user. — spec §0 field audit.
 - **`MockProfileRepository`** returns fully hardcoded profile data. — see Future changes.
 - **`STAGED_DEDUPE_KEY = 'pending-promotion'`** written by `ingestActivity` as the candidate's staging dedupeKey; the authoritative key is recomputed inside `PromoteCandidateUseCase` (cannot be computed at staging — `computeDedupeKey` throws for an EVENT without dateStart). — `src/mcp/tools/ingestActivity.ts`, spec plan-2 §8.
 - **`.mcp.json` uses a Windows `cmd /c pnpm` launcher.** On POSIX, drop `"cmd", "/c"` and set `"command": "pnpm"`. — `.mcp.json`.
