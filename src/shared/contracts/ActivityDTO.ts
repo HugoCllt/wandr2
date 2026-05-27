@@ -1,8 +1,5 @@
-import type {
-  ActivityCategory,
-  ActivityKind,
-  ActivityStatus,
-} from '../../modules/activities/domain/Activity';
+import type { ActivityKind, ActivityStatus } from '../../modules/activities/domain/Activity';
+import type { ActivityCategorySet } from '../../modules/activities/domain/ActivityCategorySet';
 
 export type ActivityDTO = {
   id: string;
@@ -10,9 +7,8 @@ export type ActivityDTO = {
   title: string;
   description: string;
   imageUrl: string | null;
-  imageCredit: string | null;
   kind: ActivityKind;
-  category: ActivityCategory;
+  categories: ActivityCategorySet;
   address: string;
   neighborhood: string | null;
   latitude: number;
@@ -26,9 +22,6 @@ export type ActivityDTO = {
   outdoor: boolean;
   isFeatured: boolean;
   status: ActivityStatus;
-  sourceId: string;
-  externalId: string | null;
-  tags: string[];
   createdAt: string;
   updatedAt: string;
 };

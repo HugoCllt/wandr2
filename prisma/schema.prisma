@@ -82,9 +82,8 @@ model Activity {
   title         String
   description   String
   imageUrl      String?
-  imageCredit   String?
   kind          ActivityKind
-  category      ActivityCategory
+  categories    Json
   address       String
   neighborhood  String?
   latitude      Float
@@ -99,10 +98,8 @@ model Activity {
   isFeatured    Boolean          @default(false)
   status        ActivityStatus   @default(PUBLISHED)
   sourceId      String
-  externalId    String?
   cityId         String
   city           City             @relation(fields: [cityId], references: [id])
-  tags           String[]         @default([])
   dedupeKey      String
   expiresAt      DateTime?
   lastSeenAt     DateTime         @default(now())
@@ -114,10 +111,8 @@ model Activity {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  @@unique([sourceId, externalId])
   @@unique([cityId, dedupeKey])
   @@index([status, isFeatured, dateStart])
-  @@index([category, dateStart])
   @@index([kind, dateStart])
   @@index([neighborhood])
   @@index([cityId, status, expiresAt])

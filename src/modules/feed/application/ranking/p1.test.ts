@@ -13,9 +13,8 @@ function activity(overrides: Partial<Activity>): Activity {
     title: 'Default',
     description: 'Default',
     imageUrl: 'https://images.unsplash.com/default',
-    imageCredit: 'Photo on Unsplash',
     kind: 'PLACE',
-    category: 'CULTURE',
+    categories: { primary: 'CULTURE', secondary: [] },
     address: 'Montreal',
     neighborhood: 'Plateau',
     latitude: 45.5,
@@ -30,9 +29,7 @@ function activity(overrides: Partial<Activity>): Activity {
     isFeatured: false,
     status: 'PUBLISHED',
     sourceId: 'source_1',
-    externalId: null,
     cityId: 'city_mtl',
-    tags: [],
     dedupeKey: 'default-activity|45.500,-73.500',
     expiresAt: null,
     lastSeenAt: createdAt,
@@ -48,8 +45,8 @@ const EMPTY_AFFINITY: Map<ActivityCategory, number> = new Map();
 
 describe('rank()', () => {
   it('returns activities with matchScore from affinity map', () => {
-    const a = activity({ id: 'a', slug: 'a', category: 'SPORT' });
-    const b = activity({ id: 'b', slug: 'b', category: 'FOOD' });
+    const a = activity({ id: 'a', slug: 'a', categories: { primary: 'SPORT', secondary: [] } });
+    const b = activity({ id: 'b', slug: 'b', categories: { primary: 'FOOD', secondary: [] } });
     const aff = new Map<ActivityCategory, number>([
       ['SPORT', 8],
       ['FOOD', 9],
@@ -63,7 +60,7 @@ describe('rank()', () => {
   });
 
   it('falls back to 5 when category has no affinity row', () => {
-    const a = activity({ id: 'a', slug: 'a', category: 'NIGHTLIFE' });
+    const a = activity({ id: 'a', slug: 'a', categories: { primary: 'NIGHTLIFE', secondary: [] } });
 
     const ranked = rank([a], EMPTY_AFFINITY, NOW);
 
@@ -74,13 +71,13 @@ describe('rank()', () => {
     const featuredLow = activity({
       id: 'feat',
       slug: 'feat',
-      category: 'NIGHTLIFE',
+      categories: { primary: 'NIGHTLIFE', secondary: [] },
       isFeatured: true,
     });
     const unfeaturedHigh = activity({
       id: 'unf',
       slug: 'unf',
-      category: 'SPORT',
+      categories: { primary: 'SPORT', secondary: [] },
       isFeatured: false,
     });
     const aff = new Map<ActivityCategory, number>([
@@ -94,8 +91,8 @@ describe('rank()', () => {
   });
 
   it('breaks featured ties by matchScore descending', () => {
-    const a = activity({ id: 'a', slug: 'a', category: 'FOOD', isFeatured: true });
-    const b = activity({ id: 'b', slug: 'b', category: 'SPORT', isFeatured: true });
+    const a = activity({ id: 'a', slug: 'a', categories: { primary: 'FOOD', secondary: [] }, isFeatured: true });
+    const b = activity({ id: 'b', slug: 'b', categories: { primary: 'SPORT', secondary: [] }, isFeatured: true });
     const aff = new Map<ActivityCategory, number>([
       ['SPORT', 9],
       ['FOOD', 3],
@@ -111,7 +108,7 @@ describe('rank()', () => {
       id: 'early',
       slug: 'early',
       kind: 'EVENT',
-      category: 'CULTURE',
+      categories: { primary: 'CULTURE', secondary: [] },
       dateStart: new Date('2026-06-01T00:00:00.000Z'),
       dateEnd: new Date('2026-06-01T03:00:00.000Z'),
     });
@@ -119,7 +116,7 @@ describe('rank()', () => {
       id: 'late',
       slug: 'late',
       kind: 'EVENT',
-      category: 'CULTURE',
+      categories: { primary: 'CULTURE', secondary: [] },
       dateStart: new Date('2026-07-01T00:00:00.000Z'),
       dateEnd: new Date('2026-07-01T03:00:00.000Z'),
     });
@@ -127,7 +124,7 @@ describe('rank()', () => {
       id: 'place',
       slug: 'place',
       kind: 'PLACE',
-      category: 'CULTURE',
+      categories: { primary: 'CULTURE', secondary: [] },
     });
 
     const ranked = rank([place, lateEvent, earlyEvent], EMPTY_AFFINITY, NOW);
@@ -189,7 +186,7 @@ describe('rank()', () => {
       id: 'low',
       slug: 'low',
       kind: 'EVENT',
-      category: 'NIGHTLIFE',
+      categories: { primary: 'NIGHTLIFE', secondary: [] },
       dateStart: new Date('2026-05-08T00:00:00.000Z'),
       dateEnd: new Date('2026-05-08T03:00:00.000Z'),
     });
@@ -197,7 +194,7 @@ describe('rank()', () => {
       id: 'high',
       slug: 'high',
       kind: 'EVENT',
-      category: 'SPORT',
+      categories: { primary: 'SPORT', secondary: [] },
       dateStart: new Date('2026-08-01T00:00:00.000Z'),
       dateEnd: new Date('2026-08-01T03:00:00.000Z'),
     });
@@ -209,6 +206,47 @@ describe('rank()', () => {
     const ranked = rank([lowImminent, highFuture], aff, NOW);
 
     expect(ranked.map((r) => r.id)).toEqual(['high', 'low']);
+  });
+
+  it('computes a weighted average of affinity over the category set', () => {
+    const a = activity({
+      id: 'a',
+      slug: 'a',
+      categories: { primary: 'ROMANTIC', secondary: ['FOOD'] },
+    });
+    const aff = new Map<ActivityCategory, number>([
+      ['ROMANTIC', 3],
+      ['FOOD', 9],
+    ]);
+
+    const ranked = rank([a], aff, NOW);
+
+    // (3 + 0.5*9) / (1 + 0.5) = 7.5 / 1.5 = 5.0
+    expect(ranked[0].matchScore).toBe(5);
+  });
+
+  it('scores a primary-only set as the primary affinity', () => {
+    const a = activity({ id: 'a', slug: 'a', categories: { primary: 'FOOD', secondary: [] } });
+    const aff = new Map<ActivityCategory, number>([['FOOD', 9]]);
+
+    const ranked = rank([a], aff, NOW);
+
+    expect(ranked[0].matchScore).toBe(9);
+  });
+
+  it('is neutral for an anonymous user regardless of set size', () => {
+    const single = activity({ id: 'single', slug: 'single', categories: { primary: 'FOOD', secondary: [] } });
+    const multi = activity({
+      id: 'multi',
+      slug: 'multi',
+      categories: { primary: 'FOOD', secondary: ['ROMANTIC', 'CULTURE'] },
+    });
+
+    const ranked = rank([single, multi], EMPTY_AFFINITY, NOW);
+    const byId = new Map(ranked.map((r) => [r.id, r.matchScore]));
+
+    expect(byId.get('single')).toBe(5);
+    expect(byId.get('multi')).toBe(5);
   });
 
   it('returns an empty list for an empty input', () => {

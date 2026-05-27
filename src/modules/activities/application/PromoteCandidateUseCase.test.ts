@@ -36,9 +36,8 @@ function payload(overrides: Partial<ExtractedActivityPayload> = {}): ExtractedAc
     title: 'St-Viateur Bagel',
     description: 'Warm bagels in Mile End.',
     imageUrl: 'https://images.unsplash.com/x',
-    imageCredit: null,
     kind: 'PLACE',
-    category: 'FOOD',
+    categories: { primary: 'FOOD', secondary: [] },
     address: '263 Rue Saint-Viateur O, Montreal, QC',
     neighborhood: 'Mile End',
     latitude: 45.5227,
@@ -50,7 +49,6 @@ function payload(overrides: Partial<ExtractedActivityPayload> = {}): ExtractedAc
     externalUrl: 'https://www.stviateurbagel.com/',
     indoor: true,
     outdoor: false,
-    tags: ['FOOD'],
     ...overrides,
   };
 }

@@ -1,15 +1,9 @@
+import { type ActivityCategorySet, validateCategorySet } from './ActivityCategorySet';
+
+export { ActivityCategories, type ActivityCategory } from './ActivityCategorySet';
+
 export const ActivityKinds = ['EVENT', 'PLACE'] as const;
 export type ActivityKind = (typeof ActivityKinds)[number];
-
-export const ActivityCategories = [
-  'SPORT',
-  'ROMANTIC',
-  'FOOD',
-  'CULTURE',
-  'OUTDOOR',
-  'NIGHTLIFE',
-] as const;
-export type ActivityCategory = (typeof ActivityCategories)[number];
 
 export const ActivityStatuses = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;
 export type ActivityStatus = (typeof ActivityStatuses)[number];
@@ -20,9 +14,8 @@ export type Activity = {
   title: string;
   description: string;
   imageUrl: string | null;
-  imageCredit: string | null;
   kind: ActivityKind;
-  category: ActivityCategory;
+  categories: ActivityCategorySet;
   address: string;
   neighborhood: string | null;
   latitude: number;
@@ -37,9 +30,7 @@ export type Activity = {
   isFeatured: boolean;
   status: ActivityStatus;
   sourceId: string;
-  externalId: string | null;
   cityId: string;
-  tags: string[];
   dedupeKey: string;
   expiresAt: Date | null;
   lastSeenAt: Date;
@@ -74,9 +65,7 @@ export function validateActivity(input: ActivityCreateInput | Activity): void {
     throw new Error('Activity kind is invalid.');
   }
 
-  if (!ActivityCategories.includes(input.category)) {
-    throw new Error('Activity category is invalid.');
-  }
+  validateCategorySet(input.categories);
 
   if (!ActivityStatuses.includes(input.status)) {
     throw new Error('Activity status is invalid.');

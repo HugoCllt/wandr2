@@ -11,9 +11,8 @@ function baseActivity(overrides: Partial<ActivityCreateInput> = {}): ActivityCre
     title: 'MURAL Festival',
     description: 'Public art and music on Saint-Laurent.',
     imageUrl: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205',
-    imageCredit: 'Photo on Unsplash',
     kind: 'EVENT',
-    category: 'CULTURE',
+    categories: { primary: 'CULTURE', secondary: [] },
     address: 'Saint-Laurent Boulevard, Montreal',
     neighborhood: 'Plateau-Mont-Royal',
     latitude: 45.516,
@@ -28,9 +27,7 @@ function baseActivity(overrides: Partial<ActivityCreateInput> = {}): ActivityCre
     isFeatured: true,
     status: 'PUBLISHED',
     sourceId: 'source_1',
-    externalId: 'event_mural',
     cityId: 'city_mtl',
-    tags: [],
     dedupeKey: 'mural-festival|2026-06-15|45.516,-73.583',
     expiresAt: eventEnd,
     lastSeenAt: eventStart,
@@ -119,5 +116,11 @@ describe('Activity', () => {
     expect(() =>
       createActivity(baseActivity({ expiresAt: new Date('2026-06-15T22:00:00.000Z') })),
     ).toThrow(/expiresAt/);
+  });
+
+  it('rejects an invalid category set (primary in secondary)', () => {
+    expect(() =>
+      createActivity(baseActivity({ categories: { primary: 'CULTURE', secondary: ['CULTURE'] } })),
+    ).toThrow();
   });
 });

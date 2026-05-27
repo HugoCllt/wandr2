@@ -47,7 +47,10 @@ class FakeActivityRepository implements IActivityRepository {
         if (!criteria.activityIds.includes(a.id)) return false;
       }
       if (criteria.kinds && !criteria.kinds.includes(a.kind)) return false;
-      if (criteria.categories && !criteria.categories.includes(a.category)) return false;
+      if (criteria.categories) {
+        const set = [a.categories.primary, ...a.categories.secondary];
+        if (!criteria.categories.some((c) => set.includes(c))) return false;
+      }
       return true;
     });
   }
@@ -109,9 +112,8 @@ function activity(overrides: Partial<Activity>): Activity {
     title: 'A',
     description: 'D',
     imageUrl: 'https://images.unsplash.com/x',
-    imageCredit: null,
     kind: 'PLACE',
-    category: 'CULTURE',
+    categories: { primary: 'CULTURE', secondary: [] },
     address: 'Montreal',
     neighborhood: 'Plateau',
     latitude: 45.5,
@@ -126,9 +128,7 @@ function activity(overrides: Partial<Activity>): Activity {
     isFeatured: false,
     status: 'PUBLISHED',
     sourceId: 'source_1',
-    externalId: null,
     cityId: 'city_mtl',
-    tags: [],
     dedupeKey: id,
     expiresAt: null,
     lastSeenAt: createdAt,

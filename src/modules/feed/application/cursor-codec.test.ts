@@ -20,6 +20,16 @@ describe('encodeCursor / decodeCursor — fixtures', () => {
     });
   });
 
+  it('round-trips a fractional matchScore (weighted-average ranking)', () => {
+    expectRoundTrip({
+      featured: false,
+      matchScore: 5.5,
+      dateStart: null,
+      createdAt: '2026-04-15T08:30:00.000Z',
+      id: 'activity_frac',
+    });
+  });
+
   it('round-trips a PLACE key with null dateStart', () => {
     expectRoundTrip({
       featured: false,

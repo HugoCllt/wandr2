@@ -22,9 +22,8 @@ function payload(overrides: Partial<ExtractedActivityPayload> = {}): ExtractedAc
     title: 'IT Bagel',
     description: 'Test bagels.',
     imageUrl: 'https://example.com/bagel.jpg',
-    imageCredit: null,
     kind: 'PLACE',
-    category: 'FOOD',
+    categories: { primary: 'FOOD', secondary: [] },
     address: '1 Rue Test, Montreal, QC',
     neighborhood: 'Mile End',
     latitude: 45.5227,
@@ -36,7 +35,6 @@ function payload(overrides: Partial<ExtractedActivityPayload> = {}): ExtractedAc
     externalUrl: 'https://example.com/it-bagel',
     indoor: true,
     outdoor: false,
-    tags: ['FOOD'],
     ...overrides,
   };
 }

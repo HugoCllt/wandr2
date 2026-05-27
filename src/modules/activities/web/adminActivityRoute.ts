@@ -13,9 +13,11 @@ const AdminActivitySchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   imageUrl: z.string().url().nullable().optional(),
-  imageCredit: z.string().min(1).nullable().optional(),
   kind: z.enum(ActivityKinds),
-  category: z.enum(ActivityCategories),
+  categories: z.object({
+    primary: z.enum(ActivityCategories),
+    secondary: z.array(z.enum(ActivityCategories)).max(2).default([]),
+  }),
   address: z.string().min(1),
   neighborhood: z.string().min(1).nullable().optional(),
   latitude: z.number(),
@@ -29,10 +31,8 @@ const AdminActivitySchema = z.object({
   outdoor: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   status: z.enum(ActivityStatuses).optional(),
-  externalId: z.string().min(1).nullable().optional(),
   slug: z.string().min(1).optional(),
   citySlug: z.string().min(1).optional(),
-  tags: z.array(z.string()).optional(),
 });
 
 export async function postAdminActivity(request: Request): Promise<NextResponse> {
@@ -54,9 +54,8 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
     title: body.title,
     description: body.description,
     imageUrl: body.imageUrl ?? null,
-    imageCredit: body.imageCredit ?? null,
     kind: body.kind,
-    category: body.category,
+    categories: body.categories,
     address: body.address,
     neighborhood: body.neighborhood ?? null,
     latitude: body.latitude,
@@ -70,10 +69,8 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
     outdoor: body.outdoor ?? false,
     isFeatured: body.isFeatured ?? false,
     status: body.status ?? 'PUBLISHED',
-    externalId: body.externalId ?? null,
     slug: body.slug,
     cityId: city.id,
-    tags: body.tags ?? [],
   });
 
   return NextResponse.json(toActivityDTO(activity), { status: 201 });

@@ -5,7 +5,7 @@ const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 const CursorSchema = z
   .object({
     featured: z.boolean(),
-    matchScore: z.number().int().min(0).max(10),
+    matchScore: z.number().min(0).max(10),
     dateStart: z.string().regex(ISO_DATE_TIME).nullable(),
     createdAt: z.string().regex(ISO_DATE_TIME),
     id: z.string().min(1),

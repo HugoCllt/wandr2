@@ -6,10 +6,16 @@ export function rank(
   affinityMap: ReadonlyMap<ActivityCategory, number>,
   _now: Date,
 ): RankedActivity[] {
-  const scored: RankedActivity[] = activities.map((activity) => ({
-    ...activity,
-    matchScore: affinityMap.get(activity.category) ?? DEFAULT_MATCH_SCORE,
-  }));
+  const aff = (c: ActivityCategory) => affinityMap.get(c) ?? DEFAULT_MATCH_SCORE;
+  const scored: RankedActivity[] = activities.map((activity) => {
+    const { primary, secondary } = activity.categories;
+    return {
+      ...activity,
+      matchScore:
+        (aff(primary) + 0.5 * secondary.reduce((sum, c) => sum + aff(c), 0)) /
+        (1 + 0.5 * secondary.length),
+    };
+  });
 
   return scored.sort(compareRanked);
 }

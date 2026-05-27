@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Activity, ActivityCreateInput } from '../domain/Activity';
+import type { Activity, ActivityCategory, ActivityCreateInput } from '../domain/Activity';
 import type { IActivityRepository } from '../domain/IActivityRepository';
 import { CreateActivityUseCase } from './CreateActivityUseCase';
 
@@ -45,9 +45,8 @@ const basePlace = {
   title: 'St-Viateur Bagel',
   description: 'Bagels',
   imageUrl: 'https://images.unsplash.com/x',
-  imageCredit: null,
   kind: 'PLACE' as const,
-  category: 'FOOD' as const,
+  categories: { primary: 'FOOD' as const, secondary: [] as ActivityCategory[] },
   address: 'Mile End',
   neighborhood: 'Mile End',
   latitude: 45.5227,
@@ -61,9 +60,7 @@ const basePlace = {
   outdoor: false,
   isFeatured: false,
   status: 'PUBLISHED' as const,
-  externalId: null,
   cityId: 'city_mtl',
-  tags: [],
 };
 
 describe('CreateActivityUseCase', () => {
