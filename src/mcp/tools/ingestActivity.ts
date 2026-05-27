@@ -23,17 +23,18 @@ const payloadSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   kind: z.enum(ActivityKinds),
-  category: z.enum(ActivityCategories),
+  categories: z.object({
+    primary: z.enum(ActivityCategories),
+    secondary: z.array(z.enum(ActivityCategories)).max(2).default([]),
+  }),
   address: z.string().min(1),
   latitude: z.number(),
   longitude: z.number(),
   priceMinCents: z.number().int().nonnegative(),
   indoor: z.boolean(),
   outdoor: z.boolean(),
-  tags: z.array(z.string()),
   // Optional — omitted ⇒ null
   imageUrl: z.string().url().nullable().default(null),
-  imageCredit: z.string().nullable().default(null),
   neighborhood: z.string().nullable().default(null),
   dateStart: z.string().datetime().nullable().default(null),
   dateEnd: z.string().datetime().nullable().default(null),
@@ -88,7 +89,7 @@ export async function ingestActivity(
     searchQuery: input.meta.searchQuery,
     sourceUrl: input.meta.sourceUrl,
     rawExcerpt: input.meta.rawExcerpt,
-    extractedPayload: payload, // payload.category is the activity's real category
+    extractedPayload: payload, // payload.categories is the activity's real category set
     dedupeKey: STAGED_DEDUPE_KEY,
   });
 
@@ -98,8 +99,8 @@ export async function ingestActivity(
 export const ingestActivityDescription = [
   'Enregistre UNE activité que tu as extraite du web pour une ville, puis la fait passer par validation + déduplication + création/rafraîchissement. Appelle-le une fois par activité plausible trouvée — ne pré-filtre pas les doublons toi-même, l’outil déduplique. Lis l’outcome pour savoir quoi rapporter.',
   '- citySlug — slug de la ville (ex. "montreal"). Ville inconnue → REJECTED.',
-  "- payload — la donnée façon Activity que tu as extraite. latitude/longitude doivent tomber dans la ville ; un kind 'EVENT' doit avoir dateStart (ISO 8601) ; prix en cents entiers ; payload.category = la catégorie réelle de l’activité. Champs optionnels (omis ⇒ null) : imageUrl, imageCredit, neighborhood, dateStart, dateEnd, priceMaxCents, externalUrl.",
-  '- meta — provenance : agentName (ton nom), searchQuery (la requête qui l’a trouvée), sourceUrl, rawExcerpt (le texte d’où tu as extrait), category (ton thème de recherche, peut différer de payload.category).',
+  "- payload — la donnée façon Activity que tu as extraite. latitude/longitude doivent tomber dans la ville ; un kind 'EVENT' doit avoir dateStart (ISO 8601) ; prix en cents entiers ; payload.categories = { primary, secondary } = les catégories réelles de l’activité : primary = sa nature dominante, secondary = 0 à 2 autres catégories distinctes (≠ primary) qu’elle sert vraiment (0 est normal, ne remplis pas pour remplir). Champs optionnels (omis ⇒ null) : imageUrl, neighborhood, dateStart, dateEnd, priceMaxCents, externalUrl.",
+  '- meta — provenance : agentName (ton nom), searchQuery (la requête qui l’a trouvée), sourceUrl, rawExcerpt (le texte d’où tu as extrait), category (ton thème de recherche, peut différer de payload.categories.primary).',
   '- Outcomes : PROMOTED = nouvelle activité créée ; DUPLICATE = a matché une existante (fraîcheur rafraîchie) ; REJECTED = la donnée a échoué une règle métier — lis reason et corrige la donnée (pas la forme de l’appel).',
 ].join('\n');
 

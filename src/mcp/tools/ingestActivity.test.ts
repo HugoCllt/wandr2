@@ -38,9 +38,8 @@ function payload(overrides: Partial<ExtractedActivityPayload> = {}): ExtractedAc
     title: 'St-Viateur Bagel',
     description: 'Warm bagels in Mile End.',
     imageUrl: 'https://images.example.com/bagel.jpg',
-    imageCredit: null,
     kind: 'PLACE',
-    category: 'FOOD',
+    categories: { primary: 'FOOD', secondary: [] },
     address: '263 Rue Saint-Viateur O, Montreal, QC',
     neighborhood: 'Mile End',
     latitude: 45.5227,
@@ -52,7 +51,6 @@ function payload(overrides: Partial<ExtractedActivityPayload> = {}): ExtractedAc
     externalUrl: 'https://www.stviateurbagel.com/',
     indoor: true,
     outdoor: false,
-    tags: ['FOOD'],
     ...overrides,
   };
 }
@@ -174,7 +172,7 @@ describe('ingestActivity handler', () => {
     expect(candidates.created[0].dedupeKey).toBe('pending-promotion');
     expect(candidates.created[0].cityId).toBe('city_mtl');
     expect(writer.created).toHaveLength(1);
-    expect(writer.created[0].category).toBe('FOOD');
+    expect(writer.created[0].categories).toEqual({ primary: 'FOOD', secondary: [] });
   });
 
   it('DUPLICATE: refreshes the existing activity instead of creating one', async () => {
@@ -248,14 +246,13 @@ describe('ingestActivity handler', () => {
         title: 'St-Viateur Bagel',
         description: 'Warm bagels.',
         kind: 'PLACE',
-        category: 'FOOD',
+        categories: { primary: 'FOOD' },
         address: '263 Rue Saint-Viateur O',
         latitude: 45.5227,
         longitude: -73.6016,
         priceMinCents: 200,
         indoor: true,
         outdoor: false,
-        tags: ['FOOD'],
       },
       meta: meta(),
     });
@@ -264,9 +261,23 @@ describe('ingestActivity handler', () => {
     if (parsed.success) {
       expect(parsed.data.payload.imageUrl).toBeNull();
       expect(parsed.data.payload.dateStart).toBeNull();
-      expect(parsed.data.payload.imageCredit).toBeNull();
+      expect(parsed.data.payload.categories.secondary).toEqual([]);
       expect(parsed.data.payload.priceMaxCents).toBeNull();
     }
+  });
+
+  it('Layer B: a payload whose primary repeats in secondary parses but is REJECTED', async () => {
+    const { deps, writer } = build();
+
+    const result = await ingestActivity(deps, {
+      citySlug: 'montreal',
+      payload: payload({ categories: { primary: 'FOOD', secondary: ['FOOD'] } }),
+      meta: meta(),
+    });
+
+    expect(result.outcome).toBe('REJECTED');
+    expect(result.reason).toBeTruthy();
+    expect(writer.created).toHaveLength(0);
   });
 
   it('PROMOTED: an activity with no image (imageUrl omitted) is still created', async () => {
