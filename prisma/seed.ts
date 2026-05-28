@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
+import { auth } from '../src/shared/auth/auth';
 import { env } from '../src/shared/config/env';
 import { computeDedupeKey } from '../src/modules/activities/domain/computeDedupeKey';
 import { computeExpiresAt, computeRecheckAfter } from '../src/modules/activities/domain/freshness';
@@ -662,20 +663,37 @@ async function main() {
     },
   });
 
-  const user = await prisma.user.upsert({
+  // Recreate the seed user through the real Better Auth sign-up path so it has
+  // a credential Account (scrypt password) exactly like a normal signup —
+  // single inscription code-path in the repo. Idempotent: nuke first.
+  const existing = await prisma.user.findUnique({
     where: { email: env.SEED_USER_EMAIL },
-    update: {
-      name: env.SEED_USER_NAME,
-      cityId: montreal.id,
-      gender: 'MALE',
-      birthDate: new Date('2000-06-28'),
-    },
-    create: {
+    select: { id: true },
+  });
+  if (existing) {
+    await prisma.userCategoryAffinity.deleteMany({ where: { userId: existing.id } });
+    await prisma.favorite.deleteMany({ where: { userId: existing.id } });
+    await prisma.calendarEntry.deleteMany({ where: { userId: existing.id } });
+    await prisma.user.delete({ where: { id: existing.id } }); // cascades Account/Session
+  }
+
+  // databaseHooks.user.create.before injects cityId = Montréal (created above).
+  await auth.api.signUpEmail({
+    body: {
       email: env.SEED_USER_EMAIL,
+      password: env.SEED_USER_PASSWORD,
       name: env.SEED_USER_NAME,
-      cityId: montreal.id,
+    },
+  });
+
+  // Backfill the business fields Better Auth doesn't manage, and mark Hugo as
+  // already onboarded so he skips the popup.
+  const user = await prisma.user.update({
+    where: { email: env.SEED_USER_EMAIL },
+    data: {
       gender: 'MALE',
       birthDate: new Date('2000-06-28'),
+      onboardedAt: new Date(),
     },
   });
 
