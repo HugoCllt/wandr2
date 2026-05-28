@@ -60,99 +60,69 @@
     "semantic_hash": "076f350d4fcaa93e95d7041175121e94"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\page.tsx": {
-    "mtime": 1778419493.4701552,
-    "ast_hash": "8576bee026e60c63925dfc0e4095e34e",
-    "semantic_hash": "8576bee026e60c63925dfc0e4095e34e"
+    "mtime": 1779934582.3469782,
+    "ast_hash": "6ba2cc796b9ddc3e81a371671b2ec0d6",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\calendar\\page.tsx": {
     "mtime": 1778423897.1528337,
     "ast_hash": "113911f1d8f1862be8cfcddda948b87d",
     "semantic_hash": "113911f1d8f1862be8cfcddda948b87d"
   },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\culture\\page.tsx": {
-    "mtime": 1778419597.5230722,
-    "ast_hash": "0ac48b215c270d6cae93dbeaf52ff494",
-    "semantic_hash": "0ac48b215c270d6cae93dbeaf52ff494"
-  },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\dining\\page.tsx": {
-    "mtime": 1778419592.5300655,
-    "ast_hash": "15eabdab85656051373a00a0b6ef254f",
-    "semantic_hash": "15eabdab85656051373a00a0b6ef254f"
-  },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\favorites\\page.tsx": {
     "mtime": 1779565775.523112,
     "ast_hash": "28aeb1be22f3c3a74a4db351fdff1aea",
     "semantic_hash": "28aeb1be22f3c3a74a4db351fdff1aea"
   },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\nightlife\\page.tsx": {
-    "mtime": 1778419605.5803175,
-    "ast_hash": "6acc1d713fe9801733b1ec5cac004ee0",
-    "semantic_hash": "6acc1d713fe9801733b1ec5cac004ee0"
-  },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\outdoor\\page.tsx": {
-    "mtime": 1778419601.3822954,
-    "ast_hash": "c9623d8b088b54b1b8c4c4f116a1bc0f",
-    "semantic_hash": "c9623d8b088b54b1b8c4c4f116a1bc0f"
-  },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\romantic\\page.tsx": {
-    "mtime": 1779765772.3181503,
-    "ast_hash": "60a746c3a2b975e90e0682067269a390",
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\_lib\\categoryPage.tsx": {
+    "mtime": 1779934566.905671,
+    "ast_hash": "3051f24f06755391bb60442d1066362b",
     "semantic_hash": ""
   },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\sport\\page.tsx": {
-    "mtime": 1778424224.1053584,
-    "ast_hash": "abdfb3509c92fb877149d8b3f778eee8",
-    "semantic_hash": "abdfb3509c92fb877149d8b3f778eee8"
-  },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\_lib\\categoryPage.tsx": {
-    "mtime": 1778419587.3911016,
-    "ast_hash": "98b996e75f6afee7c07fd387a856144a",
-    "semantic_hash": "98b996e75f6afee7c07fd387a856144a"
-  },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\activities\\[slug]\\route.ts": {
-    "mtime": 1778098813.7806602,
-    "ast_hash": "951a8a2beaf7f4528b61c9742d739271",
-    "semantic_hash": "951a8a2beaf7f4528b61c9742d739271"
+    "mtime": 1779935540.2174273,
+    "ast_hash": "0c6e82d00002ff7fe587bf4dcfef6150",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\admin\\activities\\route.ts": {
-    "mtime": 1778098264.2501488,
-    "ast_hash": "18a1726ae4f5c7c21cccf4f06bb13ec8",
-    "semantic_hash": "18a1726ae4f5c7c21cccf4f06bb13ec8"
+    "mtime": 1779935547.2770534,
+    "ast_hash": "a7f1ee10800a91ec2d9c79c6f6e884f4",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\calendar\\route.ts": {
-    "mtime": 1778120725.7397916,
-    "ast_hash": "0e9ddf732a8d298f78429ebd8f03790e",
-    "semantic_hash": "0e9ddf732a8d298f78429ebd8f03790e"
+    "mtime": 1779935530.7511935,
+    "ast_hash": "79f1dead8d02dd44c7ce35ac980ecdb3",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\calendar\\[id]\\route.ts": {
-    "mtime": 1778120731.3173003,
-    "ast_hash": "881173cdfb399d64fd97d9082c7bea2f",
-    "semantic_hash": "881173cdfb399d64fd97d9082c7bea2f"
+    "mtime": 1779935535.491251,
+    "ast_hash": "a526a035d2c542f080daf5cf34c35278",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\chat\\messages\\route.ts": {
-    "mtime": 1778419854.738485,
-    "ast_hash": "2d82a65237179cbfaecd67433f984aa7",
-    "semantic_hash": "2d82a65237179cbfaecd67433f984aa7"
+    "mtime": 1779935554.7377687,
+    "ast_hash": "51aeb166688838a2d22ba4fd9f69183f",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\favorites\\route.ts": {
-    "mtime": 1778119376.826121,
-    "ast_hash": "35fd630b03891eddb662796bae2618ee",
-    "semantic_hash": "35fd630b03891eddb662796bae2618ee"
+    "mtime": 1779935521.7315474,
+    "ast_hash": "b146e318222b54174487fc1d0ccb98c8",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\favorites\\feed\\route.ts": {
-    "mtime": 1778119630.7808673,
-    "ast_hash": "e23e5e86e3cd698357d534d7f2932ac6",
-    "semantic_hash": "e23e5e86e3cd698357d534d7f2932ac6"
+    "mtime": 1779935526.0157132,
+    "ast_hash": "e1d0623147f3df46710dcca0a53b513e",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\feed\\route.ts": {
-    "mtime": 1778116067.912117,
-    "ast_hash": "ff796a29a8ae6438b6589671b4f510f1",
-    "semantic_hash": "ff796a29a8ae6438b6589671b4f510f1"
+    "mtime": 1779935516.896675,
+    "ast_hash": "ec07923f302f294c5433c5b314fdecf2",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\_lib\\error-handler.ts": {
-    "mtime": 1778098264.248148,
-    "ast_hash": "681bbdf68e2fb1cd4a9bb1f2c2d4eb5c",
-    "semantic_hash": "681bbdf68e2fb1cd4a9bb1f2c2d4eb5c"
+    "mtime": 1779935011.5280375,
+    "ast_hash": "69783c08a726fefb006bf62d0bb97472",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\chat\\page.tsx": {
     "mtime": 1778419849.8945377,
@@ -395,9 +365,9 @@
     "semantic_hash": "fecd691a891a885ecd60e76a83472c50"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\infra\\PrismaActivityRepository.ts": {
-    "mtime": 1779648012.6839356,
-    "ast_hash": "2031c69588d4c12c0f01993791b54ae9",
-    "semantic_hash": "2031c69588d4c12c0f01993791b54ae9"
+    "mtime": 1779934355.6331594,
+    "ast_hash": "0c27e154662a1263c07aa9ff929b1cbd",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\infra\\PrismaCandidateRepository.ts": {
     "mtime": 1779588738.1518414,
@@ -410,14 +380,14 @@
     "semantic_hash": "3e50f8adf13652418515c36b7306a0c5"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\activityDetailRoute.ts": {
-    "mtime": 1779765785.1028495,
-    "ast_hash": "5ef97d4aeb9f5884abe8146928b744ac",
+    "mtime": 1779935297.4696417,
+    "ast_hash": "1f35eb14b40825fac526387a1958c87e",
     "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\adminActivityRoute.ts": {
-    "mtime": 1779651548.1730692,
-    "ast_hash": "0d61d07473deebe3f91f0dcec6b1a5f4",
-    "semantic_hash": "0d61d07473deebe3f91f0dcec6b1a5f4"
+    "mtime": 1779935328.0737634,
+    "ast_hash": "011e8ac01bccf7dc779089e4a12bb298",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\HeroSection.tsx": {
     "mtime": 1779565775.567921,
@@ -490,8 +460,8 @@
     "semantic_hash": "613763a28191ce3ae2d16883032d4278"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\cards\\MediaRowActivityCard.tsx": {
-    "mtime": 1779765743.4515965,
-    "ast_hash": "3029fb21da826fbf071121cff67bd649",
+    "mtime": 1779766206.9233656,
+    "ast_hash": "b4ddebf2060ba30fbf88f4f40389daa6",
     "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\cards\\PlayActivityCard.tsx": {
@@ -500,8 +470,8 @@
     "semantic_hash": "98f4a9d8f30824d1098ae8da76de6e99"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\cards\\RecActivityCard.tsx": {
-    "mtime": 1779765729.5327017,
-    "ast_hash": "4d8abb2911a5bca3a9c2ffa7a70466e6",
+    "mtime": 1779766206.9233656,
+    "ast_hash": "67593f3918cc9aaa706304d215c938d9",
     "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\activities\\web\\cards\\SideActivityCard.tsx": {
@@ -625,9 +595,9 @@
     "semantic_hash": "9bffd4a7e1c4f85e24c05724c9652d30"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\calendar\\web\\calendarEntryRoute.ts": {
-    "mtime": 1778120719.2571893,
-    "ast_hash": "aab43358c7b96f54618e83e6b08e6476",
-    "semantic_hash": "aab43358c7b96f54618e83e6b08e6476"
+    "mtime": 1779935283.377252,
+    "ast_hash": "98d53f85f575ec9a330319c7334b99a5",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\calendar\\web\\CalendarMonthGrid.tsx": {
     "mtime": 1779565775.5996084,
@@ -635,9 +605,9 @@
     "semantic_hash": "ceffcc5c4f136cec3f0568ae05df3f03"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\calendar\\web\\calendarRoute.ts": {
-    "mtime": 1778155413.8427782,
-    "ast_hash": "ee08380e979b1a05c285e1050637c395",
-    "semantic_hash": "ee08380e979b1a05c285e1050637c395"
+    "mtime": 1779935242.7658386,
+    "ast_hash": "cc21743b01075e0c47d4af8d4009b586",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\calendar\\web\\CalendarUpcomingList.tsx": {
     "mtime": 1779565775.6098623,
@@ -695,9 +665,9 @@
     "semantic_hash": "78a0355f614cf47897d88353a3f7f5c0"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\chat\\web\\chatMessagesRoute.ts": {
-    "mtime": 1779589062.679933,
-    "ast_hash": "8bb62eee1b59b4a3340f2b028ea31e60",
-    "semantic_hash": "8bb62eee1b59b4a3340f2b028ea31e60"
+    "mtime": 1779935348.1303651,
+    "ast_hash": "61e89a17232f196a1a1b25050ec2e7aa",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\chat\\web\\ChatPage.tsx": {
     "mtime": 1778419844.4827425,
@@ -750,14 +720,14 @@
     "semantic_hash": "b62dcf373f6bb5ef3e48b7df59602657"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\favorites\\web\\favoritesFeedRoute.ts": {
-    "mtime": 1779588904.42801,
-    "ast_hash": "ee21c5d69f170dc571c78318bbb7b4ba",
-    "semantic_hash": "ee21c5d69f170dc571c78318bbb7b4ba"
+    "mtime": 1779935219.8581138,
+    "ast_hash": "53488b319c8632069653e4b8bd0bc2d5",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\favorites\\web\\favoritesRoute.ts": {
-    "mtime": 1778119371.2622626,
-    "ast_hash": "f9bd33d109ae2b3f0ba0caa838297994",
-    "semantic_hash": "f9bd33d109ae2b3f0ba0caa838297994"
+    "mtime": 1779935064.67111,
+    "ast_hash": "2c5f89c1b1ad9ce0cb535b6ea4c01f0f",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\favorites\\web\\loadFavoritedIds.ts": {
     "mtime": 1778119579.0342338,
@@ -810,14 +780,14 @@
     "semantic_hash": "97fdd58ad1f946b89b703d1affc8a6d8"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\feed\\web\\FeedGrid.tsx": {
-    "mtime": 1779765753.5726366,
-    "ast_hash": "a245decf5fc3c26c5ea4d1d2afff5d51",
+    "mtime": 1779766206.9243653,
+    "ast_hash": "5f751334ffcd5a57e022f9596d946a5f",
     "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\feed\\web\\feedRoute.ts": {
-    "mtime": 1779588900.3529892,
-    "ast_hash": "0064e72e29415515f10b133388f1ce26",
-    "semantic_hash": "0064e72e29415515f10b133388f1ce26"
+    "mtime": 1779935210.2994704,
+    "ast_hash": "c68a42ba458be82e92db821e59b0c7e7",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\feed\\web\\loadCategoryFeed.ts": {
     "mtime": 1778419579.130196,
@@ -828,11 +798,6 @@
     "mtime": 1779565775.495571,
     "ast_hash": "f0807cde17c2f0dc52a66a3b4b0f07d0",
     "semantic_hash": "f0807cde17c2f0dc52a66a3b4b0f07d0"
-  },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\feed\\web\\SportTabbedFeed.tsx": {
-    "mtime": 1779565775.5030894,
-    "ast_hash": "f95a0da5524bc746478281874d11d0e7",
-    "semantic_hash": "f95a0da5524bc746478281874d11d0e7"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\modules\\filters\\application\\url-codec.test.ts": {
     "mtime": 1778112271.7214973,
@@ -1025,9 +990,9 @@
     "semantic_hash": "58f8a2a66e8b129d4036922e8e2250f0"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\presets\\CATEGORY_PRESETS.ts": {
-    "mtime": 1778419166.6939907,
-    "ast_hash": "85dc5a479d04f1dd2f7d3aec7541670e",
-    "semantic_hash": "85dc5a479d04f1dd2f7d3aec7541670e"
+    "mtime": 1779934689.2345047,
+    "ast_hash": "0cffdde4324cfa6880f0ef0f9d6abf92",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\presets\\FAVORITES_PRESET.ts": {
     "mtime": 1778119624.5781698,
@@ -1039,20 +1004,15 @@
     "ast_hash": "c8742776965065135c089f5723bb40f8",
     "semantic_hash": "c8742776965065135c089f5723bb40f8"
   },
-  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\presets\\SPORT_PRESET.ts": {
-    "mtime": 1778419134.3954008,
-    "ast_hash": "14d00f06c10e6f6bf8e61deb3fcf9d97",
-    "semantic_hash": "14d00f06c10e6f6bf8e61deb3fcf9d97"
-  },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\ui\\FooterBanner.tsx": {
     "mtime": 1778419001.7485118,
     "ast_hash": "6963dd36dd20226011a1b8f385549634",
     "semantic_hash": "6963dd36dd20226011a1b8f385549634"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\ui\\Nav.tsx": {
-    "mtime": 1778424542.4056334,
-    "ast_hash": "7df3af390e624647386ebd22ec59b5e5",
-    "semantic_hash": "7df3af390e624647386ebd22ec59b5e5"
+    "mtime": 1779934723.8984451,
+    "ast_hash": "dcb8922350ef9f4813c3f2b4468ce9c5",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\ui\\decor\\EdgeArtLeft.tsx": {
     "mtime": 1778418937.2953112,
@@ -1165,7 +1125,7 @@
     "semantic_hash": "a307bc69b7b8717f8aade6202c156b0f"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\CLAUDE.md": {
-    "mtime": 1779764403.6397872,
+    "mtime": 1779766206.792063,
     "ast_hash": "bc49f4c22fbd4284c520f1593b428932",
     "semantic_hash": ""
   },
@@ -1190,9 +1150,9 @@
     "semantic_hash": "504a07e69dcc53cf9a78dc882b3e3bcc"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\tbd.md": {
-    "mtime": 1779674593.5388753,
-    "ast_hash": "322ecfd9e3ebff3e33f51ab8b5b1a74a",
-    "semantic_hash": "322ecfd9e3ebff3e33f51ab8b5b1a74a"
+    "mtime": 1779934286.6406772,
+    "ast_hash": "9313cc1c9b18784715a85962c8a0c7b0",
+    "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\.agents\\skills\\grill-me\\SKILL.md": {
     "mtime": 1778098264.2206302,
@@ -1375,13 +1335,43 @@
     "semantic_hash": "6f19bc956fada6928de9a125c3133634"
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\.claude\\settings.json": {
-    "mtime": 1779764403.6407812,
+    "mtime": 1779766206.7895434,
     "ast_hash": "5d6ecd96cf065b16e8bb9fbf5d7d8f0d",
     "semantic_hash": ""
   },
   "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\docs\\superpowers\\specs\\2026-05-25-multi-category-activities-design.md": {
-    "mtime": 1779765903.322751,
-    "ast_hash": "10db768afa3807f11b30d7efd16138c5",
+    "mtime": 1779885502.4408157,
+    "ast_hash": "859e20cce2ca07e07e234ce4eb54a5f3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\design-showcase\\page.tsx": {
+    "mtime": 1779934874.4642193,
+    "ast_hash": "9bb4dd8cd2a88bcdd5b0010f4f1daeba",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\[category]\\page.tsx": {
+    "mtime": 1779934712.8825827,
+    "ast_hash": "d8a92df192dbefe15b51bbcf5d42a0c1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\(with-sidebar)\\_lib\\searchParams.ts": {
+    "mtime": 1779934555.0708163,
+    "ast_hash": "06b30fbcb88dff7aa3dbb3849be1914e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\app\\api\\_lib\\withRoute.ts": {
+    "mtime": 1779935506.7513874,
+    "ast_hash": "d0f99b724349952ec499ea2717bd1f57",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\src\\shared\\api\\parse.ts": {
+    "mtime": 1779935111.2607422,
+    "ast_hash": "5c162a40920832da363c0e45208a335e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\coeui\\Documents\\Dev\\Wandr\\CONTEXT.md": {
+    "mtime": 1779934277.8779328,
+    "ast_hash": "af58ff5715072559fd98ee72c247e037",
     "semantic_hash": ""
   }
 }
