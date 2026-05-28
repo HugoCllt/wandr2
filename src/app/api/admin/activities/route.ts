@@ -1,12 +1,6 @@
-import { handleApiError } from '../../_lib/error-handler';
 import { postAdminActivity } from '../../../../modules/activities/web/adminActivityRoute';
+import { route } from '../../_lib/route';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
-  try {
-    return await postAdminActivity(request);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+export const POST = route(postAdminActivity);

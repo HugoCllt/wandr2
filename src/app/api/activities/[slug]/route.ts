@@ -1,12 +1,6 @@
-import { handleApiError } from '../../_lib/error-handler';
-import { getActivityBySlug } from '../../../../modules/activities/web/activityDetailRoute';
+import { getActivityBySlugHandler } from '../../../../modules/activities/web/activityDetailRoute';
+import { route } from '../../_lib/route';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: Request, { params }: { params: { slug: string } }) {
-  try {
-    return await getActivityBySlug(params.slug);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+export const GET = route(getActivityBySlugHandler);

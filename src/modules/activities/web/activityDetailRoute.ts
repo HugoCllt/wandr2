@@ -4,7 +4,6 @@ import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { prisma } from '../../../shared/db/prisma';
 import { GetActivityUseCase } from '../application/GetActivityUseCase';
-import { ActivityNotFoundError } from '../domain/ActivityNotFoundError';
 import { PrismaActivityRepository } from '../infra/PrismaActivityRepository';
 
 export async function loadActivityDTOBySlug(slug: string): Promise<ActivityDTO> {
@@ -13,14 +12,11 @@ export async function loadActivityDTOBySlug(slug: string): Promise<ActivityDTO> 
   return toActivityDTO(activity);
 }
 
-export async function getActivityBySlug(slug: string): Promise<NextResponse> {
-  try {
-    const dto = await loadActivityDTOBySlug(slug);
-    return NextResponse.json(dto);
-  } catch (error) {
-    if (error instanceof ActivityNotFoundError) {
-      return NextResponse.json({ error: 'Activity not found' }, { status: 404 });
-    }
-    throw error;
-  }
+export async function getActivityBySlugHandler(
+  _request: Request,
+  context: { params: { slug: string } },
+): Promise<NextResponse> {
+  // ActivityNotFoundError throws out of the use case → handleApiError maps it to 404.
+  const dto = await loadActivityDTOBySlug(context.params.slug);
+  return NextResponse.json(dto);
 }

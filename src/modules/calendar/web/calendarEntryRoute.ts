@@ -9,13 +9,10 @@ export async function deleteCalendarEntryRouteHandler(
   _request: Request,
   context: { params: { id: string } },
 ): Promise<NextResponse> {
-  const id = context.params.id?.trim();
-  if (!id) {
-    return NextResponse.json({ error: 'Missing entry id' }, { status: 400 });
-  }
-
+  // Next.js only routes here when the [id] segment is non-empty, so no explicit
+  // missing-id check is needed. A blank slug would 404 at the routing layer.
   const user = await getCurrentUser();
   const useCase = new RemoveFromCalendarUseCase(new PrismaCalendarRepository(prisma));
-  await useCase.execute(user.id, id);
+  await useCase.execute(user.id, context.params.id);
   return new NextResponse(null, { status: 204 });
 }

@@ -54,10 +54,8 @@ export async function loadFavoritesFeedDTO(searchParams: URLSearchParams): Promi
   };
 }
 
-export async function favoritesFeedRouteHandler(
-  searchParams: URLSearchParams,
-): Promise<NextResponse> {
-  const dto = await loadFavoritesFeedDTO(searchParams);
+export async function favoritesFeedRouteHandler(request: Request): Promise<NextResponse> {
+  const dto = await loadFavoritesFeedDTO(new URL(request.url).searchParams);
   return NextResponse.json(dto);
 }
 

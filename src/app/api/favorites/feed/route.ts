@@ -1,13 +1,6 @@
-import { handleApiError } from '../../_lib/error-handler';
+import { route } from '../../_lib/route';
 import { favoritesFeedRouteHandler } from '../../../../modules/favorites/web/favoritesFeedRoute';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
-  try {
-    const url = new URL(request.url);
-    return await favoritesFeedRouteHandler(url.searchParams);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+export const GET = route(favoritesFeedRouteHandler);

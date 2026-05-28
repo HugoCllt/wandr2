@@ -66,8 +66,8 @@ export async function loadFeedDTO(
   };
 }
 
-export async function feedRouteHandler(searchParams: URLSearchParams): Promise<NextResponse> {
-  const dto = await loadFeedDTO(searchParams);
+export async function feedRouteHandler(request: Request): Promise<NextResponse> {
+  const dto = await loadFeedDTO(new URL(request.url).searchParams);
   return NextResponse.json(dto);
 }
 

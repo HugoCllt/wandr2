@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
+import { parseBody } from '../../../shared/api/parse';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
 import { SendChatMessageUseCase } from '../application/SendChatMessageUseCase';
 import { MockChatProvider } from '../infra/MockChatProvider';
 import { MockChatRepository } from '../infra/MockChatRepository';
+
+const ChatMessageBodySchema = z.object({
+  text: z.string().trim().min(1, 'Message text required.'),
+});
 
 const HARDCODED_SUGGESTIONS: ActivityDTO[] = [
   {
@@ -62,11 +68,7 @@ const HARDCODED_SUGGESTIONS: ActivityDTO[] = [
 ];
 
 export async function chatMessagesPostHandler(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as { text?: string };
-  const text = (body.text ?? '').trim();
-  if (text.length === 0) {
-    return NextResponse.json({ error: 'Message text required.' }, { status: 400 });
-  }
+  const { text } = await parseBody(ChatMessageBodySchema, request);
 
   const user = await getCurrentUser();
   const repo = new MockChatRepository();

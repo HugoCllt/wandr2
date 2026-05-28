@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { parseBody } from '../../../shared/api/parse';
 import { env } from '../../../shared/config/env';
 import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { prisma } from '../../../shared/db/prisma';
@@ -40,7 +41,7 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = AdminActivitySchema.parse(await request.json());
+  const body = await parseBody(AdminActivitySchema, request);
 
   const citySlug = body.citySlug ?? 'montreal';
   const city = await new PrismaCityRepository(prisma).findBySlug(citySlug);
