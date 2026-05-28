@@ -2295,3 +2295,120 @@ img { display: block; max-width: 100%; }
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* ---------- Profile form modal (onboarding + edit) ---------- */
+.profile-modal {
+  max-width: 520px;
+}
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 30px 28px;
+}
+.profile-form-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--ink);
+  margin: 0;
+}
+.profile-form-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin: -10px 0 4px;
+}
+.pf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.pf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+.pf-field > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.pf-count {
+  color: var(--muted-2);
+  font-style: normal;
+  font-weight: 400;
+}
+.pf-field input[type='date'],
+.pf-field select,
+.pf-field textarea {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+}
+.pf-field textarea {
+  resize: vertical;
+}
+.pf-field select:disabled {
+  color: var(--muted);
+  background: var(--cream-2);
+}
+.pf-radios {
+  display: flex;
+  gap: 10px;
+}
+.pf-radio {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  background: #fff;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  padding: 9px;
+  cursor: pointer;
+}
+.pf-radio.on {
+  border-color: var(--orange-2);
+  background: var(--orange-soft);
+  color: var(--ink);
+}
+.pf-radio input {
+  display: none;
+}
+.pf-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pf-slider {
+  display: grid;
+  grid-template-columns: 92px 1fr 28px;
+  align-items: center;
+  gap: 12px;
+}
+.pf-slider label {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.pf-slider input[type='range'] {
+  width: 100%;
+  accent-color: var(--orange-2);
+}
+.pf-slider-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: right;
+}
