@@ -1,71 +1,39 @@
-# CLAUDE.md — Engineering Guardrails
+# CLAUDE.md — Engineering guardrails
 
-Single source of truth for working principles, architecture rules, and tooling. Read this before opening a PR.
+Architecture rules and working principles. Read this + [`CONTEXT.md`](./CONTEXT.md) (domain & composition vocabulary) before opening a PR.
 
-> **Stage:** personal POC. Single locale, single user, single deployment. Anything that does not serve "make Phase 1 work end-to-end" is out of scope until it does.
-
----
-
-## 1. Think Before Coding
-
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
-
-For multi-step tasks, state a brief plan before starting:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-```
-
-## 2. Simplicity First
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: every changed line should trace directly to the user's request.
-
-## 3.1 Track deferrals in `tbd.md`
-
-**Nothing speculative in the code (§2) — but nothing silently forgotten either.**
-
-Every **assumption**, **planned future change**, or **hardcoded value** you introduce goes in `tbd.md` at the repo root, one bullet each, grouped under `## Assumptions`, `## Future changes`, `## Hardcoded`. Before adding a column, flag, default, or constant "for later," write the bullet instead of the code. Reference the `file:line` when it exists, and link the spec/plan that motivated it. Review `tbd.md` before each plan so deferrals get picked up when their consumer finally exists.
+> **Stage:** personal POC. Single locale, single user, single deployment. Anything that doesn't serve "make Phase 1 work end-to-end" is out of scope.
 
 ---
 
-## 4. Architecture stance
+## Working principles
 
-- **Modular monolith.** One Next.js app at `apps/web`. Capabilities live under `apps/web/src/modules/<capability>/{domain,application,infra,web}`.
-- **Capabilities are shared across pages.** A page (Home, Sport, Romantic, Food, Chat) is a thin composition of shared modules parameterized by a **preset**. If you find yourself copying a feature into a page-specific file, you are violating this rule.
-- **Selective hexagonal.** Ports + adapters only for genuine external dependencies: DB, search, map, LLM, cache. Filters, sorting, ranking, presets, UI are not ports.
-- **Modules are folders, not packages.** Promote a folder to a workspace package only when a second consumer (`apps/api`, `apps/mobile`) actually exists.
+**1. Think before coding.** State assumptions, surface tradeoffs, don't pick silently. If multiple interpretations exist, ask.
 
-## 5. Layer DAG (enforced by `dependency-cruiser`)
+**2. Simplicity first.** Minimum code that solves the problem. No abstractions for single-use code. No flexibility that wasn't requested. If a senior would call it overcomplicated, simplify.
+
+**3. Surgical changes.** Touch only what the task requires. Match existing style. Don't refactor adjacent code. Every changed line traces directly to the user's request.
+
+**3.1 Deferrals go in `tbd.md`.** Every assumption, planned future change, or hardcoded value gets one bullet under `## Assumptions`, `## Future changes`, or `## Hardcoded`. Reference `file:line`. Review before each new plan so deferrals get picked up when their consumer finally exists.
+
+---
+
+## Architecture
+
+**Modular monolith** under `src/`. Two entry points:
+
+- `src/app/` — Next.js App Router (web product)
+- `src/mcp/` — MCP server (ingestion + recheck tools)
+
+Capabilities live in `src/modules/<cap>/{domain,application,infra,web}`. Cross-cutting helpers live in `src/shared/{api,auth,config,contracts,db,obs,presets,ui}`.
+
+### The two architectural seams to know
+
+**1. Pages are config, not code.** Every category page (sport, dining, culture, outdoor, nightlife, romantic) is served by **one** dynamic route `app/(with-sidebar)/[category]/page.tsx` driven by **one** registry `shared/presets/CATEGORY_PRESETS`. The Nav also derives from it. **Adding a category = one registry entry.** Home is the only product exception (`app/(with-sidebar)/page.tsx`). `design-showcase` is dev-only. See `CONTEXT.md`.
+
+**2. HTTP edge is one seam.** Every `app/api/**/route.ts` collapses to `export const VERB = withRoute(handler)` (`src/app/api/_lib/withRoute.ts`). Handlers throw — `handleApiError` is the single error→status policy. Input validation lives in Zod schemas via `parseBody` / `parseQuery` (`src/shared/api/parse.ts`); no manual `safeParse + 400` in handlers, no `instanceof` chains.
+
+## Layer DAG (enforced by `dependency-cruiser`)
 
 ```
 web → application → domain
@@ -74,63 +42,75 @@ infra → domain     (infra implements ports declared in domain)
 shared/* → domain | shared/*   (no upward edges)
 ```
 
-**Forbidden edges** — CI fails if any of these appear:
+**Forbidden edges** — `pnpm dep:check` fails on any of these:
 
-- `domain → application | infra | web`
-- `application → infra | web`
-- `infra → web | application`
-- `web → infra` (web only goes through application)
-- `shared/ui → shared/contracts` — **`shared/ui` is DTO-free.** A component that reads a DTO belongs to its capability's `web/`, not the shared bin. This is the teeth behind the §6 placement rule; it stops the shared grab-bag from reforming.
+- `domain → application | infra | web | app`
+- `application → infra | web | app`
+- `infra → application | web | app`
+- `src/app → src/modules/*/infra` (app goes through application)
+- `src/modules → src/app` (modules never import app)
+- `src/shared → application | infra | web | app`
+- `src/shared/ui → src/shared/contracts` (shared/ui is DTO-free)
 - Any cycle, anywhere.
 
-**Cross-module edges** — also enforced:
+**Cross-module edges:**
 
-- `chat/* → feed/*` allowed. The reverse is forbidden. *Chat consumes the feed; never the inverse.*
-- `<page>/* → modules/*` allowed. `modules/* → app/*` forbidden.
-- A capability's `web/` may import another capability's `web/` (e.g. an activity card embedding a `FavoriteButton`), **but the capability graph must stay acyclic.** `activities` is the core noun — `feed`, `calendar`, `favorites` depend on it; it must not depend back on them. *Known debt: `activities → calendar` / `activities → favorites` exist because cards embed action buttons. Resolve by passing actions in as props (see card deepening), then this becomes enforceable.*
+- `chat → feed` allowed; reverse forbidden. Chat consumes the feed, never the inverse.
+- A capability's `web/` may import another capability's `web/` (e.g. a card embedding `FavoriteButton`), **but `activities` is the core noun** — feed/calendar/favorites/chat/profile depend on it; it must not depend back. Inject sibling UI as props from the consumer.
 
-## 6. Layer responsibilities
+## Layer responsibilities
 
 | Layer | Owns | Forbidden |
 |---|---|---|
-| `domain` | Entities, value objects, ports (interfaces), domain errors, pure business rules | Frameworks, HTTP, Prisma, React, env, time-of-day |
-| `application` | Use cases, orchestration, error mapping, dependency wiring | Direct DB calls, HTTP routes, JSX |
-| `infra` | Port adapters (Prisma, Mapbox, OpenAI, Redis, …) | Business rules, orchestration |
-| `shared/contracts` | Pure types crossing the API/UI boundary (DTOs, view models) | Logic, methods, domain entities |
-| `shared/presets` | Per-page configuration objects | Logic, data fetching, UI |
-| `shared/ui` | Presentational React **primitives** — DTO-free, used by ≥2 capabilities (icons, decor, formatters, layout chrome like `Nav`) | Data fetching, business rules, **capability-specific UI** |
-| `modules/<cap>/web` | A capability's own UI + route handlers — components that consume that capability's DTO | Business rules, infrastructure details |
-| `web` (Next.js `app/`) | Route handlers, page composition, hooks | Business rules, infrastructure details |
+| `modules/<cap>/domain` | Entities, value objects, ports, domain errors, pure rules | Frameworks, HTTP, Prisma, React, env, time-of-day |
+| `modules/<cap>/application` | Use cases, orchestration | Direct DB calls, HTTP routes, JSX |
+| `modules/<cap>/infra` | Port adapters (Prisma, Mapbox, OpenAI, …) | Business rules, orchestration |
+| `modules/<cap>/web` | A capability's UI + route handlers (consumes its DTO) | Business rules, infrastructure details |
+| `shared/contracts` | DTOs / view models crossing API↔UI | Logic, methods, domain entities |
+| `shared/presets` | Per-page config (`CATEGORY_PRESETS`, `HOME_PRESET`, `FAVORITES_PRESET`) | Logic, data fetching, UI |
+| `shared/ui` | DTO-free primitives (icons, decor, layout chrome, Nav) used by ≥2 capabilities | Data fetching, business rules, DTO-aware components |
+| `shared/api` | Cross-layer HTTP helpers (`parseBody`, `parseQuery`) | Capability logic |
+| `app/api/_lib` | Edge wrapper + error policy (`withRoute`, `handleApiError`) | Capability logic |
+| `src/app` | Next route files + page composition | Business rules, direct infra access |
 
-**Component placement rule** — where does a `.tsx` go? One question decides it:
+**Component placement** — does a `.tsx` consume a capability's DTO (`ActivityDTO`, `CalendarEntryDTO`, …)?
 
-> *Does the component consume a capability's DTO (e.g. `ActivityDTO`, `FilterValueDTO`, `CalendarEntryDTO`)?*
-> **Yes** → it lives in that capability's `modules/<cap>/web/`.
-> **No, and ≥2 capabilities use it** → `shared/ui`.
-> **No, and only one capability uses it** → that capability's `web/` anyway; promote to `shared/ui` when a second consumer appears.
+- **Yes** → it lives in that capability's `modules/<cap>/web/`.
+- **No, and ≥2 capabilities use it** → `shared/ui`.
+- **No, and only one capability uses it** → that capability's `web/`; promote when a second consumer appears.
 
-"Presentational" is not a placement signal — almost every component is presentational. **DTO ownership is the signal.** A component marooned in `shared/ui` while it reads one capability's DTO is misplaced; move it.
+DTO ownership is the placement signal — not "is it presentational". A component reading a capability's DTO from `shared/ui` is misplaced; move it.
 
-## 7. Naming
+## Naming
 
 ```
 Entities       PascalCase nouns       Activity, Favorite, FeedQuery
 Ports          IPascalCase            IActivityRepository, ILLMProvider
-Adapters       <Tech>PascalCase       PrismaActivityRepository, MapboxAdapter
+Adapters       <Tech>PascalCase       PrismaActivityRepository
 Use cases      <Verb><Noun>UseCase    GetFeedUseCase, AddFavoriteUseCase
 DTOs           PascalCaseDTO          ActivityDTO, FeedQueryDTO
-View models    PascalCaseVM           ActivityCardVM
-Presets        SCREAMING_SNAKE_CASE   HOME_PRESET, SPORT_PRESET
+Presets        SCREAMING_SNAKE_CASE   HOME_PRESET, CATEGORY_PRESETS
 Errors         PascalCaseError        ActivityNotFoundError
 Modules        kebab-case folders     activities, feed, favorites
 ```
 
+## Verification commands
+
+```
+pnpm type-check   # tsc --noEmit
+pnpm dep:check    # dependency-cruiser (layer DAG)
+pnpm test         # vitest unit tests
+pnpm lint         # eslint
+pnpm build        # next build (catches Next-specific issues)
+```
+
+Run `type-check + dep:check + test` after every increment; add `build` before a finishing commit.
+
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+Knowledge graph of the codebase at `graphify-out/`.
 
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- For codebase questions, prefer `graphify query "<question>"` over raw grep when `graph.json` exists.
+- `graphify path "<A>" "<B>"` for relationships, `graphify explain "<concept>"` for focused concepts.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review.
+- After modifying code: `graphify update .` (AST-only, no API cost).
