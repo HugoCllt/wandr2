@@ -17,36 +17,8 @@ export class PrismaActivityRepository
 
   async create(input: ActivityCreateInput): Promise<Activity> {
     const activity = await this.prisma.activity.create({
-      data: {
-        slug: input.slug,
-        title: input.title,
-        description: input.description,
-        imageUrl: input.imageUrl,
-        kind: input.kind,
-        categories: input.categories as unknown as Prisma.InputJsonValue,
-        address: input.address,
-        neighborhood: input.neighborhood,
-        latitude: input.latitude,
-        longitude: input.longitude,
-        dateStart: input.dateStart,
-        dateEnd: input.dateEnd,
-        priceMinCents: input.priceMinCents,
-        priceMaxCents: input.priceMaxCents,
-        externalUrl: input.externalUrl,
-        indoor: input.indoor,
-        outdoor: input.outdoor,
-        isFeatured: input.isFeatured,
-        status: input.status,
-        sourceId: input.sourceId,
-        cityId: input.cityId,
-        dedupeKey: input.dedupeKey,
-        expiresAt: input.expiresAt,
-        lastSeenAt: input.lastSeenAt,
-        lastVerifiedAt: input.lastVerifiedAt,
-        recheckAfter: input.recheckAfter,
-      },
+      data: { ...input, categories: input.categories as unknown as Prisma.InputJsonValue },
     });
-
     return toActivity(activity);
   }
 
