@@ -2412,3 +2412,27 @@ img { display: block; max-width: 100%; }
   color: var(--muted);
   text-align: right;
 }
+
+/* ---------- Profile header actions ---------- */
+.profile-header-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+.profile-signout {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.profile-signout:hover {
+  color: var(--ink-2);
+  border-color: var(--muted-2);
+}
