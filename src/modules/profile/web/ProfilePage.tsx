@@ -1,4 +1,5 @@
 import type { ProfileViewDTO } from '../../../shared/contracts/ProfileViewDTO';
+import { Avatar } from '../../../shared/ui/Avatar';
 import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
 
 const KNOWN_ICON_NAMES: ReadonlySet<string> = new Set([
@@ -31,8 +32,7 @@ export function ProfilePage({ view }: { view: ProfileViewDTO }) {
     <div className="profile-shell">
       <header className="profile-header">
         <div className="profile-avatar">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={profile.avatarUrl} alt="" />
+          <Avatar name={profile.name} src={profile.avatarUrl} size={72} />
         </div>
         <div>
           <h1 className="profile-name">{profile.name}</h1>

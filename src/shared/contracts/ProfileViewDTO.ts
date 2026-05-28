@@ -28,7 +28,7 @@ export type ProfileViewDTO = {
     id: string;
     name: string;
     vibe: string;
-    avatarUrl: string;
+    avatarUrl: string | null;
     tags: ProfileTagDTO[];
   };
   stats: ProfileStatDTO[];

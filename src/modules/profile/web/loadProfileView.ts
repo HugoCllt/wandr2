@@ -1,11 +1,14 @@
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import type { ProfileViewDTO } from '../../../shared/contracts/ProfileViewDTO';
+import { prisma } from '../../../shared/db/prisma';
 import { GetProfileViewUseCase } from '../application/GetProfileViewUseCase';
-import { MockProfileRepository } from '../infra/MockProfileRepository';
+import { PrismaProfileRepository } from '../infra/PrismaProfileRepository';
 
 export async function loadProfileView(): Promise<ProfileViewDTO> {
   const user = await getCurrentUser();
-  const view = await new GetProfileViewUseCase(new MockProfileRepository()).execute(user.id);
+  const view = await new GetProfileViewUseCase(
+    new PrismaProfileRepository(prisma),
+  ).execute(user.id);
   return {
     profile: {
       id: view.profile.id,
