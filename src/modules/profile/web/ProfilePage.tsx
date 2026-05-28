@@ -1,5 +1,8 @@
 import type { ProfileViewDTO } from '../../../shared/contracts/ProfileViewDTO';
+import { Avatar } from '../../../shared/ui/Avatar';
 import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
+import { ProfileHeaderActions } from './ProfileHeaderActions';
+import type { ProfileFormInitial } from './ProfileFormModal';
 
 const KNOWN_ICON_NAMES: ReadonlySet<string> = new Set([
   'ball',
@@ -24,15 +27,20 @@ const QUICK_ACTIONS: { name: string; meta: string; icon: IconName; kind: '' | 'w
   { name: 'Settings', meta: 'Account & privacy', icon: 'compass', kind: '' },
 ];
 
-export function ProfilePage({ view }: { view: ProfileViewDTO }) {
+export function ProfilePage({
+  view,
+  formInitial,
+}: {
+  view: ProfileViewDTO;
+  formInitial: ProfileFormInitial;
+}) {
   const { profile, stats, breakdown, history } = view;
 
   return (
     <div className="profile-shell">
       <header className="profile-header">
         <div className="profile-avatar">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={profile.avatarUrl} alt="" />
+          <Avatar name={profile.name} src={profile.avatarUrl} size={72} />
         </div>
         <div>
           <h1 className="profile-name">{profile.name}</h1>
@@ -45,9 +53,7 @@ export function ProfilePage({ view }: { view: ProfileViewDTO }) {
             ))}
           </div>
         </div>
-        <button type="button" className="profile-edit">
-          <Icon name="sparkle" size={14} /> Edit profile
-        </button>
+        <ProfileHeaderActions initial={formInitial} />
       </header>
 
       <section className="stats-grid">

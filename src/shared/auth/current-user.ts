@@ -1,26 +1,38 @@
-import { env } from '../config/env';
+import { headers } from 'next/headers';
+
 import { prisma } from '../db/prisma';
+import { auth } from './auth';
+
+/** Thrown when no authenticated session backs the request. Mapped to 401. */
+export class NotAuthenticatedError extends Error {
+  constructor() {
+    super('Not authenticated');
+    this.name = 'NotAuthenticatedError';
+  }
+}
 
 export type CurrentUser = {
   id: string;
   email: string;
   name: string;
   cityId: string;
+  onboardedAt: Date | null;
 };
 
-let cached: CurrentUser | null = null;
-
+/**
+ * Resolves the authenticated user from the Better Auth DB session. Throws
+ * `NotAuthenticatedError` (→ 401) when there is no session. No caching, no
+ * seed-email fallback: every request is scoped to its own session.
+ */
 export async function getCurrentUser(): Promise<CurrentUser> {
-  if (cached) return cached;
+  const session = await auth.api.getSession({ headers: headers() });
+  if (!session?.user) throw new NotAuthenticatedError();
+
   const user = await prisma.user.findUnique({
-    where: { email: env.SEED_USER_EMAIL },
-    select: { id: true, email: true, name: true, cityId: true },
+    where: { id: session.user.id },
+    select: { id: true, email: true, name: true, cityId: true, onboardedAt: true },
   });
-  if (!user) {
-    throw new Error(
-      `Seed user with email ${env.SEED_USER_EMAIL} was not found. Run \`pnpm db:seed\`.`,
-    );
-  }
-  cached = user;
+  if (!user) throw new NotAuthenticatedError();
+
   return user;
 }

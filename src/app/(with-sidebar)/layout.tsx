@@ -2,11 +2,21 @@ import type { ReactNode } from 'react';
 
 import { listNeighborhoods } from '../../modules/activities/web/listNeighborhoods';
 import { TopFilters } from '../../modules/filters/web/TopFilters';
+import { OnboardingGate } from '../../modules/profile/web/OnboardingGate';
+import { requireSession } from '../../shared/auth/require-session';
+import { prisma } from '../../shared/db/prisma';
 import { EdgeArtLeft } from '../../shared/ui/decor/EdgeArtLeft';
 import { EdgeArtRight } from '../../shared/ui/decor/EdgeArtRight';
 
 export default async function WithSidebarLayout({ children }: { children: ReactNode }) {
-  const neighborhoods = await listNeighborhoods();
+  const session = await requireSession();
+  const [user, neighborhoods] = await Promise.all([
+    prisma.user.findUniqueOrThrow({
+      where: { id: session.user.id },
+      select: { onboardedAt: true, cityId: true },
+    }),
+    listNeighborhoods(),
+  ]);
 
   return (
     <>
@@ -20,6 +30,7 @@ export default async function WithSidebarLayout({ children }: { children: ReactN
         <TopFilters neighborhoods={neighborhoods} />
         <main className="main">{children}</main>
       </div>
+      <OnboardingGate onboardedAt={user.onboardedAt} cityId={user.cityId} />
     </>
   );
 }

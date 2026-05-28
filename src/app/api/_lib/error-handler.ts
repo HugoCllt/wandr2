@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 import { ActivityNotFoundError } from '../../../modules/activities/domain/ActivityNotFoundError';
 import { DuplicateCalendarEntryError } from '../../../modules/calendar/domain/DuplicateCalendarEntryError';
+import { NotAuthenticatedError } from '../../../shared/auth/current-user';
 import { logger } from '../../../shared/obs/logger';
 
 /**
@@ -19,6 +20,9 @@ export function handleApiError(error: unknown): NextResponse {
       { error: 'Invalid request', issues: error.flatten().fieldErrors },
       { status: 400 },
     );
+  }
+  if (error instanceof NotAuthenticatedError) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
   if (error instanceof ActivityNotFoundError) {
     return NextResponse.json({ error: error.message }, { status: 404 });

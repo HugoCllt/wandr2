@@ -5,6 +5,18 @@ const EnvSchema = z.object({
   ADMIN_TOKEN: z.string().min(1),
   SEED_USER_EMAIL: z.string().email(),
   SEED_USER_NAME: z.string().min(1),
+  // Seed user password — lets `prisma/seed.ts` register Hugo through the real
+  // Better Auth sign-up path. Defaults in dev for zero friction.
+  SEED_USER_PASSWORD: z.string().min(8).default('changeme123'),
+  // Better Auth.
+  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_URL: z.string().url(),
+  // Public base URL for the browser auth client (inlined by Next at build).
+  NEXT_PUBLIC_BETTER_AUTH_URL: z.string().url(),
+  // Google OAuth — optional. When empty, the Google provider is not mounted
+  // (sign-in button disabled) so dev works without OAuth credentials.
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
