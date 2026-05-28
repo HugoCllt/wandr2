@@ -1,6 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
 
 import type { IProfileRepository, ProfileView } from '../domain/IProfileRepository';
+import type {
+  IProfileWriteRepository,
+  ProfileUpdateInput,
+} from '../domain/IProfileWriteRepository';
 
 const CATEGORY_META: Record<string, { label: string; iconKey: string; cool: boolean }> = {
   SPORT: { label: 'Sport', iconKey: 'ball', cool: false },
@@ -19,8 +23,42 @@ function metaFor(category: string) {
   return CATEGORY_META[category] ?? { label: category, iconKey: 'sparkle', cool: false };
 }
 
-export class PrismaProfileRepository implements IProfileRepository {
+export class PrismaProfileRepository implements IProfileRepository, IProfileWriteRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  async getOnboardedAt(userId: string): Promise<Date | null> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { onboardedAt: true },
+    });
+    return user.onboardedAt;
+  }
+
+  async saveProfile(
+    userId: string,
+    input: ProfileUpdateInput,
+    opts: { markOnboarded: boolean },
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          gender: input.gender,
+          birthDate: input.birthDate,
+          cityId: input.cityId,
+          bio: input.bio,
+          ...(opts.markOnboarded ? { onboardedAt: new Date() } : {}),
+        },
+      });
+      for (const affinity of input.affinities) {
+        await tx.userCategoryAffinity.upsert({
+          where: { userId_category: { userId, category: affinity.category } },
+          update: { score: affinity.score },
+          create: { userId, category: affinity.category, score: affinity.score },
+        });
+      }
+    });
+  }
 
   async getProfileView(userId: string): Promise<ProfileView> {
     const [user, affinities, favoritesCount, calendarCount, recent] = await Promise.all([
