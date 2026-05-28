@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { parseBody } from '../../../shared/api/parse';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import { prisma } from '../../../shared/db/prisma';
 import { ToggleFavoriteUseCase } from '../application/ToggleFavoriteUseCase';
@@ -11,17 +12,9 @@ const ToggleBodySchema = z.object({
 });
 
 export async function toggleFavoriteRouteHandler(request: Request): Promise<NextResponse> {
-  const json = await request.json().catch(() => null);
-  const parsed = ToggleBodySchema.safeParse(json);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body', issues: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
-  }
-
+  const { activityId } = await parseBody(ToggleBodySchema, request);
   const user = await getCurrentUser();
   const useCase = new ToggleFavoriteUseCase(new PrismaFavoriteRepository(prisma));
-  const result = await useCase.execute(user.id, parsed.data.activityId);
+  const result = await useCase.execute(user.id, activityId);
   return NextResponse.json(result);
 }
