@@ -1,6 +1,6 @@
 import { postAdminActivity } from '../../../../modules/activities/web/adminActivityRoute';
-import { route } from '../../_lib/route';
+import { withRoute } from '../../_lib/withRoute';
 
 export const dynamic = 'force-dynamic';
 
-export const POST = route(postAdminActivity);
+export const POST = withRoute(postAdminActivity);

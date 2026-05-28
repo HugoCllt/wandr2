@@ -1,6 +1,6 @@
-import { route } from '../_lib/route';
+import { withRoute } from '../_lib/withRoute';
 import { toggleFavoriteRouteHandler } from '../../../modules/favorites/web/favoritesRoute';
 
 export const dynamic = 'force-dynamic';
 
-export const POST = route(toggleFavoriteRouteHandler);
+export const POST = withRoute(toggleFavoriteRouteHandler);

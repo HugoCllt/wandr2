@@ -2,9 +2,9 @@ import {
   addToCalendarRouteHandler,
   listCalendarEntriesRouteHandler,
 } from '../../../modules/calendar/web/calendarRoute';
-import { route } from '../_lib/route';
+import { withRoute } from '../_lib/withRoute';
 
 export const dynamic = 'force-dynamic';
 
-export const POST = route(addToCalendarRouteHandler);
-export const GET = route(listCalendarEntriesRouteHandler);
+export const POST = withRoute(addToCalendarRouteHandler);
+export const GET = withRoute(listCalendarEntriesRouteHandler);

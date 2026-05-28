@@ -1,6 +1,6 @@
 import { chatMessagesPostHandler } from '../../../../modules/chat/web/chatMessagesRoute';
-import { route } from '../../_lib/route';
+import { withRoute } from '../../_lib/withRoute';
 
 export const dynamic = 'force-dynamic';
 
-export const POST = route(chatMessagesPostHandler);
+export const POST = withRoute(chatMessagesPostHandler);

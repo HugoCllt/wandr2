@@ -1,6 +1,6 @@
 import { deleteCalendarEntryRouteHandler } from '../../../../modules/calendar/web/calendarEntryRoute';
-import { route } from '../../_lib/route';
+import { withRoute } from '../../_lib/withRoute';
 
 export const dynamic = 'force-dynamic';
 
-export const DELETE = route(deleteCalendarEntryRouteHandler);
+export const DELETE = withRoute(deleteCalendarEntryRouteHandler);
