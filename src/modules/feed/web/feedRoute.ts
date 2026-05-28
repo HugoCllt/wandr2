@@ -12,13 +12,11 @@ import { prisma } from '../../../shared/db/prisma';
 import type { FilterValueDTO } from '../../../shared/contracts/FilterValueDTO';
 import { CATEGORY_PRESETS, isCategoryKey } from '../../../shared/presets/CATEGORY_PRESETS';
 import { HOME_PRESET } from '../../../shared/presets/HOME_PRESET';
-import { SPORT_PRESET } from '../../../shared/presets/SPORT_PRESET';
 import { GetFeedUseCase } from '../application/GetFeedUseCase';
 import { DEFAULT_FEED_LIMIT } from '../domain/FeedQuery';
 
 function resolveBaseFiltersFromParams(searchParams: URLSearchParams): FilterValueDTO | null {
   const preset = searchParams.get('preset');
-  if (preset === 'sport') return SPORT_PRESET.baseFilters;
   if (preset && isCategoryKey(preset)) {
     return CATEGORY_PRESETS[preset].baseFilters;
   }

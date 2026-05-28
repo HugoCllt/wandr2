@@ -4,20 +4,25 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { CATEGORY_KEYS, CATEGORY_PRESETS } from '../presets/CATEGORY_PRESETS';
 import { Icon, type IconName } from './icons/Icon';
 
-const PRIMARY_LINKS: { name: string; href: string; icon: IconName }[] = [
-  { name: 'Home', href: '/', icon: 'home' },
-  { name: 'Sport', href: '/sport', icon: 'ball' },
-  { name: 'Dining', href: '/dining', icon: 'fork' },
-  { name: 'Culture', href: '/culture', icon: 'culture' },
-  { name: 'Outdoor', href: '/outdoor', icon: 'leaf' },
-  { name: 'Nightlife', href: '/nightlife', icon: 'moon' },
-];
+type NavLink = { name: string; href: string; icon: IconName };
 
-const OVERFLOW_LINKS: { name: string; href: string; icon: IconName }[] = [
-  { name: 'Romantic', href: '/romantic', icon: 'heart' },
+const HOME_LINK: NavLink = { name: 'Home', href: '/', icon: 'home' };
+
+// Nav derives from CATEGORY_PRESETS — adding a category to the registry adds it
+// here automatically. `nav: 'primary' | 'overflow'` per preset decides where.
+const categoryLinks = CATEGORY_KEYS.map((key) => {
+  const cfg = CATEGORY_PRESETS[key];
+  return { name: cfg.label, href: `/${key}`, icon: cfg.icon, nav: cfg.nav };
+});
+
+const PRIMARY_LINKS: NavLink[] = [
+  HOME_LINK,
+  ...categoryLinks.filter((l) => l.nav === 'primary'),
 ];
+const OVERFLOW_LINKS: NavLink[] = categoryLinks.filter((l) => l.nav === 'overflow');
 
 const AVATAR_URL =
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80';
