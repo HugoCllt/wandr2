@@ -1,7 +1,14 @@
-# Implementation Plan — Authentification + Profil onboarding (v2 — Better Auth)
+# Auth + Profile onboarding — Implementation Plan
 
-> Plan dérivé de `SPEC.md` (branche `claude/user-auth-profile-13a0L`), **finalisé après grilling**.
-> Construit sur `claude/user-auth-profile-plan-EJIY9`.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Migrate Wandr from a hardcoded single-user POC (one seeded `User`, identified by `SEED_USER_EMAIL`) to a multi-user authenticated app, using **Better Auth** (email/password + Google OAuth) with native **DB sessions**, a **blocking onboarding popup** on first login, and replacing `MockProfileRepository` with a Prisma-backed reader. DAG from `CLAUDE.md` is strictly preserved at every slice.
+
+**Architecture:** Better Auth occupies the HTTP auth edge (sign-up, sign-in, sign-out, session) at `/api/auth/[...all]`. Its config lives in `shared/auth/auth.ts`. The module `modules/auth/` is reduced to `web/` (client components only — no domain/application/infra wrappers). `cityId = Montréal` is injected on user creation via `databaseHooks.user.create.before`. The only domain use case introduced is `UpdateProfileUseCase` (profile, not auth). Onboarding is a blocking client popup mounted in `(with-sidebar)/layout.tsx`, gated by `onboardedAt === null`.
+
+**Source spec:** `docs/superpowers/specs/2026-05-28-auth-profile-onboarding-spec.md` (copy of `SPEC.md` on branch `claude/user-auth-profile-13a0L`). The "Spec divergences" section below records 9 grilling-locked patches to that spec (notably: Better Auth replaces Auth.js v5, the auth module is collapsed, `passwordHash` lives on `Account` not `User`).
+
+**Branch:** `claude/user-auth-profile-plan-EJIY9`.
 
 ---
 
