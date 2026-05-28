@@ -1,3 +1,15 @@
+/**
+ * DESIGN SHOWCASE — NOT A PRODUCT PAGE.
+ *
+ * Living palette of every activity-card variant. Used as a visual reference for
+ * picking which cards to use when the richer multi-section Category page design
+ * lands (see CONTEXT.md "Design showcase" and the `tbd.md` deferral). Pulls
+ * romantic activities purely as demo data; the page is not tied to that category.
+ *
+ * Real category pages live under the dynamic `[category]` route — do not copy
+ * this file as a template.
+ */
+
 import { loadCategoryFeedDTO } from '../../../modules/feed/web/loadCategoryFeed';
 import { CATEGORY_PRESETS } from '../../../shared/presets/CATEGORY_PRESETS';
 import { AddToCalendarButton } from '../../../modules/calendar/web/AddToCalendarButton';
@@ -10,10 +22,9 @@ import { MediaRowActivityCard } from '../../../modules/activities/web/cards/Medi
 import { PlayActivityCard } from '../../../modules/activities/web/cards/PlayActivityCard';
 import { RecActivityCard } from '../../../modules/activities/web/cards/RecActivityCard';
 import { SideActivityCard } from '../../../modules/activities/web/cards/SideActivityCard';
+import { toURLSearchParams, type SearchParamsInput } from '../_lib/searchParams';
 
 export const dynamic = 'force-dynamic';
-
-type SearchParams = Record<string, string | string[] | undefined>;
 
 const DEAL_LABELS = ['20% off', 'Date-night menu', 'Sunset rate', 'Two-for-one'];
 const TAG_LABELS: Array<{ tag: string; tagKind: 'deal' | '' }> = [
@@ -25,8 +36,10 @@ const TAG_LABELS: Array<{ tag: string; tagKind: 'deal' | '' }> = [
   { tag: 'Couples', tagKind: '' },
 ];
 
-export default async function RomanticPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function DesignShowcasePage({ searchParams }: { searchParams: SearchParamsInput }) {
   const params = toURLSearchParams(searchParams);
+  // Demo data: romantic activities make for visually rich cards. The page itself
+  // is not coupled to that category — swap the key if needed.
   const feed = await loadCategoryFeedDTO('romantic', params);
   const cfg = CATEGORY_PRESETS.romantic;
   const titleLines = cfg.heroTitle.split('\n');
@@ -48,6 +61,24 @@ export default async function RomanticPage({ searchParams }: { searchParams: Sea
 
   return (
     <>
+      <div
+        role="note"
+        aria-label="Design palette"
+        style={{
+          margin: '12px 0',
+          padding: '8px 14px',
+          background: '#fff7ed',
+          border: '1px dashed #fb923c',
+          borderRadius: 8,
+          fontSize: 12,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#9a3412',
+        }}
+      >
+        Design palette — card variants reference, not a product page.
+      </div>
+
       <div className="sport-hero">
         <div className="sport-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
         <div className="sport-hero-inner">
@@ -207,17 +238,4 @@ export default async function RomanticPage({ searchParams }: { searchParams: Sea
       )}
     </>
   );
-}
-
-function toURLSearchParams(searchParams: SearchParams): URLSearchParams {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      if (value.length > 0) params.set(key, value[0]);
-    } else {
-      params.set(key, value);
-    }
-  }
-  return params;
 }

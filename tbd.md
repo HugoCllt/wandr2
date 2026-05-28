@@ -24,13 +24,9 @@ Deferrals captured per `CLAUDE.md` §3.1. Nothing speculative ships in code; eve
 - **Rename `listActivitiesDueForRecheck` → `listPlacesDueForRecheck`.** Today it only ever returns PLACEs (EVENTs have no `recheckAfter`); keep the generic name unless EVENT re-verification is ever added, then rename for clarity. — `src/mcp/tools/listActivitiesDueForRecheck.ts`.
 - **Return `structuredContent` from the MCP tools.** Currently tools return JSON in a text content block (uniform across tools; the array-returning `listActivitiesDueForRecheck` would otherwise need an `{items:[]}` wrapper). Add `structuredContent` + `outputSchema` if a client benefits from typed structured output. — `src/mcp/runTool.ts`.
 - **Extract `modules/ingestion/`** from `modules/activities/` if the staging/promotion surface grows a second consumer. — CLAUDE.md §4.
-- **Recheck orchestration** is agent-driven (judgment in the agent, not in code); only `findDueForRecheck`/`confirmActivity`/`archive` live here.
-- **Tavily MCP for ingestion search.** MVP uses native WebSearch/WebFetch in `wandr-theme-scout`; revisit Tavily only if native extraction recall/precision plateaus. — `.claude/agents/wandr-theme-scout.md`, spec `2026-05-23-ingestion-agents-mvp-spec.md` §11.
 - **Scheduling (cron) of ingestion/recheck runs.** MVP is user-launched slash commands only; no automatic trigger. — spec §11.
+- **Declarative multi-section Category page system.** Today the generic `CategoryFeedPage` is hero + one `FeedGrid` (Niveau A). When the richer page design is decided, introduce a `sections: [...]` config consumed by one renderer, and retire the `design-showcase` palette page once card-variant choices are made. See `CONTEXT.md` "Category page" / "Design showcase" + the 2026-05-27 architecture grilling. — `src/modules/feed/web/CategoryFeedPage.tsx`, `src/app/(with-sidebar)/design-showcase/page.tsx`.
 - **`getCity(slug)` MCP tool / real multi-city.** Scouts derive the search term by de-slugifying and rely on the MCP `REJECTED`/bbox loop for coord validity; a `getCity` tool would give better search terms + first-try coords once multi-city exists. — spec §9.1.
-- **Persist "dropped" findings for audit.** A drop lacks the required fields of an `ExtractedActivityPayload`, so persisting it needs a partial-candidate schema — speculative, out of MVP. — spec §11.
-- **`lead-*` orchestrator agent.** If an orchestrator ever becomes an *agent* (not a slash command) that spawns sub-agents, it must be named `lead-*`; blocked until Claude Code lets a sub-agent spawn its own sub-agents. — spec §2 (Nommage `lead-*`) / §11.
-- **Prompt optimization (recall/precision, few-shot, tuning)** for scouts/verifiers — explicitly the non-MVP. — spec §11.
 
 ## Hardcoded
 
