@@ -11,6 +11,8 @@ const EnvSchema = z.object({
   // Better Auth.
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
+  // Public base URL for the browser auth client (inlined by Next at build).
+  NEXT_PUBLIC_BETTER_AUTH_URL: z.string().url(),
   // Google OAuth — optional. When empty, the Google provider is not mounted
   // (sign-in button disabled) so dev works without OAuth credentials.
   GOOGLE_CLIENT_ID: z.string().default(''),
