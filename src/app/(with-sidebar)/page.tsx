@@ -5,12 +5,11 @@ import { RecommendationsSection } from '../../modules/feed/web/RecommendationsSe
 import { loadFeedDTO } from '../../modules/feed/web/feedRoute';
 import { parseFilters, serializeFilters } from '../../modules/filters/application/url-codec';
 import { FooterBanner } from '../../shared/ui/FooterBanner';
+import { toURLSearchParams, type SearchParamsInput } from './_lib/searchParams';
 
 export const dynamic = 'force-dynamic';
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
+export default async function HomePage({ searchParams }: { searchParams: SearchParamsInput }) {
   const params = toURLSearchParams(searchParams);
   const filters = parseFilters(params);
 
@@ -30,17 +29,4 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
       <FooterBanner />
     </>
   );
-}
-
-function toURLSearchParams(searchParams: SearchParams): URLSearchParams {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      if (value.length > 0) params.set(key, value[0]);
-    } else {
-      params.set(key, value);
-    }
-  }
-  return params;
 }
