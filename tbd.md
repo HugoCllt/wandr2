@@ -36,6 +36,10 @@ Deferrals captured per `CLAUDE.md` §3.1. Nothing speculative ships in code; eve
 
 ## Hardcoded
 
+- **Urgent-events band is global, not per-page config.** "Happening Soon" (`UrgentEventsSection`) is fetched in `(with-sidebar)/layout.tsx` and rendered at the top of every sidebar page, so it ignores per-category filters by design (it's a city-wide "do it before it's gone" band). Fold it into the deferred declarative section system if/when Category pages get richer multi-section layouts. — `src/app/(with-sidebar)/layout.tsx`, `src/modules/activities/web/UrgentEventsSection.tsx`.
+- **`URGENT_WINDOW_DAYS = 7`** and the layout's `listUrgentActivities(cityId, 6)` limit. Window = events that start, or whose `expiresAt`/deadline falls, within a week; capped at 6 cards. Tune when the design calls for a different urgency horizon or count. — `src/modules/activities/application/ListUrgentActivitiesUseCase.ts`, `src/app/(with-sidebar)/layout.tsx`.
+
+
 - **`RECHECK_INTERVAL_DAYS = 90`** for PLACE re-verification cadence. — `src/modules/activities/domain/freshness.ts`, spec §6.
 - **Default city slug `'montreal'`** in the admin create route when `citySlug` is omitted. — `adminActivityRoute.ts`.
 - **No GIN index on `Activity.categories Json`.** The feed query ORs JSON-path filters (`primary equals` / `secondary array_contains`); fine at POC scale. Add a GIN index (and revisit the where-clause) if data grows. — `PrismaActivityRepository.findCandidates`, `prisma/schema.prisma`, spec §4.

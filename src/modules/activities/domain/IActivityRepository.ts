@@ -11,4 +11,5 @@ export interface IActivityRepository {
   slugExists(slug: string): Promise<boolean>;
   listNeighborhoods(): Promise<string[]>;
   listFeatured(limit: number): Promise<Activity[]>;
+  listUrgent(cityId: string, now: Date, until: Date, limit: number): Promise<Activity[]>;
 }

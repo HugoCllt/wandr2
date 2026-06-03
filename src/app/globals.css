@@ -1063,6 +1063,22 @@ img { display: block; max-width: 100%; }
 .live-meta { font-size: 12.5px; color: rgba(246,241,232,0.85); display: flex; align-items: center; gap: 8px; }
 .live-meta .dot { width: 3px; height: 3px; border-radius: 999px; background: rgba(246,241,232,0.6); }
 
+.urgent-section { margin-bottom: 4px; }
+.urgent-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 8px;
+  height: 24px; padding: 0 10px;
+  background: var(--orange-2); color: #fff;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.urgent-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
 .play-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

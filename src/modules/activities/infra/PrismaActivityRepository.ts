@@ -152,6 +152,24 @@ export class PrismaActivityRepository
     return activities.map(toActivity);
   }
 
+  async listUrgent(cityId: string, now: Date, until: Date, limit: number): Promise<Activity[]> {
+    const activities = await this.prisma.activity.findMany({
+      where: {
+        kind: 'EVENT',
+        status: 'PUBLISHED',
+        cityId,
+        expiresAt: { gt: now },
+        OR: [
+          { dateStart: { gte: now, lte: until } }, // starts within the window
+          { expiresAt: { lte: until } }, // deadline within the window
+        ],
+      },
+      orderBy: [{ dateStart: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
+      take: limit,
+    });
+    return activities.map(toActivity);
+  }
+
   async findByCityAndDedupeKey(cityId: string, dedupeKey: string): Promise<Activity | null> {
     const activity = await this.prisma.activity.findUnique({
       where: { cityId_dedupeKey: { cityId, dedupeKey } },

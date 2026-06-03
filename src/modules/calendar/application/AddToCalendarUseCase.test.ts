@@ -87,6 +87,9 @@ class FakeActivityRepository implements IActivityRepository {
   async listFeatured(): Promise<Activity[]> {
     return [];
   }
+  async listUrgent(): Promise<Activity[]> {
+    return [];
+  }
 }
 
 function activityFixture(overrides: Partial<Activity> = {}): Activity {

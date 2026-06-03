@@ -98,6 +98,9 @@ class FakeActivityRepository implements IActivityRepository {
       .filter((a) => a.isFeatured)
       .slice(0, limit);
   }
+  async listUrgent(): Promise<Activity[]> {
+    return [];
+  }
 }
 
 let nextActivityCounter = 1;
