@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import { HeroActivityCard } from './cards/HeroActivityCard';
-import { SideActivityCard } from './cards/SideActivityCard';
+import { ClassActivityCard } from './cards/ClassActivityCard';
 import { Icon } from '../../../shared/ui/icons/Icon';
 
 type HeroSectionProps = {
@@ -65,7 +65,7 @@ export function HeroSection({ featured }: HeroSectionProps) {
       {side.length > 0 && (
         <div className="hero-side">
           {side.map((a) => (
-            <SideActivityCard key={a.id} activity={a} flames={4} />
+            <ClassActivityCard key={a.id} activity={a} flames={4} />
           ))}
         </div>
       )}

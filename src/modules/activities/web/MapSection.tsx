@@ -1,7 +1,7 @@
 'use client';
 
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
-import { FromMapActivityCard } from './cards/FromMapActivityCard';
+import { CoverActivityCard } from './cards/CoverActivityCard';
 import { useOpenActivity } from './cards/helpers';
 import { MapView, type MapMarkerData } from './Map/MapView';
 
@@ -40,7 +40,7 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
         </div>
         <div className="map-panel-list">
           {nearbyActivities.slice(0, 4).map((a) => (
-            <FromMapActivityCard key={a.id} activity={a} />
+            <CoverActivityCard key={a.id} activity={a} showPrice />
           ))}
         </div>
       </div>

@@ -1,10 +1,10 @@
 /**
  * DESIGN SHOWCASE — NOT A PRODUCT PAGE.
  *
- * Living palette of every activity-card variant. Used as a visual reference for
- * picking which cards to use when the richer multi-section Category page design
- * lands (see CONTEXT.md "Design showcase" and the `tbd.md` deferral). Pulls
- * romantic activities purely as demo data; the page is not tied to that category.
+ * Living palette of the activity-card variants we keep. Used as a visual
+ * reference for the richer multi-section Category page design (see CONTEXT.md
+ * "Design showcase" and the `tbd.md` deferral). Pulls romantic activities purely
+ * as demo data; the page is not tied to that category.
  *
  * Real category pages live under the dynamic `[category]` route — do not copy
  * this file as a template.
@@ -15,18 +15,13 @@ import { CATEGORY_PRESETS } from '../../../shared/presets/CATEGORY_PRESETS';
 import { AddToCalendarButton } from '../../../modules/calendar/web/AddToCalendarButton';
 import { FavoriteButton } from '../../../modules/favorites/web/FavoriteButton';
 import { ClassActivityCard } from '../../../modules/activities/web/cards/ClassActivityCard';
-import { FromMapActivityCard } from '../../../modules/activities/web/cards/FromMapActivityCard';
 import { HeroActivityCard } from '../../../modules/activities/web/cards/HeroActivityCard';
-import { LiveActivityCard } from '../../../modules/activities/web/cards/LiveActivityCard';
+import { CoverActivityCard } from '../../../modules/activities/web/cards/CoverActivityCard';
 import { MediaRowActivityCard } from '../../../modules/activities/web/cards/MediaRowActivityCard';
-import { PlayActivityCard } from '../../../modules/activities/web/cards/PlayActivityCard';
-import { RecActivityCard } from '../../../modules/activities/web/cards/RecActivityCard';
-import { SideActivityCard } from '../../../modules/activities/web/cards/SideActivityCard';
 import { toURLSearchParams, type SearchParamsInput } from '../_lib/searchParams';
 
 export const dynamic = 'force-dynamic';
 
-const DEAL_LABELS = ['20% off', 'Date-night menu', 'Sunset rate', 'Two-for-one'];
 const TAG_LABELS: Array<{ tag: string; tagKind: 'deal' | '' }> = [
   { tag: 'Tonight', tagKind: '' },
   { tag: '30% off', tagKind: 'deal' },
@@ -54,9 +49,6 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
   const sideItems = pick(1, 3);
   const mediaRows = pick(0, 3);
   const liveItems = pick(1, 3);
-  const playItems = pick(0, 4);
-  const tileItems = pick(2, 4);
-  const compactItems = pick(1, 4);
   const classItems = pick(0, 6);
 
   return (
@@ -79,9 +71,9 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
         Design palette — card variants reference, not a product page.
       </div>
 
-      <div className="sport-hero">
-        <div className="sport-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
-        <div className="sport-hero-inner">
+      <div className="page-hero">
+        <div className="page-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
+        <div className="page-hero-inner">
           <div className="hero-eyebrow">{cfg.eyebrow}</div>
           <h1>
             {titleLines.map((l, i) => (
@@ -98,7 +90,7 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
           {sideItems.length > 0 && (
             <div className="hero-side">
               {sideItems.map((a, i) => (
-                <SideActivityCard key={`side-${i}-${a.id}`} activity={a} flames={4} />
+                <ClassActivityCard key={`side-${i}-${a.id}`} activity={a} flames={4} />
               ))}
             </div>
           )}
@@ -106,7 +98,7 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
       )}
 
       {mediaRows.length > 0 && (
-        <section className="sport-section">
+        <section className="content-section">
           <div className="section-head">
             <div>
               <h2>In the Spotlight</h2>
@@ -129,16 +121,16 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
       )}
 
       {liveItems.length > 0 && (
-        <section className="sport-section">
+        <section className="content-section">
           <div className="section-head">
             <div>
               <h2>Tonight in Montréal</h2>
               <p>Cinematic plans happening after sundown.</p>
             </div>
           </div>
-          <div className="live-row">
+          <div className="cover-row">
             {liveItems.map((a, i) => (
-              <LiveActivityCard
+              <CoverActivityCard
                 key={`live-${i}-${a.id}`}
                 activity={a}
                 live={i === 0}
@@ -149,71 +141,8 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
         </section>
       )}
 
-      {playItems.length > 0 && (
-        <section className="sport-section">
-          <div className="section-head">
-            <div>
-              <h2>Book the Night</h2>
-              <p>Tables, sails, suites — reserve before the city beats you to it.</p>
-            </div>
-          </div>
-          <div className="play-grid">
-            {playItems.map((a, i) => (
-              <PlayActivityCard
-                key={`play-${i}-${a.id}`}
-                activity={a}
-                deal={i < DEAL_LABELS.length ? DEAL_LABELS[i] : undefined}
-                flames={3}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {tileItems.length > 0 && (
-        <section className="sport-section">
-          <div className="section-head">
-            <div>
-              <h2>Slow Montréal</h2>
-              <p>Long-lingering rooms and rooftops.</p>
-            </div>
-          </div>
-          <div className="rec-grid">
-            {tileItems.map((a, i) => (
-              <RecActivityCard
-                key={`rec-${i}-${a.id}`}
-                activity={a}
-                favoriteSlot={<FavoriteButton activityId={a.id} initialFavorited={a.isFavorited} />}
-                calendarSlot={<AddToCalendarButton activityId={a.id} activityTitle={a.title} />}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {compactItems.length > 0 && (
-        <section className="sport-section">
-          <div className="section-head">
-            <div>
-              <h2>Near Your Table</h2>
-              <p>Quick walks between a drink and a view.</p>
-            </div>
-          </div>
-          <div className="from-map-grid">
-            {compactItems.map((a, i) => (
-              <FromMapActivityCard
-                key={`fm-${i}-${a.id}`}
-                activity={a}
-                distanceLabel="0.4 mi"
-                flames={3}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
       {classItems.length > 0 && (
-        <section className="sport-section">
+        <section className="content-section">
           <div className="section-head">
             <div>
               <h2>Two-Person Workshops</h2>

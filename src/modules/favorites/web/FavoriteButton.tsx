@@ -75,7 +75,7 @@ export function FavoriteButton({
       aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
       title={error ?? undefined}
       data-loading={pending ? '' : undefined}
-      className={'rec-save ' + (favorited ? 'saved' : '')}
+      className={'card-fav-btn ' + (favorited ? 'saved' : '')}
     >
       <Icon name="fire" size={14} />
     </button>

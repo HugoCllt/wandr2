@@ -20,7 +20,7 @@ Trouver ~5–10 activités plausibles du thème, les extraire, et en ingérer ch
 <steps>
 1. `WebSearch` large : ex. « meilleurs <theme> à <searchCity> » (+ variantes). Ne présume pas le type.
 2. Pour chaque résultat prometteur : `WebFetch` la page, puis extrais un payload. **Contrat d'extraction = la description de l'outil `ingestActivity`** (champs requis vs optionnels, coords dans la ville, prix en cents entiers, `payload.categories` = catégories réelles, voir `<classification>`).
-3. **Auto-classe** `kind` : `PLACE` (lieu permanent) ou `EVENT` (daté). `imageUrl` = `og:image` si présent, sinon `null`.
+3. **Auto-classe** `kind` : `PLACE` (lieu permanent) ou `EVENT` (daté). **Image** : prends `og:image` si présent sur la page ; sinon fais une `WebSearch` ciblée sur unsplash.com (ex. `site:unsplash.com <nom ou type d'activité>`) et utilise une image `.jpg`/`.jpeg`/`.png` trouvée ; si aucune image disponible après ça → `null` - N'utilise pas la meme image pour plusieurs activité.
 4. **Champ requis manquant** (date d'un EVENT, adresse/localisation) → fais **1 recherche d'approfondissement** pour le combler. Toujours manquant après ça → **drop** (note dans `dropped`, n'ingère pas).
 5. Appelle `ingestActivity` **une fois par activité retenue**, `meta = { agentName: "<theme>-scout", searchQuery, sourceUrl, rawExcerpt, category: <theme> }`. Ne déduplique pas toi-même.
 6. Lis l'`outcome` : `PROMOTED`/`DUPLICATE` → compte ; `REJECTED` → lis `reason`, corrige la **donnée** et re-tente **une seule fois** (sinon → `rejected`) ; erreur d'outil (Zod) → corrige la **forme** de l'appel.

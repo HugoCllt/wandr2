@@ -1,6 +1,21 @@
-onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
-  - esbuild
-  - prisma
-  - unrs-resolver
+# pnpm 11 enforces a default 24h minimum-release-age supply-chain policy.
+# Disabled for this solo POC — it was a recurring false positive on
+# fast-publishing browser-data packages (electron-to-chromium, caniuse-lite).
+minimumReleaseAge: 0
+
+# Moved from package.json's "pnpm" field, which pnpm 11 no longer reads.
+# Pins better-call for Better Auth.
+overrides:
+  better-call: 1.3.5
+
+# Postinstall/native build scripts allowed to run. pnpm 11 replaced the old
+# `onlyBuiltDependencies` array with this explicit allow-map. better-sqlite3
+# is left false on purpose: it's an unused Better Auth transitive (we use the
+# Prisma/Postgres adapter) and building it would require MSVC tooling.
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
+  esbuild: true
+  unrs-resolver: true
+  better-sqlite3: false

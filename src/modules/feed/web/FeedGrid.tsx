@@ -3,18 +3,14 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
-import { RecActivityCard } from '../../activities/web/cards/RecActivityCard';
-import { FromMapActivityCard } from '../../activities/web/cards/FromMapActivityCard';
+import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
 import { AddToCalendarButton } from '../../calendar/web/AddToCalendarButton';
 import { FavoriteButton } from '../../favorites/web/FavoriteButton';
-
-export type FeedGridVariant = 'standard' | 'compact';
 
 type FeedGridProps = {
   initialItems: FeedItemDTO[];
   initialCursor: string | null;
   filterQueryString: string;
-  variant?: FeedGridVariant;
   feedApiPath?: string;
   emptyMessage?: string;
 };
@@ -23,7 +19,6 @@ export function FeedGrid({
   initialItems,
   initialCursor,
   filterQueryString,
-  variant = 'standard',
   feedApiPath = '/api/feed',
   emptyMessage = 'No activities match your filters.',
 }: FeedGridProps): ReactElement {
@@ -77,26 +72,21 @@ export function FeedGrid({
     return <p className="feed-empty">{emptyMessage}</p>;
   }
 
-  const gridClass = variant === 'compact' ? 'from-map-grid' : 'rec-grid';
-
   return (
     <div>
-      <div className={gridClass} role="list" aria-label="Activities">
+      <div className="cover-grid" role="list" aria-label="Activities">
         {items.map((item) => (
           <div role="listitem" key={item.id}>
-            {variant === 'compact' ? (
-              <FromMapActivityCard activity={item} />
-            ) : (
-              <RecActivityCard
-                activity={item}
-                favoriteSlot={
-                  <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
-                }
-                calendarSlot={
-                  <AddToCalendarButton activityId={item.id} activityTitle={item.title} />
-                }
-              />
-            )}
+            <CoverActivityCard
+              activity={item}
+              showPrice
+              favoriteSlot={
+                <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
+              }
+              calendarSlot={
+                <AddToCalendarButton activityId={item.id} activityTitle={item.title} />
+              }
+            />
           </div>
         ))}
       </div>
