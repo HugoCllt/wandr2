@@ -1,10 +1,11 @@
 import type { FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { CATEGORY_PRESETS, type CategoryKey } from '../../../shared/presets/CATEGORY_PRESETS';
-import { FeedGrid } from './FeedGrid';
+import { MapSection } from '../../activities/web/MapSection';
+import { SectionedFeed } from './SectionedFeed';
 
 type CategoryFeedPageProps = {
   categoryKey: CategoryKey;
-  initialFeed: FeedResultDTO;
+  initialFeed: FeedResultDTO; // the 48-item pool
   filterQueryString: string;
 };
 
@@ -15,6 +16,9 @@ export function CategoryFeedPage({
 }: CategoryFeedPageProps) {
   const cfg = CATEGORY_PRESETS[categoryKey];
   const titleLines = cfg.heroTitle.split('\n');
+  const presetQuery = filterQueryString
+    ? `preset=${categoryKey}&${filterQueryString}`
+    : `preset=${categoryKey}`;
 
   return (
     <>
@@ -31,20 +35,14 @@ export function CategoryFeedPage({
         </div>
       </div>
 
-      <section className="content-section">
-        <div className="section-head">
-          <div>
-            <h2>{cfg.label}</h2>
-            <p>What the city is doing in this lane right now.</p>
-          </div>
-        </div>
-        <FeedGrid
-          key={`${categoryKey}-${filterQueryString}`}
-          initialItems={initialFeed.items}
-          initialCursor={initialFeed.nextCursor}
-          filterQueryString={filterQueryString ? `preset=${categoryKey}&${filterQueryString}` : `preset=${categoryKey}`}
-        />
-      </section>
+      <MapSection nearbyActivities={initialFeed.items} />
+
+      <SectionedFeed
+        key={`${categoryKey}-${filterQueryString}`}
+        items={initialFeed.items}
+        nextCursor={initialFeed.nextCursor}
+        filterQueryString={presetQuery}
+      />
     </>
   );
 }
