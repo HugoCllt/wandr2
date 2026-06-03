@@ -1,8 +1,9 @@
 import { HeroSection } from '../../modules/activities/web/HeroSection';
 import { listFeaturedActivities } from '../../modules/activities/web/listFeaturedActivities';
 import { MapSection } from '../../modules/activities/web/MapSection';
-import { RecommendationsSection } from '../../modules/feed/web/RecommendationsSection';
+import { POOL_LIMIT } from '../../modules/feed/web/buildFeedSections';
 import { loadFeedDTO } from '../../modules/feed/web/feedRoute';
+import { SectionedFeed } from '../../modules/feed/web/SectionedFeed';
 import { parseFilters, serializeFilters } from '../../modules/filters/application/url-codec';
 import { FooterBanner } from '../../shared/ui/FooterBanner';
 import { toURLSearchParams, type SearchParamsInput } from './_lib/searchParams';
@@ -13,19 +14,27 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const params = toURLSearchParams(searchParams);
   const filters = parseFilters(params);
 
-  const [initialFeed, featured, nearby] = await Promise.all([
-    loadFeedDTO(params),
+  const poolParams = new URLSearchParams(params);
+  poolParams.set('limit', String(POOL_LIMIT));
+
+  const [pool, featured] = await Promise.all([
+    loadFeedDTO(poolParams),
     listFeaturedActivities(6),
-    listFeaturedActivities(8),
   ]);
 
   const filterQueryString = serializeFilters(filters).toString();
+  const excludeIds = new Set(featured.map((a) => a.id));
 
   return (
     <>
       <HeroSection featured={featured} />
-      <MapSection nearbyActivities={nearby.slice(featured.length)} />
-      <RecommendationsSection initialFeed={initialFeed} filterQueryString={filterQueryString} />
+      <MapSection nearbyActivities={pool.items} />
+      <SectionedFeed
+        items={pool.items}
+        nextCursor={pool.nextCursor}
+        filterQueryString={filterQueryString}
+        excludeIds={excludeIds}
+      />
       <FooterBanner />
     </>
   );
