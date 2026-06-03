@@ -18,9 +18,9 @@ export function CategoryFeedPage({
 
   return (
     <>
-      <div className="sport-hero">
-        <div className="sport-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
-        <div className="sport-hero-inner">
+      <div className="page-hero">
+        <div className="page-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
+        <div className="page-hero-inner">
           <div className="hero-eyebrow">{cfg.eyebrow}</div>
           <h1>
             {titleLines.map((l, i) => (
@@ -31,7 +31,7 @@ export function CategoryFeedPage({
         </div>
       </div>
 
-      <section className="sport-section">
+      <section className="content-section">
         <div className="section-head">
           <div>
             <h2>{cfg.label}</h2>

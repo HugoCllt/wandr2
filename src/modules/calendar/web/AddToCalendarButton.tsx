@@ -36,7 +36,7 @@ export function AddToCalendarButton({
           onClick={handleClick}
           aria-label="Add to calendar"
           title="Add to calendar"
-          className="rec-bookmark"
+          className="card-cal-btn"
         >
           <Icon name="bookmark" size={15} />
         </button>
