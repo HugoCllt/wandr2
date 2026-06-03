@@ -28,7 +28,7 @@ export function MediaRowActivityCard({
     <article className={className} onClick={() => open(activity)}>
       <div className="media-row-img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
       <div className="media-row-body">
-        <div className="media-row-eyebrow">{eyebrow ?? 'IN THE SPOTLIGHT'}</div>
+        {eyebrow ? <div className="media-row-eyebrow">{eyebrow}</div> : null}
         <h3 className="media-row-title">
           {titleLines.map((l, i) => (
             <div key={i}>{l}</div>
