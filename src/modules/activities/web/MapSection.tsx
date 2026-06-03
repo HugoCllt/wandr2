@@ -14,8 +14,10 @@ const MONTREAL_CENTER = { lng: -73.5674, lat: 45.5019 };
 export function MapSection({ nearbyActivities }: MapSectionProps) {
   const open = useOpenActivity();
 
+  const MARKER_CAP = 24;
   const markers: MapMarkerData[] = nearbyActivities
     .filter((a) => Number.isFinite(a.latitude) && Number.isFinite(a.longitude))
+    .slice(0, MARKER_CAP)
     .map((a) => ({
       id: a.id,
       lng: a.longitude,
@@ -24,6 +26,8 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
       color: a.kind === 'EVENT' ? 'orange' : 'blue',
       onClick: () => open(a),
     }));
+
+  if (markers.length === 0) return null;
 
   return (
     <section className="map-panel">
