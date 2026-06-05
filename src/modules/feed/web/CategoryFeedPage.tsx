@@ -1,5 +1,6 @@
 import type { FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { CATEGORY_PRESETS, type CategoryKey } from '../../../shared/presets/CATEGORY_PRESETS';
+import { PageHero } from '../../../shared/ui/PageHero';
 import { MapSection } from '../../activities/web/MapSection';
 import { SectionedFeed } from './SectionedFeed';
 
@@ -15,34 +16,37 @@ export function CategoryFeedPage({
   filterQueryString,
 }: CategoryFeedPageProps) {
   const cfg = CATEGORY_PRESETS[categoryKey];
-  const titleLines = cfg.heroTitle.split('\n');
   const presetQuery = filterQueryString
     ? `preset=${categoryKey}&${filterQueryString}`
     : `preset=${categoryKey}`;
 
   return (
     <>
-      <div className="page-hero">
-        <div className="page-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
-        <div className="page-hero-inner">
-          <div className="hero-eyebrow">{cfg.eyebrow}</div>
-          <h1>
-            {titleLines.map((l, i) => (
-              <div key={i}>{l}</div>
-            ))}
-          </h1>
-          <p>{cfg.heroSub}</p>
-        </div>
+      <PageHero
+        eyebrow={cfg.eyebrow}
+        title={cfg.heroTitle}
+        subtitle={cfg.heroSub}
+        image={cfg.heroImage}
+        actions={
+          <>
+            <a className="btn-charcoal" href="#map">View map</a>
+            <a className="btn-silver" href="#feed">Browse activities</a>
+          </>
+        }
+      />
+
+      <div id="map" className="scroll-anchor">
+        <MapSection nearbyActivities={initialFeed.items} />
       </div>
 
-      <MapSection nearbyActivities={initialFeed.items} />
-
-      <SectionedFeed
-        key={`${categoryKey}-${filterQueryString}`}
-        items={initialFeed.items}
-        nextCursor={initialFeed.nextCursor}
-        filterQueryString={presetQuery}
-      />
+      <div id="feed" className="scroll-anchor">
+        <SectionedFeed
+          key={`${categoryKey}-${filterQueryString}`}
+          items={initialFeed.items}
+          nextCursor={initialFeed.nextCursor}
+          filterQueryString={presetQuery}
+        />
+      </div>
     </>
   );
 }

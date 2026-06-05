@@ -18,6 +18,7 @@ import { ClassActivityCard } from '../../../modules/activities/web/cards/ClassAc
 import { HeroActivityCard } from '../../../modules/activities/web/cards/HeroActivityCard';
 import { CoverActivityCard } from '../../../modules/activities/web/cards/CoverActivityCard';
 import { MediaRowActivityCard } from '../../../modules/activities/web/cards/MediaRowActivityCard';
+import { PageHero } from '../../../shared/ui/PageHero';
 import { toURLSearchParams, type SearchParamsInput } from '../_lib/searchParams';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +38,6 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
   // is not coupled to that category — swap the key if needed.
   const feed = await loadCategoryFeedDTO('romantic', params);
   const cfg = CATEGORY_PRESETS.romantic;
-  const titleLines = cfg.heroTitle.split('\n');
   const items = feed.items;
 
   const pick = (start: number, n: number) => {
@@ -71,18 +71,12 @@ export default async function DesignShowcasePage({ searchParams }: { searchParam
         Design palette — card variants reference, not a product page.
       </div>
 
-      <div className="page-hero">
-        <div className="page-hero-img" style={{ backgroundImage: `url(${cfg.heroImage})` }} />
-        <div className="page-hero-inner">
-          <div className="hero-eyebrow">{cfg.eyebrow}</div>
-          <h1>
-            {titleLines.map((l, i) => (
-              <div key={i}>{l}</div>
-            ))}
-          </h1>
-          <p>{cfg.heroSub}</p>
-        </div>
-      </div>
+      <PageHero
+        eyebrow={cfg.eyebrow}
+        title={cfg.heroTitle}
+        subtitle={cfg.heroSub}
+        image={cfg.heroImage}
+      />
 
       {heroItem && (
         <section className="hero">

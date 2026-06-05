@@ -11,7 +11,7 @@ export function FooterBanner() {
       <div className="skyline">
         <FooterSkyline />
       </div>
-      <button className="btn-primary">
+      <button className="btn-silver">
         Let&apos;s Explore
         <Icon name="sparkle" size={14} />
       </button>

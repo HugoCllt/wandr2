@@ -3,7 +3,7 @@ export function EdgeArtLeft() {
     <svg viewBox="0 0 110 980" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
       <g
         fill="none"
-        stroke="#2A241D"
+        stroke="#C7CCD1"
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -18,7 +18,7 @@ export function EdgeArtLeft() {
           <path d="M50 12 L 58 36" />
           <path d="M38 36 L 44 16" />
           <path d="M44 16 L 52 16" />
-          <circle cx="38" cy="36" r="2" fill="#2A241D" />
+          <circle cx="38" cy="36" r="2" fill="#C7CCD1" />
         </g>
         <path d="M50 330 C 30 360, 20 400, 30 440 C 40 470, 70 480, 60 510" />
         <g transform="translate(20 520)">

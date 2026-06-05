@@ -84,7 +84,7 @@ export function Nav() {
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
                   right: 0,
-                  background: 'var(--cream)',
+                  background: 'var(--offwhite)',
                   border: '1px solid var(--line)',
                   borderRadius: 12,
                   boxShadow: 'var(--shadow-md)',

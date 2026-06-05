@@ -28,7 +28,7 @@ type MapViewProps = {
   className?: string;
 };
 
-const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
 
 export function MapView({
   center,

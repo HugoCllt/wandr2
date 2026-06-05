@@ -3,7 +3,7 @@ export function FooterSkyline() {
     <svg viewBox="0 0 720 80" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
       <g
         fill="none"
-        stroke="#2A241D"
+        stroke="#C7CCD1"
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"

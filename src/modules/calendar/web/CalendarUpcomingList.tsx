@@ -54,7 +54,7 @@ export function CalendarUpcomingList({ items }: { items: Item[] }) {
         );
       })}
       {items.length === 0 && (
-        <p style={{ margin: 0, color: 'var(--muted)', fontSize: 13 }}>
+        <p style={{ margin: 0, color: 'var(--smoke)', fontSize: 13 }}>
           Nothing booked yet — explore activities and add them to your calendar.
         </p>
       )}

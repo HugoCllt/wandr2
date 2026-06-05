@@ -1,6 +1,7 @@
 import { loadFavoritesFeedDTO } from '../../../modules/favorites/web/favoritesFeedRoute';
 import { parseFilters, serializeFilters } from '../../../modules/filters/application/url-codec';
 import { FeedGrid } from '../../../modules/feed/web/FeedGrid';
+import { PageHero } from '../../../shared/ui/PageHero';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,15 +15,14 @@ export default async function FavoritesPage({ searchParams }: { searchParams: Se
   const filterQueryString = serializeFilters(filters).toString();
 
   return (
-    <section>
-      <div className="section-head">
-        <div>
-          <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 32 }}>
-            Your Favorites
-          </h1>
-          <p>The places, events and plans you&rsquo;ve saved.</p>
-        </div>
-      </div>
+    <>
+      <PageHero
+        eyebrow="SAVED IN MONTREAL"
+        title={'Your\ncollection.'}
+        subtitle="The places, events and plans you’ve saved — kept in one quiet, curated place."
+        image="https://images.unsplash.com/photo-1444723121867-7a241cacace9?auto=format&fit=crop&w=1600&q=80"
+        actions={<a className="btn-charcoal" href="/">Discover more</a>}
+      />
       <FeedGrid
         key={filterQueryString}
         initialItems={initialFeed.items}
@@ -31,7 +31,7 @@ export default async function FavoritesPage({ searchParams }: { searchParams: Se
         feedApiPath="/api/favorites/feed"
         emptyMessage="You haven't favorited anything yet. Tap the flame on a card to save it."
       />
-    </section>
+    </>
   );
 }
 

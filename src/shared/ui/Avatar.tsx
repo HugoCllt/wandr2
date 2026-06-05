@@ -1,6 +1,6 @@
 /**
  * DTO-free avatar primitive. Renders the image when available, otherwise a
- * generated initial on a stable pastel background derived from the seed.
+ * generated initial on a stable neutral-grey background derived from the seed.
  */
 function hue(seed: string): number {
   let h = 0;
@@ -31,7 +31,7 @@ export function Avatar({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `hsl(${hue(name)} 52% 80%)`,
+        background: `hsl(220 8% ${70 + (hue(name) % 14)}%)`,
         color: 'var(--ink)',
         fontFamily: 'var(--font-display)',
         fontWeight: 700,
