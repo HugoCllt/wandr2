@@ -10,6 +10,8 @@ type FilterPillProps = {
   summary?: string | null;
   active?: boolean;
   onClear?: () => void;
+  /** Popover side — "right" for the vertical rail, "bottom" for a horizontal bar. */
+  side?: 'bottom' | 'right';
   children: ReactNode;
 };
 
@@ -18,6 +20,7 @@ export function FilterPill({
   summary,
   active = false,
   onClear,
+  side = 'bottom',
   children,
 }: FilterPillProps): ReactElement {
   return (
@@ -56,6 +59,7 @@ export function FilterPill({
       <Popover.Portal>
         <Popover.Content
           className="filter-popover"
+          side={side}
           sideOffset={8}
           align="start"
           collisionPadding={16}

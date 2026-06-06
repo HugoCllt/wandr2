@@ -1,9 +1,10 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import type { FilterValueDTO } from '../../../shared/contracts/FilterValueDTO';
+import { Icon } from '../../../shared/ui/icons/Icon';
 import { FilterBarHorizontal } from './FilterBar';
 import { parseFilters, serializeFilters } from '../application/url-codec';
 
@@ -17,6 +18,8 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
+
+  const [open, setOpen] = useState(false);
 
   const params = new URLSearchParams();
   search.forEach((v, k) => params.set(k, v));
@@ -35,11 +38,37 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
   }
 
   return (
-    <FilterBarHorizontal
-      value={value}
-      onChange={handleChange}
-      neighborhoods={neighborhoods}
-    />
+    <>
+      <button
+        type="button"
+        className="filter-rail-toggle"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label="Filters"
+      >
+        <Icon name="menu" size={16} />
+        Filters
+      </button>
+      <aside className={'filter-rail' + (open ? ' open' : '')} aria-label="Filters">
+        <div className="filter-rail-head">
+          <span>Filters</span>
+          <button
+            type="button"
+            className="filter-rail-close"
+            onClick={() => setOpen(false)}
+            aria-label="Close filters"
+          >
+            <Icon name="close" size={15} />
+          </button>
+        </div>
+        <FilterBarHorizontal
+          orientation="rail"
+          value={value}
+          onChange={handleChange}
+          neighborhoods={neighborhoods}
+        />
+      </aside>
+    </>
   );
 }
 

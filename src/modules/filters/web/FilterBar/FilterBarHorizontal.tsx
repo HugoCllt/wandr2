@@ -17,6 +17,8 @@ type FilterBarHorizontalProps = {
   onChange: (next: FilterValueDTO) => void;
   neighborhoods: ReadonlyArray<string>;
   visibleFilters?: FilterKey[];
+  /** "rail" stacks the pills vertically and opens popovers to the right. */
+  orientation?: 'horizontal' | 'rail';
 };
 
 const ALL_FILTERS: FilterKey[] = [
@@ -33,7 +35,10 @@ export function FilterBarHorizontal({
   onChange,
   neighborhoods,
   visibleFilters = ALL_FILTERS,
+  orientation = 'horizontal',
 }: FilterBarHorizontalProps): ReactElement {
+  const side = orientation === 'rail' ? 'right' : 'bottom';
+  const containerClass = orientation === 'rail' ? 'filter-rail-list' : 'filter-bar-top';
   function update(patch: Partial<FilterValueDTO>): void {
     const next: FilterValueDTO = { ...value, ...patch };
     for (const key of Object.keys(patch) as Array<keyof FilterValueDTO>) {
@@ -64,13 +69,14 @@ export function FilterBarHorizontal({
     value.paid === true;
 
   return (
-    <div className="filter-bar-top" aria-label="Filters">
+    <div className={containerClass} aria-label="Filters">
       {visible.has('kind') && (
         <FilterPill
           label="Kind"
           summary={summarizeKind(value.kind)}
           active={value.kind !== undefined}
           onClear={() => clear('kind')}
+          side={side}
         >
           <KindToggle value={value.kind} onChange={(kind) => update({ kind })} />
         </FilterPill>
@@ -82,6 +88,7 @@ export function FilterBarHorizontal({
           summary={summarizeNeighborhood(value.neighborhood)}
           active={(value.neighborhood?.length ?? 0) > 0}
           onClear={() => clear('neighborhood')}
+          side={side}
         >
           <NeighborhoodFilter
             value={value.neighborhood}
@@ -97,6 +104,7 @@ export function FilterBarHorizontal({
           summary={summarizeDate(value.date)}
           active={value.date !== undefined}
           onClear={() => clear('date')}
+          side={side}
         >
           <DateFilter value={value.date} onChange={(date) => update({ date })} />
         </FilterPill>
@@ -108,6 +116,7 @@ export function FilterBarHorizontal({
           summary={summarizePrice(value.priceMax)}
           active={value.priceMax !== undefined}
           onClear={() => clear('priceMax')}
+          side={side}
         >
           <PriceFilter value={value.priceMax} onChange={(priceMax) => update({ priceMax })} />
         </FilterPill>
@@ -119,6 +128,7 @@ export function FilterBarHorizontal({
           summary={summarizeSetting(value.indoor, value.outdoor)}
           active={value.indoor === true || value.outdoor === true}
           onClear={() => clear('indoor', 'outdoor')}
+          side={side}
         >
           <IndoorOutdoorToggle
             indoor={value.indoor}
@@ -134,6 +144,7 @@ export function FilterBarHorizontal({
           summary={summarizeCost(value.free, value.paid)}
           active={value.free === true || value.paid === true}
           onClear={() => clear('free', 'paid')}
+          side={side}
         >
           <FreePaidToggle
             free={value.free}

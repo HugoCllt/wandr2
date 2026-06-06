@@ -319,21 +319,74 @@ img { display: block; max-width: 100%; }
 /* ---------- MAIN ---------- */
 .main { display: flex; flex-direction: column; gap: 88px; min-width: 0; }
 
-/* ---------- TOP FILTER BAR ---------- */
-.filter-bar-top {
-  position: sticky;
-  top: 80px;
-  z-index: 30;
+/* ---------- FILTER RAIL (floating vertical glass panel) ---------- */
+.filter-rail {
+  position: fixed;
+  top: 104px;
+  left: max(24px, calc((100vw - 1440px) / 2 + 24px));
+  z-index: 40;
+  width: 212px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgba(246, 241, 232, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px;
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid var(--silver);
+  box-shadow: var(--shadow-lg);
+}
+.filter-rail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-body);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--smoke);
+  padding: 0 2px 2px;
+}
+.filter-rail-close { display: none; color: var(--smoke); }
+.filter-rail-list { display: flex; flex-direction: column; gap: 8px; }
+.filter-rail-list .filter-pill-wrap { display: flex; width: 100%; }
+.filter-rail-list .filter-pill { width: 100%; justify-content: flex-start; }
+.filter-rail-list .filter-pill-chev { margin-left: auto; }
+.filter-rail-list .filter-pill[data-active="true"] .filter-pill-chev { display: none; }
+.filter-rail-list .filter-clear-all { height: auto; padding: 6px 4px 0; }
+/* Floating toggle — only shown when the rail collapses on narrow screens */
+.filter-rail-toggle {
+  display: none;
+  position: fixed;
+  left: 20px; bottom: 20px;
+  z-index: 41;
+  align-items: center; gap: 8px;
+  height: 44px; padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--grad-charcoal);
+  color: var(--offwhite);
+  border: 1px solid #0E0F10;
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+
+/* Reserve a left column for the rail so it never covers content */
+@media (min-width: 1200px) {
+  .shell { padding-left: 268px; }
+}
+/* Below 1200px the rail collapses into a slide-in drawer + toggle button */
+@media (max-width: 1199px) {
+  .filter-rail {
+    top: 0; left: 0; bottom: 0;
+    width: 288px; max-width: 84vw;
+    border-radius: 0;
+    padding-top: 88px;
+    background: rgba(255, 255, 255, 0.94);
+    transform: translateX(-102%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+  }
+  .filter-rail.open { transform: translateX(0); }
+  .filter-rail-close { display: inline-flex; }
+  .filter-rail-toggle { display: inline-flex; }
 }
 .filter-pill-wrap {
   position: relative;
@@ -364,7 +417,7 @@ img { display: block; max-width: 100%; }
 }
 .filter-pill-label { font-weight: 600; letter-spacing: 0.005em; }
 .filter-pill-sep { color: var(--silver-2); }
-.filter-pill[data-active="true"] .filter-pill-sep { color: rgba(246, 241, 232, 0.5); }
+.filter-pill[data-active="true"] .filter-pill-sep { color: rgba(255, 255, 255, 0.5); }
 .filter-pill-value { font-weight: 500; }
 .filter-pill-chev { display: inline-flex; opacity: 0.7; }
 .filter-pill[data-active="true"] .filter-pill-chev { opacity: 0.9; }
@@ -376,7 +429,7 @@ img { display: block; max-width: 100%; }
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: rgba(246, 241, 232, 0.18);
+  background: rgba(255, 255, 255, 0.18);
   color: var(--offwhite);
   display: inline-flex;
   align-items: center;
@@ -385,7 +438,7 @@ img { display: block; max-width: 100%; }
   cursor: pointer;
   transition: background 0.15s;
 }
-.filter-pill-clear:hover { background: rgba(246, 241, 232, 0.32); }
+.filter-pill-clear:hover { background: rgba(255, 255, 255, 0.32); }
 .filter-clear-all {
   display: inline-flex;
   align-items: center;

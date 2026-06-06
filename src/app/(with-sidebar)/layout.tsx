@@ -18,8 +18,8 @@ export default async function WithSidebarLayout({ children }: { children: ReactN
 
   return (
     <>
+      <TopFilters neighborhoods={neighborhoods} />
       <div className="shell">
-        <TopFilters neighborhoods={neighborhoods} />
         <main className="main">{children}</main>
       </div>
       <OnboardingGate onboardedAt={user.onboardedAt} cityId={user.cityId} />
