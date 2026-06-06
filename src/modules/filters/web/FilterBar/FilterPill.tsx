@@ -3,7 +3,7 @@
 import * as Popover from '@radix-ui/react-popover';
 import type { ReactElement, ReactNode } from 'react';
 
-import { Icon } from '../../../../shared/ui/icons/Icon';
+import { Icon, type IconName } from '../../../../shared/ui/icons/Icon';
 
 type FilterPillProps = {
   label: string;
@@ -12,6 +12,10 @@ type FilterPillProps = {
   onClear?: () => void;
   /** Popover side — "right" for the vertical rail, "bottom" for a horizontal bar. */
   side?: 'bottom' | 'right';
+  /** "bubble" renders a round icon button (vertical rail); "pill" a text pill. */
+  variant?: 'pill' | 'bubble';
+  /** Icon shown in the bubble variant. */
+  icon?: IconName;
   children: ReactNode;
 };
 
@@ -21,41 +25,58 @@ export function FilterPill({
   active = false,
   onClear,
   side = 'bottom',
+  variant = 'pill',
+  icon,
   children,
 }: FilterPillProps): ReactElement {
+  const hint = summary ? `${label}: ${summary}` : label;
   return (
     <Popover.Root>
-      <div className="filter-pill-wrap" data-active={active || undefined}>
+      {variant === 'bubble' ? (
         <Popover.Trigger asChild>
-          <button type="button" className="filter-pill" data-active={active || undefined}>
-            <span className="filter-pill-label">{label}</span>
-            {summary ? (
-              <>
-                <span className="filter-pill-sep" aria-hidden="true">
-                  ·
-                </span>
-                <span className="filter-pill-value">{summary}</span>
-              </>
-            ) : null}
-            <span className="filter-pill-chev" aria-hidden="true">
-              <Icon name="chev-down" size={12} />
-            </span>
-          </button>
-        </Popover.Trigger>
-        {active && onClear ? (
           <button
             type="button"
-            className="filter-pill-clear"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            aria-label={`Clear ${label}`}
+            className="filter-bubble"
+            data-active={active || undefined}
+            aria-label={hint}
+            title={hint}
           >
-            <Icon name="close" size={11} stroke={2.4} />
+            {icon ? <Icon name={icon} size={18} /> : null}
           </button>
-        ) : null}
-      </div>
+        </Popover.Trigger>
+      ) : (
+        <div className="filter-pill-wrap" data-active={active || undefined}>
+          <Popover.Trigger asChild>
+            <button type="button" className="filter-pill" data-active={active || undefined}>
+              <span className="filter-pill-label">{label}</span>
+              {summary ? (
+                <>
+                  <span className="filter-pill-sep" aria-hidden="true">
+                    ·
+                  </span>
+                  <span className="filter-pill-value">{summary}</span>
+                </>
+              ) : null}
+              <span className="filter-pill-chev" aria-hidden="true">
+                <Icon name="chev-down" size={12} />
+              </span>
+            </button>
+          </Popover.Trigger>
+          {active && onClear ? (
+            <button
+              type="button"
+              className="filter-pill-clear"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              aria-label={`Clear ${label}`}
+            >
+              <Icon name="close" size={11} stroke={2.4} />
+            </button>
+          ) : null}
+        </div>
+      )}
       <Popover.Portal>
         <Popover.Content
           className="filter-popover"

@@ -50,17 +50,6 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
         Filters
       </button>
       <aside className={'filter-rail' + (open ? ' open' : '')} aria-label="Filters">
-        <div className="filter-rail-head">
-          <span>Filters</span>
-          <button
-            type="button"
-            className="filter-rail-close"
-            onClick={() => setOpen(false)}
-            aria-label="Close filters"
-          >
-            <Icon name="close" size={15} />
-          </button>
-        </div>
         <FilterBarHorizontal
           orientation="rail"
           value={value}

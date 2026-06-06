@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { FilterValueDTO } from '../../../../shared/contracts/FilterValueDTO';
 import type { FilterKey } from '../../../../shared/presets/HOME_PRESET';
+import { Icon } from '../../../../shared/ui/icons/Icon';
 import { DateFilter } from './DateFilter';
 import { FilterPill } from './FilterPill';
 import { FreePaidToggle } from './FreePaidToggle';
@@ -38,6 +39,7 @@ export function FilterBarHorizontal({
   orientation = 'horizontal',
 }: FilterBarHorizontalProps): ReactElement {
   const side = orientation === 'rail' ? 'right' : 'bottom';
+  const variant = orientation === 'rail' ? 'bubble' : 'pill';
   const containerClass = orientation === 'rail' ? 'filter-rail-list' : 'filter-bar-top';
   function update(patch: Partial<FilterValueDTO>): void {
     const next: FilterValueDTO = { ...value, ...patch };
@@ -77,6 +79,8 @@ export function FilterBarHorizontal({
           active={value.kind !== undefined}
           onClear={() => clear('kind')}
           side={side}
+          variant={variant}
+          icon="grid"
         >
           <KindToggle value={value.kind} onChange={(kind) => update({ kind })} />
         </FilterPill>
@@ -89,6 +93,8 @@ export function FilterBarHorizontal({
           active={(value.neighborhood?.length ?? 0) > 0}
           onClear={() => clear('neighborhood')}
           side={side}
+          variant={variant}
+          icon="pin"
         >
           <NeighborhoodFilter
             value={value.neighborhood}
@@ -105,6 +111,8 @@ export function FilterBarHorizontal({
           active={value.date !== undefined}
           onClear={() => clear('date')}
           side={side}
+          variant={variant}
+          icon="calendar"
         >
           <DateFilter value={value.date} onChange={(date) => update({ date })} />
         </FilterPill>
@@ -117,6 +125,8 @@ export function FilterBarHorizontal({
           active={value.priceMax !== undefined}
           onClear={() => clear('priceMax')}
           side={side}
+          variant={variant}
+          icon="gem"
         >
           <PriceFilter value={value.priceMax} onChange={(priceMax) => update({ priceMax })} />
         </FilterPill>
@@ -129,6 +139,8 @@ export function FilterBarHorizontal({
           active={value.indoor === true || value.outdoor === true}
           onClear={() => clear('indoor', 'outdoor')}
           side={side}
+          variant={variant}
+          icon="mountain"
         >
           <IndoorOutdoorToggle
             indoor={value.indoor}
@@ -145,6 +157,8 @@ export function FilterBarHorizontal({
           active={value.free === true || value.paid === true}
           onClear={() => clear('free', 'paid')}
           side={side}
+          variant={variant}
+          icon="sparkle"
         >
           <FreePaidToggle
             free={value.free}
@@ -154,11 +168,22 @@ export function FilterBarHorizontal({
         </FilterPill>
       )}
 
-      {anyActive && (
-        <button type="button" className="filter-clear-all" onClick={clearAll}>
-          Clear all
-        </button>
-      )}
+      {anyActive &&
+        (variant === 'bubble' ? (
+          <button
+            type="button"
+            className="filter-bubble filter-bubble-clear"
+            onClick={clearAll}
+            aria-label="Clear all filters"
+            title="Clear all filters"
+          >
+            <Icon name="close" size={16} stroke={2} />
+          </button>
+        ) : (
+          <button type="button" className="filter-clear-all" onClick={clearAll}>
+            Clear all
+          </button>
+        ))}
     </div>
   );
 }

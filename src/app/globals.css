@@ -321,39 +321,56 @@ img { display: block; max-width: 100%; }
 /* ---------- MAIN ---------- */
 .main { display: flex; flex-direction: column; gap: 88px; min-width: 0; padding-left: var(--rail-col); }
 
-/* ---------- FILTER RAIL (floating vertical glass panel) ---------- */
+/* ---------- FILTER RAIL (thin transparent floating bubble bar) ---------- */
 .filter-rail {
   position: fixed;
-  top: 104px;
-  left: max(24px, calc((100vw - 1440px) / 2 + 24px));
+  top: 50%;
+  transform: translateY(-50%);
+  left: max(20px, calc((100vw - 1440px) / 2 + 16px));
   z-index: 40;
-  width: 212px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 14px;
-  border-radius: var(--radius-card);
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(14px) saturate(1.1);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  align-items: center;
+  gap: 18px;
+  padding: 18px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
   border: 1px solid var(--silver);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
-.filter-rail-head {
-  display: flex; align-items: center; justify-content: space-between;
-  font-family: var(--font-body);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.18em; text-transform: uppercase;
+.filter-rail-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+/* Round icon "bubble" — the rail's per-filter trigger */
+.filter-bubble {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--line-2);
+  color: var(--charcoal-800);
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+.filter-bubble:hover { background: #fff; transform: translateY(-1px); }
+.filter-bubble[data-active="true"] {
+  background: var(--ink);
+  color: var(--offwhite);
+  border-color: var(--ink);
+}
+.filter-bubble-clear {
+  width: 36px; height: 36px;
+  background: transparent;
+  border-color: var(--silver-2);
   color: var(--smoke);
-  padding: 0 2px 2px;
+  box-shadow: none;
 }
-.filter-rail-close { display: none; color: var(--smoke); }
-.filter-rail-list { display: flex; flex-direction: column; gap: 8px; }
-.filter-rail-list .filter-pill-wrap { display: flex; width: 100%; }
-.filter-rail-list .filter-pill { width: 100%; justify-content: flex-start; }
-.filter-rail-list .filter-pill-chev { margin-left: auto; }
-.filter-rail-list .filter-pill[data-active="true"] .filter-pill-chev { display: none; }
-.filter-rail-list .filter-clear-all { height: auto; padding: 6px 4px 0; }
+.filter-bubble-clear:hover { background: rgba(255, 255, 255, 0.6); color: var(--ink); }
 /* Floating toggle — only shown when the rail collapses on narrow screens */
 .filter-rail-toggle {
   display: none;
@@ -370,25 +387,24 @@ img { display: block; max-width: 100%; }
   box-shadow: var(--shadow-md);
 }
 
-/* Reserve a left column (in .main) for the rail so it never covers content.
+/* Reserve a slim left column (in .main) for the rail so it never covers content.
    The full-bleed hero subtracts half of it — see .page-hero margin-left. */
 @media (min-width: 1200px) {
-  :root { --rail-col: 244px; }
+  :root { --rail-col: 96px; }
 }
 /* Below 1200px the rail collapses into a slide-in drawer + toggle button */
 @media (max-width: 1199px) {
   .filter-rail {
     top: 0; left: 0; bottom: 0;
-    width: 288px; max-width: 84vw;
-    border-radius: 0;
-    padding-top: 88px;
-    background: rgba(255, 255, 255, 0.94);
     transform: translateX(-102%);
     transition: transform 0.25s ease;
+    border-radius: 0;
+    justify-content: flex-start;
+    padding-top: 80px;
+    background: rgba(255, 255, 255, 0.9);
     overflow-y: auto;
   }
   .filter-rail.open { transform: translateX(0); }
-  .filter-rail-close { display: inline-flex; }
   .filter-rail-toggle { display: inline-flex; }
 }
 .filter-pill-wrap {
