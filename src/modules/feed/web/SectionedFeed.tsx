@@ -45,7 +45,7 @@ function Section({ section }: { section: RenderedSection }): ReactElement {
           <h2>{section.spec.title}</h2>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
         <CoverActivityCard
           activity={feature}
           size="lg"
@@ -56,7 +56,7 @@ function Section({ section }: { section: RenderedSection }): ReactElement {
         {stanzas.map((stanza, i) => {
           const [row, ...grid] = stanza;
           return (
-            <div key={`stanza-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div key={`stanza-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
               <MediaRowActivityCard
                 activity={row}
                 side={i % 2 === 0 ? 'left' : 'right'}

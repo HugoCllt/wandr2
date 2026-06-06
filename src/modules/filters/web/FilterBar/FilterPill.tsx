@@ -41,7 +41,7 @@ export function FilterPill({
             aria-label={hint}
             title={hint}
           >
-            {icon ? <Icon name={icon} size={18} /> : null}
+            {icon ? <Icon name={icon} size={21} /> : null}
           </button>
         </Popover.Trigger>
       ) : (

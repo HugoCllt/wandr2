@@ -177,7 +177,7 @@ export function FilterBarHorizontal({
             aria-label="Clear all filters"
             title="Clear all filters"
           >
-            <Icon name="close" size={16} stroke={2} />
+            <Icon name="close" size={18} stroke={2} />
           </button>
         ) : (
           <button type="button" className="filter-clear-all" onClick={clearAll}>
