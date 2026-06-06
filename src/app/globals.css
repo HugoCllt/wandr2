@@ -58,18 +58,6 @@ img { display: block; max-width: 100%; }
   min-height: 100vh;
   overflow-x: hidden;
 }
-.edge-art {
-  position: absolute;
-  top: 96px;
-  bottom: 0;
-  width: 110px;
-  pointer-events: none;
-  opacity: 0.55;
-  z-index: 0;
-}
-.edge-art.left { left: 0; }
-.edge-art.right { right: 0; }
-.edge-art svg { width: 100%; height: auto; display: block; }
 
 .shell {
   position: relative;
@@ -329,7 +317,7 @@ img { display: block; max-width: 100%; }
 .open-map-btn:hover { background: var(--surface-3); }
 
 /* ---------- MAIN ---------- */
-.main { display: flex; flex-direction: column; gap: 52px; min-width: 0; }
+.main { display: flex; flex-direction: column; gap: 88px; min-width: 0; }
 
 /* ---------- TOP FILTER BAR ---------- */
 .filter-bar-top {
@@ -565,7 +553,7 @@ img { display: block; max-width: 100%; }
 /* Section heading */
 .section-head {
   display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 22px;
+  margin-bottom: 32px;
 }
 .section-head h2 {
   font-family: var(--font-display);
@@ -838,7 +826,7 @@ img { display: block; max-width: 100%; }
 }
 
 
-.content-section { margin-bottom: 52px; }
+.content-section { margin-bottom: 80px; }
 .content-section .section-head h2 { font-size: 24px; }
 
 /* Featured 3-up row, first card larger (showcase "Tonight", home featured) */

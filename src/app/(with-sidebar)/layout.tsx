@@ -5,8 +5,6 @@ import { TopFilters } from '../../modules/filters/web/TopFilters';
 import { OnboardingGate } from '../../modules/profile/web/OnboardingGate';
 import { requireSession } from '../../shared/auth/require-session';
 import { prisma } from '../../shared/db/prisma';
-import { EdgeArtLeft } from '../../shared/ui/decor/EdgeArtLeft';
-import { EdgeArtRight } from '../../shared/ui/decor/EdgeArtRight';
 
 export default async function WithSidebarLayout({ children }: { children: ReactNode }) {
   const session = await requireSession();
@@ -20,12 +18,6 @@ export default async function WithSidebarLayout({ children }: { children: ReactN
 
   return (
     <>
-      <div className="edge-art left">
-        <EdgeArtLeft />
-      </div>
-      <div className="edge-art right">
-        <EdgeArtRight />
-      </div>
       <div className="shell">
         <TopFilters neighborhoods={neighborhoods} />
         <main className="main">{children}</main>
