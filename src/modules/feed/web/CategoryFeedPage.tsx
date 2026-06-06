@@ -1,6 +1,6 @@
 import type { FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { CATEGORY_PRESETS, type CategoryKey } from '../../../shared/presets/CATEGORY_PRESETS';
-import { PageHero } from '../../../shared/ui/PageHero';
+import { FeaturedHero } from '../../activities/web/FeaturedHero';
 import { MapSection } from '../../activities/web/MapSection';
 import { SectionedFeed } from './SectionedFeed';
 
@@ -20,20 +20,12 @@ export function CategoryFeedPage({
     ? `preset=${categoryKey}&${filterQueryString}`
     : `preset=${categoryKey}`;
 
+  const heroItems = initialFeed.items.filter((a) => Boolean(a.imageUrl)).slice(0, 3);
+  const heroIds = new Set(heroItems.map((a) => a.id));
+
   return (
     <>
-      <PageHero
-        eyebrow={cfg.eyebrow}
-        title={cfg.heroTitle}
-        subtitle={cfg.heroSub}
-        image={cfg.heroImage}
-        actions={
-          <>
-            <a className="btn-charcoal" href="#map">View map</a>
-            <a className="btn-silver" href="#feed">Browse activities</a>
-          </>
-        }
-      />
+      <FeaturedHero activities={heroItems} eyebrow={cfg.eyebrow} />
 
       <div id="map" className="scroll-anchor">
         <MapSection nearbyActivities={initialFeed.items} />
@@ -45,6 +37,7 @@ export function CategoryFeedPage({
           items={initialFeed.items}
           nextCursor={initialFeed.nextCursor}
           filterQueryString={presetQuery}
+          excludeIds={heroIds}
         />
       </div>
     </>

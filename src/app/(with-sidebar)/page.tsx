@@ -1,4 +1,4 @@
-import { HeroSection } from '../../modules/activities/web/HeroSection';
+import { FeaturedHero } from '../../modules/activities/web/FeaturedHero';
 import { listFeaturedActivities } from '../../modules/activities/web/listFeaturedActivities';
 import { MapSection } from '../../modules/activities/web/MapSection';
 import { POOL_LIMIT } from '../../modules/feed/web/buildFeedSections';
@@ -27,7 +27,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
   return (
     <>
-      <HeroSection featured={featured} />
+      <FeaturedHero activities={featured} eyebrow="THIS WEEK IN MONTREAL" />
       <MapSection nearbyActivities={pool.items} />
       <SectionedFeed
         items={pool.items}

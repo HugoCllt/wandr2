@@ -825,6 +825,53 @@ img { display: block; max-width: 100%; }
   .page-hero h1 { font-size: 40px; }
 }
 
+/* Featured carousel hero — full-bleed band shown under the nav on Home and
+   every category page. Builds on .page-hero (band + scrim + inner). */
+.featured-hero { min-height: min(66vh, 560px); }
+.featured-hero-img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.featured-hero-img.active { opacity: 1; }
+.featured-hero-meta {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.82);
+}
+.featured-hero-meta .dot {
+  width: 3px; height: 3px; border-radius: 999px;
+  background: rgba(255,255,255,0.55);
+}
+.featured-hero-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 3;
+  width: 42px; height: 42px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  color: var(--offwhite);
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s;
+}
+.featured-hero-arrow:hover { background: rgba(255,255,255,0.28); }
+.featured-hero-arrow.prev { left: 24px; }
+.featured-hero-arrow.next { right: 24px; }
+.featured-hero-dots {
+  position: absolute; z-index: 3;
+  bottom: 22px; right: 28px;
+  display: flex; gap: 7px;
+}
+.featured-hero-dot {
+  width: 7px; height: 7px; border-radius: 999px;
+  background: rgba(255,255,255,0.4);
+  transition: background 0.15s, transform 0.15s;
+}
+.featured-hero-dot.active { background: var(--offwhite); transform: scale(1.15); }
 
 .content-section { margin-bottom: 80px; }
 .content-section .section-head h2 { font-size: 24px; }
