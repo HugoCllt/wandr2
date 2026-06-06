@@ -938,15 +938,17 @@ img { display: block; max-width: 100%; }
 .featured-hero-arrow.next { right: 24px; }
 .featured-hero-dots {
   position: absolute; z-index: 3;
-  bottom: 22px; right: 28px;
-  display: flex; gap: 7px;
+  bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
 }
 .featured-hero-dot {
-  width: 7px; height: 7px; border-radius: 999px;
-  background: rgba(255,255,255,0.4);
-  transition: background 0.15s, transform 0.15s;
+  width: 8px; height: 8px; border-radius: 999px;
+  background: rgba(255,255,255,0.45);
+  transition: width 0.3s ease, background 0.2s ease;
 }
-.featured-hero-dot.active { background: var(--offwhite); transform: scale(1.15); }
+.featured-hero-dot:hover { background: rgba(255,255,255,0.7); }
+/* Current slide gets an elongated "you-are-here" pill */
+.featured-hero-dot.active { width: 28px; background: var(--offwhite); }
 
 .content-section { margin-bottom: 80px; }
 .content-section .section-head h2 { font-size: 24px; }
