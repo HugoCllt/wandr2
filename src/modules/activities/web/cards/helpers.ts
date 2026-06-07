@@ -9,20 +9,20 @@ export { coverImageUrl } from './coverImage';
 
 export function formatActivityPrice(activity: ActivityDTO): string {
   if (activity.priceMinCents <= 0 && (activity.priceMaxCents === null || activity.priceMaxCents === 0)) {
-    return 'Free';
+    return 'Gratuit';
   }
   const min = Math.round(activity.priceMinCents / 100);
   if (activity.priceMaxCents === null || activity.priceMaxCents === activity.priceMinCents) {
-    return `$${min}+`;
+    return `${min} $+`;
   }
-  return `$${min}–$${Math.round(activity.priceMaxCents / 100)}`;
+  return `${min}–${Math.round(activity.priceMaxCents / 100)} $`;
 }
 
 export function formatActivityWhen(activity: ActivityDTO): string {
-  if (activity.kind === 'PLACE') return 'Open daily';
-  if (!activity.dateStart) return 'TBA';
+  if (activity.kind === 'PLACE') return 'Ouvert tous les jours';
+  if (!activity.dateStart) return 'À venir';
   const d = new Date(activity.dateStart);
-  return d.toLocaleString('en-US', {
+  return d.toLocaleString('fr-CA', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
