@@ -2455,3 +2455,63 @@ img { display: block; max-width: 100%; }
   color: var(--charcoal-800);
   border-color: var(--silver-2);
 }
+
+/* ===========================================================
+   IMAGELESS CARD (.nophoto) — paper brushed text card
+   Same footprint as a Tuile; deliberate no-photo treatment.
+   =========================================================== */
+.nophoto {
+  position: relative; display: flex; flex-direction: column; width: 100%;
+  aspect-ratio: 4 / 3.15;
+  border-radius: 14px;
+  overflow: hidden; cursor: pointer; text-align: left;
+  padding: 24px 24px 22px;
+  background: linear-gradient(158deg, #FFFFFF 0%, #F4F4F4 54%, #E9E9E9 100%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-xs);
+  transition: transform .4s var(--ease), box-shadow .4s var(--ease), border-color .4s var(--ease);
+}
+.nophoto::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,0.0) 40%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.0) 60%);
+  opacity: 0.6;
+}
+.nophoto:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--line-2); }
+.nophoto-top {
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.nophoto-cat {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--smoke-2);
+}
+.nophoto-mark {
+  width: 40px; height: 40px; border-radius: 11px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--ink-800);
+  background: var(--brushed);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, var(--shadow-xs);
+}
+.nophoto-title {
+  position: relative; z-index: 1;
+  margin: 18px 0 0;
+  font-size: 23px; font-weight: 400; letter-spacing: -0.028em;
+  line-height: 1.1; color: var(--ink-900); text-wrap: pretty;
+}
+.nophoto-meta {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  margin-top: 10px; font-size: 13px; color: var(--smoke);
+}
+.nophoto-meta .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--smoke-3); }
+.nophoto-foot {
+  position: relative; z-index: 1;
+  margin-top: auto; padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.nophoto-price { font-size: 15px; font-weight: 500; color: var(--ink-900); letter-spacing: -0.01em; white-space: nowrap; }
+/* The shared FavoriteButton renders an absolute .card-fav-btn; inside the
+   imageless foot we want it inline (price left, save right). */
+.nophoto-foot .card-fav-btn { position: static; top: auto; right: auto; }
