@@ -2515,3 +2515,154 @@ img { display: block; max-width: 100%; }
 /* The shared FavoriteButton renders an absolute .card-fav-btn; inside the
    imageless foot we want it inline (price left, save right). */
 .nophoto-foot .card-fav-btn { position: static; top: auto; right: auto; }
+
+/* ===========================================================
+   FEED SHELL (reskin) — editorial whitespace, 3-col grid
+   =========================================================== */
+.feed-section { padding: 0 0 92px; }
+.feed-section:last-child { padding-bottom: 64px; }
+.feed-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; margin-bottom: 34px;
+}
+.feed-eyebrow {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--smoke); margin-bottom: 13px;
+}
+.feed-head h2 {
+  font-family: var(--font);
+  font-weight: 300; font-size: 38px;
+  letter-spacing: -0.035em; line-height: 1;
+  color: var(--ink-900); margin: 0;
+}
+.feed-stack { display: flex; flex-direction: column; gap: 24px; }
+.feed-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 24px; margin-top: 0;
+}
+
+/* ----- TUILE (full-bleed photo card) ----- */
+.tuile {
+  position: relative; display: block; width: 100%;
+  aspect-ratio: 4 / 3.15;
+  border-radius: 14px;
+  overflow: hidden; cursor: pointer; text-align: left;
+  background: var(--ink-900);
+  box-shadow: var(--shadow-xs);
+  transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+}
+.tuile:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+.tuile-img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: transform .8s var(--ease);
+}
+.tuile:hover .tuile-img { transform: scale(1.055); }
+.tuile-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top,
+    rgba(5,5,5,0.80) 0%, rgba(5,5,5,0.46) 30%, rgba(5,5,5,0.08) 58%, rgba(5,5,5,0) 78%);
+}
+.tuile-badge {
+  position: absolute; top: 15px; left: 15px; z-index: 3;
+  display: inline-flex; align-items: center; height: 26px; padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92); color: var(--ink-900);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+.tuile-body {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 22px 22px 20px; color: var(--white);
+}
+.tuile-title {
+  font-size: 21px; font-weight: 500; letter-spacing: -0.022em;
+  line-height: 1.12; margin: 0 0 9px; text-wrap: pretty;
+}
+.tuile-meta {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 13px; color: rgba(255,255,255,0.80); margin-bottom: 13px;
+}
+.tuile-meta .dot { width: 3px; height: 3px; border-radius: 999px; background: rgba(255,255,255,0.5); }
+.tuile-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 24px; }
+.tuile-price { font-size: 15px; font-weight: 500; color: var(--white); letter-spacing: -0.01em; white-space: nowrap; }
+
+/* ----- FEATURE ("À la une" editorial split) ----- */
+.feature {
+  position: relative; display: grid;
+  grid-template-columns: 1.18fr 1fr;
+  border-radius: 18px; overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  min-height: 400px; cursor: pointer;
+  transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+}
+.feature:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.feature.flip { grid-template-columns: 1fr 1.18fr; }
+.feature.flip .feature-media { order: 2; }
+.feature.flip .feature-body { order: 1; }
+.feature-media { position: relative; overflow: hidden; background: var(--ink-900); }
+.feature-media .img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: transform .9s var(--ease);
+}
+.feature:hover .feature-media .img { transform: scale(1.04); }
+.feature-media.placeholder { display: flex; align-items: center; justify-content: center; background: var(--panel); }
+.feature-media .ph-mark {
+  width: 92px; height: 92px; border-radius: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--ink-900); background: var(--brushed);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, var(--shadow-sm);
+}
+.feature-body { padding: 46px 48px 38px; display: flex; flex-direction: column; }
+.feature-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--smoke); margin-bottom: 18px;
+}
+.feature-title {
+  font-weight: 300; font-size: 42px; letter-spacing: -0.04em; line-height: 1.0;
+  color: var(--ink-900); margin: 0 0 18px; text-wrap: balance;
+}
+.feature-desc {
+  font-weight: 300; font-size: 16px; line-height: 1.62;
+  color: var(--ink-700); margin: 0 0 24px; max-width: 46ch; text-wrap: pretty;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.feature-meta {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  font-size: 14px; color: var(--smoke);
+}
+.feature-meta .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--smoke-3); }
+.feature-foot {
+  margin-top: auto; padding-top: 26px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.feature-price b { font-weight: 400; font-size: 26px; color: var(--ink-900); letter-spacing: -0.02em; }
+.feature-cta {
+  display: inline-flex; align-items: center; gap: 11px;
+  background: var(--ink-900); color: var(--white);
+  font-weight: 500; font-size: 14px;
+  padding: 13px 22px; border-radius: 10px;
+  border: 1px solid var(--ink-700);
+  transition: background .2s var(--ease), transform .2s var(--ease);
+}
+.feature:hover .feature-cta { background: var(--ink-800); }
+.feature-cta svg { transition: transform .25s var(--ease); }
+.feature:hover .feature-cta svg { transform: translateX(3px); }
+
+@media (max-width: 1080px) {
+  .feed-grid { grid-template-columns: repeat(2, 1fr); }
+  .feature, .feature.flip { grid-template-columns: 1fr; min-height: 0; }
+  .feature.flip .feature-media { order: 1; }
+  .feature.flip .feature-body { order: 2; }
+  .feature-media { min-height: 280px; }
+  .feature-body { padding: 34px 32px; }
+  .feature-title { font-size: 34px; }
+}
+@media (max-width: 760px) {
+  .feed-grid { grid-template-columns: 1fr; }
+  .feed-head h2 { font-size: 30px; }
+}

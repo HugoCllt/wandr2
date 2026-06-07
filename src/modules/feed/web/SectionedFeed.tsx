@@ -3,14 +3,11 @@ import type { ReactElement, ReactNode } from 'react';
 import type { FeedItemDTO } from '../../../shared/contracts/FeedResultDTO';
 import { DEFAULT_FEED_SECTIONS } from '../../../shared/presets/FEED_SECTIONS';
 import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
+import { ImagelessActivityCard } from '../../activities/web/cards/ImagelessActivityCard';
 import { MediaRowActivityCard } from '../../activities/web/cards/MediaRowActivityCard';
-import { AddToCalendarButton } from '../../calendar/web/AddToCalendarButton';
 import { FavoriteButton } from '../../favorites/web/FavoriteButton';
 import { buildFeedSections, type RenderedSection } from './buildFeedSections';
 import { FeedGrid } from './FeedGrid';
-
-/** 1 MediaRow + up to 4 grid cards. */
-const STANZA = 5;
 
 type SectionedFeedProps = {
   items: FeedItemDTO[];
@@ -24,70 +21,45 @@ type SectionedFeedProps = {
 function favoriteSlot(a: FeedItemDTO): ReactNode {
   return <FavoriteButton activityId={a.id} initialFavorited={a.isFavorited} />;
 }
-function calendarSlot(a: FeedItemDTO): ReactNode {
-  return <AddToCalendarButton activityId={a.id} activityTitle={a.title} />;
+
+/** Routes a grid item to the Tuile (has photo) or the Imageless card. */
+function GridCard({ item }: { item: FeedItemDTO }): ReactElement {
+  return item.imageUrl ? (
+    <CoverActivityCard activity={item} showPrice favoriteSlot={favoriteSlot(item)} />
+  ) : (
+    <ImagelessActivityCard activity={item} favoriteSlot={favoriteSlot(item)} />
+  );
 }
 
-function chunk(items: FeedItemDTO[], size: number): FeedItemDTO[][] {
-  const out: FeedItemDTO[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
-}
-
-function Section({ section }: { section: RenderedSection }): ReactElement {
+function Section({ section, index }: { section: RenderedSection; index: number }): ReactElement {
   const [feature, ...rest] = section.items;
-  const stanzas = chunk(rest, STANZA);
 
   return (
-    <section className="content-section">
-      <div className="section-head">
+    <section className="feed-section">
+      <div className="feed-head">
         <div>
+          {section.spec.eyebrow ? <div className="feed-eyebrow">{section.spec.eyebrow}</div> : null}
           <h2>{section.spec.title}</h2>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-        <CoverActivityCard
-          activity={feature}
-          size="lg"
-          showPrice
-          favoriteSlot={favoriteSlot(feature)}
-          calendarSlot={calendarSlot(feature)}
-        />
-        {stanzas.map((stanza, i) => {
-          const [row, ...grid] = stanza;
-          return (
-            <div key={`stanza-${i}`} style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-              <MediaRowActivityCard
-                activity={row}
-                side={i % 2 === 0 ? 'left' : 'right'}
-                favoriteSlot={favoriteSlot(row)}
-                calendarSlot={calendarSlot(row)}
-              />
-              {grid.length > 0 && (
-                <div className="cover-grid">
-                  {grid.map((a) => (
-                    <CoverActivityCard
-                      key={a.id}
-                      activity={a}
-                      showPrice
-                      favoriteSlot={favoriteSlot(a)}
-                      calendarSlot={calendarSlot(a)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      <div className="feed-stack">
+        <MediaRowActivityCard activity={feature} flip={index % 2 === 1} />
+        {rest.length > 0 && (
+          <div className="feed-grid">
+            {rest.map((a) => (
+              <GridCard key={a.id} item={a} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
 /**
- * Renders the partitioned pool as themed sections (feature → alternating
- * MediaRow + grid-of-4) followed by a trailing "Toutes les activités" grid for
- * the long tail. Server component; the cards/slots are client leaves.
+ * Renders the partitioned pool as themed sections (a Feature anchor + a routed
+ * 3-col grid) followed by a trailing "Toutes les activités" grid for the long
+ * tail. Server component; cards/slots are client leaves.
  */
 export function SectionedFeed({
   items,
@@ -101,13 +73,14 @@ export function SectionedFeed({
 
   return (
     <>
-      {sections.map((section) => (
-        <Section key={section.spec.key} section={section} />
+      {sections.map((section, i) => (
+        <Section key={section.spec.key} section={section} index={i} />
       ))}
       {showTail && (
-        <section className="content-section">
-          <div className="section-head">
+        <section className="feed-section">
+          <div className="feed-head">
             <div>
+              <div className="feed-eyebrow">Tout explorer</div>
               <h2>Toutes les activités</h2>
             </div>
           </div>

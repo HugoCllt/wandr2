@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
-import { AddToCalendarButton } from '../../calendar/web/AddToCalendarButton';
+import { ImagelessActivityCard } from '../../activities/web/cards/ImagelessActivityCard';
 import { FavoriteButton } from '../../favorites/web/FavoriteButton';
 
 type FeedGridProps = {
@@ -20,7 +20,7 @@ export function FeedGrid({
   initialCursor,
   filterQueryString,
   feedApiPath = '/api/feed',
-  emptyMessage = 'No activities match your filters.',
+  emptyMessage = 'Aucune activité ne correspond à vos filtres.',
 }: FeedGridProps): ReactElement {
   const [items, setItems] = useState<FeedItemDTO[]>(initialItems);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
@@ -74,27 +74,33 @@ export function FeedGrid({
 
   return (
     <div>
-      <div className="cover-grid" role="list" aria-label="Activities">
+      <div className="feed-grid" role="list" aria-label="Activities">
         {items.map((item) => (
           <div role="listitem" key={item.id}>
-            <CoverActivityCard
-              activity={item}
-              showPrice
-              favoriteSlot={
-                <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
-              }
-              calendarSlot={
-                <AddToCalendarButton activityId={item.id} activityTitle={item.title} />
-              }
-            />
+            {item.imageUrl ? (
+              <CoverActivityCard
+                activity={item}
+                showPrice
+                favoriteSlot={
+                  <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
+                }
+              />
+            ) : (
+              <ImagelessActivityCard
+                activity={item}
+                favoriteSlot={
+                  <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
+                }
+              />
+            )}
           </div>
         ))}
       </div>
       <div ref={sentinelRef} style={{ height: 1, width: '100%' }} aria-hidden="true" />
-      {loading ? <p className="feed-status">Loading more…</p> : null}
+      {loading ? <p className="feed-status">Chargement…</p> : null}
       {error ? <p className="feed-error">{error}</p> : null}
       {cursor === null && items.length > 0 ? (
-        <p className="feed-status">You&rsquo;ve reached the end.</p>
+        <p className="feed-status">Vous avez tout vu.</p>
       ) : null}
     </div>
   );
