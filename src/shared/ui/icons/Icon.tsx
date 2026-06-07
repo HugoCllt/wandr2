@@ -35,7 +35,10 @@ export type IconName =
   | 'save'
   | 'save-fill'
   | 'menu'
-  | 'close';
+  | 'close'
+  | 'instagram'
+  | 'facebook'
+  | 'x';
 
 type IconProps = {
   name: IconName;
@@ -301,6 +304,26 @@ export function Icon({ name, size = 18, stroke = 1.6, className }: IconProps) {
       return (
         <svg {...common}>
           <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      );
+    case 'instagram':
+      return (
+        <svg {...common}>
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17" cy="7" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case 'facebook':
+      return (
+        <svg {...common}>
+          <path d="M14 8.5h2.2V5.4h-2.4c-2 0-3.3 1.3-3.3 3.4v1.9H8.3v3h2.2V21h3.2v-7.3h2.3l.5-3h-2.8V9.1c0-.4.3-.6.7-.6Z" />
+        </svg>
+      );
+    case 'x':
+      return (
+        <svg {...common}>
+          <path d="M4 4l16 16M20 4 4 20" />
         </svg>
       );
     default:
