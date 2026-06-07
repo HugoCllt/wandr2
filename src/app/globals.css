@@ -1005,7 +1005,7 @@ img { display: block; max-width: 100%; }
 }
 .featured-hero-dot:hover { background: rgba(255,255,255,0.7); }
 /* Current slide gets an elongated "you-are-here" pill */
-.featured-hero-dot.active { width: 28px; background: var(--offwhite); }
+.featured-hero-dot.active { width: 26px; background: var(--silver-200); }
 
 .content-section { margin-bottom: 80px; }
 .content-section .section-head h2 { font-size: 24px; }
