@@ -14,20 +14,20 @@ type ActivityModalProps = {
 };
 
 function formatPrice(a: ActivityDTO): { price: string | null; unit: string | null } {
-  if (a.priceMinCents <= 0) return { price: null, unit: 'Free entry' };
+  if (a.priceMinCents <= 0) return { price: null, unit: 'Entrée gratuite' };
   const min = (a.priceMinCents / 100).toFixed(0);
   if (a.priceMaxCents && a.priceMaxCents > a.priceMinCents) {
     const max = (a.priceMaxCents / 100).toFixed(0);
-    return { price: `$${min}–$${max}`, unit: null };
+    return { price: `${min}–${max} $`, unit: null };
   }
-  return { price: `$${min}+`, unit: null };
+  return { price: `${min} $+`, unit: null };
 }
 
 function formatWhen(a: ActivityDTO): string | null {
-  if (a.kind === 'PLACE') return 'Open daily';
+  if (a.kind === 'PLACE') return 'Ouvert tous les jours';
   if (!a.dateStart) return null;
   const d = new Date(a.dateStart);
-  return d.toLocaleString('en-US', {
+  return d.toLocaleString('fr-CA', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -47,7 +47,7 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
   return (
     <div className="act-overlay" onClick={onClose}>
       <div className="act-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="act-close" onClick={onClose} aria-label="Close">
+        <button className="act-close" onClick={onClose} aria-label="Fermer">
           <Icon name="close" size={16} stroke={2.2} />
         </button>
 
@@ -63,7 +63,7 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
                   <div className="act-badges">
                     <span className="act-badge warm">
                       <Icon name="fire" size={11} />
-                      Featured
+                      À la une
                     </span>
                   </div>
                 )}
@@ -71,7 +71,7 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
               </div>
               <div className="act-flames-pill">
                 <FlameRow value={3} size={12} />
-                <span>Trending</span>
+                <span>Tendance</span>
               </div>
             </div>
           </div>
@@ -92,32 +92,32 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
 
           <div className="act-body">
             <div>
-              <h3>About this activity</h3>
+              <h3>À propos de cette activité</h3>
               <p className="act-desc">{a.description}</p>
 
-              <h3>Good to know</h3>
+              <h3>Bon à savoir</h3>
               <div className="act-info-grid">
-                {when && <InfoItem icon="calendar" label="When" value={when} />}
+                {when && <InfoItem icon="calendar" label="Quand" value={when} />}
                 {a.neighborhood && (
-                  <InfoItem icon="pin" label="Neighborhood" value={a.neighborhood} />
+                  <InfoItem icon="pin" label="Quartier" value={a.neighborhood} />
                 )}
                 {(a.indoor || a.outdoor) && (
                   <InfoItem
                     icon="compass"
-                    label="Setting"
-                    value={a.indoor && a.outdoor ? 'Indoor & outdoor' : a.indoor ? 'Indoor' : 'Outdoor'}
+                    label="Cadre"
+                    value={a.indoor && a.outdoor ? 'Intérieur et extérieur' : a.indoor ? 'Intérieur' : 'Extérieur'}
                   />
                 )}
                 <InfoItem
                   icon="sparkle"
                   label="Type"
-                  value={a.kind === 'EVENT' ? 'Event' : 'Place'}
+                  value={a.kind === 'EVENT' ? 'Événement' : 'Lieu'}
                 />
               </div>
             </div>
 
             <div className="act-side">
-              <h3>Location</h3>
+              <h3>Emplacement</h3>
               <div className="act-mini-map">
                 <MapView
                   center={{ lng: a.longitude, lat: a.latitude }}
@@ -146,7 +146,7 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Get directions <Icon name="arrow-right" size={13} />
+                Itinéraire <Icon name="arrow-right" size={13} />
               </a>
             </div>
           </div>
@@ -156,12 +156,12 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
           <div className="act-price-blk">
             {price && <span className="act-price-num">{price}</span>}
             {unit && <span className="act-price-unit">{unit}</span>}
-            {!price && !unit && <span className="act-price-unit">See site</span>}
+            {!price && !unit && <span className="act-price-unit">Voir le site</span>}
           </div>
           <div className="act-cta-row">
             {a.externalUrl && (
               <a className="act-cta" href={a.externalUrl} target="_blank" rel="noreferrer">
-                Book this <Icon name="arrow-right" size={14} />
+                Réserver <Icon name="arrow-right" size={14} />
               </a>
             )}
           </div>
