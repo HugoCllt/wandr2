@@ -2876,3 +2876,56 @@ img { display: block; max-width: 100%; }
 /* Active (selected) map pin — distinct from idle pins. */
 .map-pin.active .pin-bubble { background: var(--ink-900); border-color: var(--white); transform: rotate(-45deg) scale(1.18); }
 .map-pin.active { z-index: 4; }
+
+/* ===========================================================
+   MAP EXPLORER — full-width map that shrinks for a volet carousel
+   =========================================================== */
+.map-explorer { position: relative; z-index: 1; margin-bottom: 80px; }
+.map-explorer-head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px;
+}
+.map-explorer-head .feed-eyebrow { margin-bottom: 11px; }
+.map-explorer-head h2 {
+  font-family: var(--font); font-weight: 300; font-size: 32px;
+  letter-spacing: -0.03em; line-height: 1; color: var(--ink-900); margin: 0;
+}
+.map-explorer-head p { margin: 6px 0 0; color: var(--smoke); font-size: 14px; }
+.map-explorer-stage { display: flex; gap: 0; transition: gap .5s var(--ease); align-items: stretch; }
+.map-explorer-stage.open { gap: 20px; }
+.map-explorer-map {
+  position: relative; flex: 1 1 auto; height: 480px;
+  border-radius: 20px; overflow: hidden; border: 1px solid var(--line);
+  background: var(--surface-3);
+}
+.map-volet {
+  position: relative; flex: 0 0 0; width: 0; opacity: 0; overflow: hidden;
+  transition: flex-basis .5s var(--ease), width .5s var(--ease), opacity .35s var(--ease);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.map-explorer-stage.open .map-volet { flex: 0 0 360px; width: 360px; opacity: 1; }
+.map-volet-card { flex: 1; min-height: 0; }
+.map-volet-card .tuile { height: 100%; aspect-ratio: auto; }
+.map-volet-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.map-volet-count { font-size: 12.5px; color: var(--smoke); letter-spacing: 0.04em; }
+.map-volet-btns { display: flex; gap: 8px; }
+.map-volet-btn {
+  width: 40px; height: 40px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--white); border: 1px solid var(--line-2); color: var(--ink-800);
+  transition: background .15s, transform .15s;
+}
+.map-volet-btn:hover { background: var(--silver-100); transform: translateY(-1px); }
+.map-volet-close {
+  position: absolute; top: 10px; right: 10px; z-index: 5;
+  width: 34px; height: 34px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(8,8,8,0.42); color: var(--white);
+  border: 1px solid rgba(255,255,255,0.18); backdrop-filter: blur(8px);
+}
+.map-volet-close:hover { background: rgba(8,8,8,0.62); }
+@media (max-width: 900px) {
+  .map-explorer-stage, .map-explorer-stage.open { flex-direction: column; gap: 16px; }
+  .map-explorer-map { height: 340px; }
+  .map-explorer-stage.open .map-volet { flex: 0 0 auto; width: 100%; }
+  .map-volet-card .tuile { aspect-ratio: 4 / 3.15; height: auto; }
+}
