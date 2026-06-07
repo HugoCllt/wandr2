@@ -5,7 +5,6 @@ import { POOL_LIMIT } from '../../modules/feed/web/buildFeedSections';
 import { loadFeedDTO } from '../../modules/feed/web/feedRoute';
 import { SectionedFeed } from '../../modules/feed/web/SectionedFeed';
 import { parseFilters, serializeFilters } from '../../modules/filters/application/url-codec';
-import { FooterBanner } from '../../shared/ui/FooterBanner';
 import { toURLSearchParams, type SearchParamsInput } from './_lib/searchParams';
 
 export const dynamic = 'force-dynamic';
@@ -35,7 +34,6 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
         filterQueryString={filterQueryString}
         excludeIds={excludeIds}
       />
-      <FooterBanner />
     </>
   );
 }
