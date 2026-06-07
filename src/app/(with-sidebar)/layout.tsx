@@ -5,6 +5,7 @@ import { TopFilters } from '../../modules/filters/web/TopFilters';
 import { OnboardingGate } from '../../modules/profile/web/OnboardingGate';
 import { requireSession } from '../../shared/auth/require-session';
 import { prisma } from '../../shared/db/prisma';
+import { SmoothScroll } from '../../shared/ui/SmoothScroll';
 
 export default async function WithSidebarLayout({ children }: { children: ReactNode }) {
   const session = await requireSession();
@@ -17,12 +18,12 @@ export default async function WithSidebarLayout({ children }: { children: ReactN
   ]);
 
   return (
-    <>
+    <SmoothScroll>
       <TopFilters neighborhoods={neighborhoods} />
       <div className="shell">
         <main className="main">{children}</main>
       </div>
       <OnboardingGate onboardedAt={user.onboardedAt} cityId={user.cityId} />
-    </>
+    </SmoothScroll>
   );
 }

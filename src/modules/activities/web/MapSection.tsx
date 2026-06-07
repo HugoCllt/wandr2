@@ -39,7 +39,7 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
         <span className="link">See all on the map</span>
       </div>
       <div className="map-panel-grid">
-        <div className="map-panel-map">
+        <div className="map-panel-map" data-lenis-prevent-wheel>
           <MapView center={MONTREAL_CENTER} zoom={12} markers={markers} />
         </div>
         <div className="map-panel-list">

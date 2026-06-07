@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useLenis } from 'lenis/react';
+import { useRef, useState } from 'react';
 
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../shared/ui/icons/Icon';
@@ -30,6 +31,23 @@ export function FeaturedHero({ activities, eyebrow }: FeaturedHeroProps) {
   const [idx, setIdx] = useState(0);
   const open = useOpenActivity();
 
+  // Subtle parallax: the image layers drift up slower than the page, so the
+  // hero feels deep and the filter rail reads as emerging from under it. Driven
+  // imperatively via a CSS var (no per-frame React re-render). Disabled for
+  // reduced-motion users.
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  useLenis(
+    ({ scroll }) => {
+      if (reduced) return;
+      const shift = Math.min(scroll, 700) * 0.28;
+      sectionRef.current?.style.setProperty('--hero-parallax', `${shift}px`);
+    },
+    [reduced],
+  );
+
   if (slides.length === 0) return null;
 
   const safeIdx = Math.min(idx, slides.length - 1);
@@ -39,7 +57,7 @@ export function FeaturedHero({ activities, eyebrow }: FeaturedHeroProps) {
   const titleLines = active.title.split('\n');
 
   return (
-    <section className="page-hero featured-hero">
+    <section ref={sectionRef} className="page-hero featured-hero">
       {slides.map((a, i) => (
         <div
           key={a.id}

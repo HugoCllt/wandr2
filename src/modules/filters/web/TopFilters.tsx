@@ -1,5 +1,6 @@
 'use client';
 
+import { useLenis } from 'lenis/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, type ReactElement } from 'react';
 
@@ -20,6 +21,16 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
   const search = useSearchParams();
 
   const [open, setOpen] = useState(false);
+
+  // The desktop rail stays hidden behind the hero, then slides up from under it
+  // once you scroll roughly past the hero (reversible). Only re-renders when the
+  // boolean actually flips, not every scroll frame.
+  const [revealed, setRevealed] = useState(false);
+  useLenis(({ scroll }) => {
+    const threshold = typeof window !== 'undefined' ? window.innerHeight * 0.3 : 320;
+    const next = scroll > threshold;
+    setRevealed((prev) => (prev === next ? prev : next));
+  });
 
   const params = new URLSearchParams();
   search.forEach((v, k) => params.set(k, v));
@@ -49,7 +60,10 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
         <Icon name="menu" size={16} />
         Filters
       </button>
-      <aside className={'filter-rail' + (open ? ' open' : '')} aria-label="Filters">
+      <aside
+        className={'filter-rail' + (open ? ' open' : '') + (revealed ? ' revealed' : '')}
+        aria-label="Filters"
+      >
         <FilterBarHorizontal
           orientation="rail"
           value={value}
