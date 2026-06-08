@@ -122,9 +122,13 @@ img { display: block; max-width: 100%; }
   max-width: var(--content-max);
   margin: 0 auto;
   height: 72px;
-  padding: 0 32px;
+  /* Align nav content to the same column as the hero text + page sections:
+     .shell's 24px gutter plus .main's --rail-col indent on the left, gutter
+     only on the right (.main has no right padding). */
+  padding-left: calc(24px + var(--rail-col));
+  padding-right: 24px;
   display: grid;
-  grid-template-columns: 200px 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 24px;
 }
@@ -149,9 +153,7 @@ img { display: block; max-width: 100%; }
   padding: 0 16px;
   height: 42px;
   color: var(--silver);
-  max-width: 520px;
-  width: 100%;
-  margin: 0 auto;
+  width: 300px;
 }
 .search input {
   flex: 1;
@@ -923,7 +925,9 @@ img { display: block; max-width: 100%; }
   position: relative; z-index: 2;
   width: 100%; max-width: var(--content-max);
   margin: 0 auto;
-  padding: 56px 40px;
+  /* Left edge aligns with the page sections below (.shell's 24px gutter +
+     .main's --rail-col indent); right edge matches the 24px gutter. */
+  padding: 56px 24px 56px calc(24px + var(--rail-col));
 }
 .page-hero-eyebrow {
   font-family: var(--font-body);

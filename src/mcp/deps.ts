@@ -8,13 +8,17 @@ import { PrismaCityRepository } from '../modules/activities/infra/PrismaCityRepo
 import type { ArchiveActivityDeps } from './tools/archiveActivity';
 import type { ConfirmActivityDeps } from './tools/confirmActivity';
 import type { IngestActivityDeps } from './tools/ingestActivity';
+import type { ListActivitiesDeps } from './tools/listActivities';
 import type { ListActivitiesDueForRecheckDeps } from './tools/listActivitiesDueForRecheck';
+import type { UpdateActivityImageDeps } from './tools/updateActivityImage';
 
 export type ToolDeps = {
   ingest: IngestActivityDeps;
   list: ListActivitiesDueForRecheckDeps;
   confirm: ConfirmActivityDeps;
   archive: ArchiveActivityDeps;
+  listActivities: ListActivitiesDeps;
+  updateImage: UpdateActivityImageDeps;
 };
 
 /**
@@ -34,5 +38,7 @@ export function createDeps(prisma: PrismaClient, now: () => Date = () => new Dat
     list: { cities, ingestion: activities, now },
     confirm: { confirm, now },
     archive: { activities, ingestion: activities },
+    listActivities: { cities, activities },
+    updateImage: { activities, ingestion: activities },
   };
 }

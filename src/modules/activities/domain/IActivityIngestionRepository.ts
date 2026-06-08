@@ -17,4 +17,5 @@ export interface IActivityIngestionRepository {
    */
   findDueForRecheck(cityId: string, now: Date, limit?: number): Promise<Activity[]>;
   archive(id: string): Promise<void>;
+  updateImageUrl(id: string, imageUrl: string): Promise<void>;
 }

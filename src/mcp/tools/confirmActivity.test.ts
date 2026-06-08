@@ -34,6 +34,7 @@ class FakeIngestion implements IActivityIngestionRepository {
     return [];
   }
   async archive(): Promise<void> {}
+  async updateImageUrl(): Promise<void> {}
 }
 
 function build(map: Map<string, Activity>) {

@@ -23,6 +23,7 @@ class FakeIngestion implements IActivityIngestionRepository {
   async archive(id: string): Promise<void> {
     this.archived.push(id);
   }
+  async updateImageUrl(): Promise<void> {}
 }
 
 describe('archiveActivity handler', () => {

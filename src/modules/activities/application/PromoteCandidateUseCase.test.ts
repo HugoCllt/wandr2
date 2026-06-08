@@ -133,6 +133,7 @@ class FakeActivityWriter
     return [];
   }
   async archive(): Promise<void> {}
+  async updateImageUrl(): Promise<void> {}
 }
 
 function buildUseCase(opts: {

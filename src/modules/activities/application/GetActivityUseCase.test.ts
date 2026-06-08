@@ -71,6 +71,9 @@ class FakeActivityRepository implements IActivityRepository {
       .filter((a) => a.isFeatured)
       .slice(0, limit);
   }
+  async listForUpdate(): Promise<Activity[]> {
+    return [];
+  }
 }
 
 function activityFixture(overrides: Partial<Activity> = {}): Activity {

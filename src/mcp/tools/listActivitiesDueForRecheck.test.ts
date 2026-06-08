@@ -65,6 +65,7 @@ class FakeIngestion implements IActivityIngestionRepository {
     return this.due;
   }
   async archive(): Promise<void> {}
+  async updateImageUrl(): Promise<void> {}
 }
 
 describe('listActivitiesDueForRecheck handler', () => {

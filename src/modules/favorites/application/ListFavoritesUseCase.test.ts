@@ -70,6 +70,9 @@ class FakeActivityRepository implements IActivityRepository {
   async listFeatured(): Promise<Activity[]> {
     return [];
   }
+  async listForUpdate(): Promise<Activity[]> {
+    return [];
+  }
 }
 
 class FakeFavoriteRepository implements IFavoriteRepository {

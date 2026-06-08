@@ -8,7 +8,7 @@ import type {
   FreshnessUpdate,
   IActivityIngestionRepository,
 } from '../domain/IActivityIngestionRepository';
-import type { IActivityRepository } from '../domain/IActivityRepository';
+import type { ActivityListFilter, IActivityRepository } from '../domain/IActivityRepository';
 
 export class PrismaActivityRepository
   implements IActivityRepository, IActivityIngestionRepository
@@ -181,6 +181,22 @@ export class PrismaActivityRepository
 
   async archive(id: string): Promise<void> {
     await this.prisma.activity.update({ where: { id }, data: { status: 'ARCHIVED' } });
+  }
+
+  async updateImageUrl(id: string, imageUrl: string): Promise<void> {
+    await this.prisma.activity.update({ where: { id }, data: { imageUrl } });
+  }
+
+  async listForUpdate(cityId: string, filter: ActivityListFilter): Promise<Activity[]> {
+    const where: Prisma.ActivityWhereInput = { cityId, status: 'PUBLISHED' };
+    if (filter.kind) where.kind = filter.kind;
+    if (filter.withoutImage) where.imageUrl = null;
+    const activities = await this.prisma.activity.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+      take: filter.limit,
+    });
+    return activities.map(toActivity);
   }
 }
 

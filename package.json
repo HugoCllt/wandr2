@@ -17,7 +17,8 @@
     "prisma:validate": "prisma validate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "tsx scripts/reset-activities.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

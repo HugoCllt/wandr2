@@ -37,6 +37,9 @@ class FakeActivityRepository implements IActivityRepository {
   async listFeatured(): Promise<Activity[]> {
     return [];
   }
+  async listForUpdate(): Promise<Activity[]> {
+    return [];
+  }
 }
 
 const NOW = new Date('2026-05-23T12:00:00.000Z');
