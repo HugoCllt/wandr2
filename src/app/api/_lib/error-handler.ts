@@ -3,6 +3,8 @@ import { ZodError } from 'zod';
 
 import { ActivityNotFoundError } from '../../../modules/activities/domain/ActivityNotFoundError';
 import { DuplicateCalendarEntryError } from '../../../modules/calendar/domain/DuplicateCalendarEntryError';
+import { MonthlyTokenLimitError } from '../../../modules/chat/domain/MonthlyTokenLimitError';
+import { PremiumRequiredError } from '../../../modules/chat/domain/PremiumRequiredError';
 import { NotAuthenticatedError } from '../../../shared/auth/current-user';
 import { logger } from '../../../shared/obs/logger';
 
@@ -32,6 +34,12 @@ export function handleApiError(error: unknown): NextResponse {
       { error: 'Calendar entry already exists at this time' },
       { status: 409 },
     );
+  }
+  if (error instanceof PremiumRequiredError) {
+    return NextResponse.json({ error: error.message }, { status: 403 });
+  }
+  if (error instanceof MonthlyTokenLimitError) {
+    return NextResponse.json({ error: error.message }, { status: 429 });
   }
 
   logger.error({ error }, 'Unhandled API error');

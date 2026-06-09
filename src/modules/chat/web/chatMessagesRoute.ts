@@ -3,95 +3,69 @@ import { z } from 'zod';
 
 import { parseBody } from '../../../shared/api/parse';
 import { getCurrentUser } from '../../../shared/auth/current-user';
-import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
+import { env } from '../../../shared/config/env';
 import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
-import { SendChatMessageUseCase } from '../application/SendChatMessageUseCase';
-import { MockChatProvider } from '../infra/MockChatProvider';
-import { MockChatRepository } from '../infra/MockChatRepository';
+import { prisma } from '../../../shared/db/prisma';
+import { SendChatMessageUseCase, type ChatTurn } from '../application/SendChatMessageUseCase';
+import { PremiumRequiredError } from '../domain/PremiumRequiredError';
+import { createChatModel } from '../infra/createChatModel';
+import { PrismaChatUsageRepository } from '../infra/PrismaChatUsageRepository';
 
 const ChatMessageBodySchema = z.object({
   text: z.string().trim().min(1, 'Message text required.'),
+  // Conversation memory is client-owned: the thread is replayed each turn.
+  history: z
+    .array(z.object({ role: z.enum(['user', 'assistant']), text: z.string() }))
+    .max(50)
+    .default([]),
 });
 
-const HARDCODED_SUGGESTIONS: ActivityDTO[] = [
-  {
-    id: 'mock-suggestion-rooftop',
-    slug: 'mock-suggestion-rooftop',
-    title: 'Terrasse Nelligan',
-    description:
-      'Eight floors up in Old Montréal, a low-lit DJ set rolls from house to disco and the Old Port glitters underneath you.',
-    imageUrl:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80',
-    kind: 'PLACE',
-    categories: { primary: 'NIGHTLIFE', secondary: [] },
-    address: '106 Saint-Paul St W, Montréal, QC',
-    neighborhood: 'Old Montreal',
-    latitude: 45.5017,
-    longitude: -73.5546,
-    dateStart: null,
-    dateEnd: null,
-    priceMinCents: 2500,
-    priceMaxCents: null,
-    externalUrl: null,
-    indoor: true,
-    outdoor: true,
-    isFeatured: true,
-    status: 'PUBLISHED',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'mock-suggestion-spa',
-    slug: 'mock-suggestion-spa',
-    title: 'Bota Bota Floating Spa',
-    description: 'Steam, river views, and an evening of stillness on a converted ferry boat.',
-    imageUrl:
-      'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80',
-    kind: 'PLACE',
-    categories: { primary: 'ROMANTIC', secondary: [] },
-    address: 'McGill Pier, Old Port, Montréal',
-    neighborhood: 'Old Port',
-    latitude: 45.5,
-    longitude: -73.55,
-    dateStart: null,
-    dateEnd: null,
-    priceMinCents: 4500,
-    priceMaxCents: null,
-    externalUrl: null,
-    indoor: true,
-    outdoor: true,
-    isFeatured: true,
-    status: 'PUBLISHED',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+/** `YYYY-MM` token-usage bucket for the current month (web may read the clock). */
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function newId(): string {
+  return `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export async function chatMessagesPostHandler(request: Request): Promise<NextResponse> {
-  const { text } = await parseBody(ChatMessageBodySchema, request);
+  const { text, history } = await parseBody(ChatMessageBodySchema, request);
 
   const user = await getCurrentUser();
-  const repo = new MockChatRepository();
-  const provider = new MockChatProvider();
-  const useCase = new SendChatMessageUseCase(repo, provider);
-  const thread = await repo.getThreadForUser(user.id);
-  const result = await useCase.execute({ userId: user.id, threadId: thread.id, text });
+  // Defence in depth: the page is gated in the UI, the API enforces it too.
+  if (!user.isPremium) throw new PremiumRequiredError();
 
-  const userDto: ChatMessageDTO = {
-    id: result.userMessage.id,
-    role: result.userMessage.role,
-    text: result.userMessage.text,
+  const useCase = new SendChatMessageUseCase({
+    model: createChatModel(),
+    usage: new PrismaChatUsageRepository(prisma),
+    monthlyTokenCap: env.CHAT_MONTHLY_TOKEN_CAP,
+  });
+
+  const turns: ChatTurn[] = history.map((m) => ({ role: m.role, content: m.text }));
+  const result = await useCase.execute({
+    userId: user.id,
+    month: currentMonth(),
+    text,
+    history: turns,
+  });
+
+  const nowIso = new Date().toISOString();
+  const userMessage: ChatMessageDTO = {
+    id: newId(),
+    role: 'user',
+    text,
     suggestedActivities: [],
-    createdAt: result.userMessage.createdAt.toISOString(),
+    createdAt: nowIso,
+  };
+  const assistantMessage: ChatMessageDTO = {
+    id: newId(),
+    role: 'assistant',
+    text: result.text,
+    suggestedActivities: [],
+    createdAt: nowIso,
   };
 
-  const assistantDto: ChatMessageDTO = {
-    id: result.assistantMessage.id,
-    role: result.assistantMessage.role,
-    text: result.assistantMessage.text,
-    suggestedActivities: HARDCODED_SUGGESTIONS,
-    createdAt: result.assistantMessage.createdAt.toISOString(),
-  };
-
-  return NextResponse.json({ userMessage: userDto, assistantMessage: assistantDto });
+  return NextResponse.json({ userMessage, assistantMessage });
 }

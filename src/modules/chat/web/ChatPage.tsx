@@ -36,7 +36,11 @@ export function ChatPage() {
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: t }),
+        // Replay the visible thread so the assistant has multi-turn memory.
+        body: JSON.stringify({
+          text: t,
+          history: thread.map((m) => ({ role: m.role, text: m.text })),
+        }),
         cache: 'no-store',
       });
       if (!res.ok) throw new Error(`chat failed: ${res.status}`);

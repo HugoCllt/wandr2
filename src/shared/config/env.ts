@@ -17,6 +17,17 @@ const EnvSchema = z.object({
   // (sign-in button disabled) so dev works without OAuth credentials.
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_CLIENT_SECRET: z.string().default(''),
+  // Chat LLM (Gemma). Ollama and OpenRouter both expose an OpenAI-compatible
+  // API, so a single `ChatOpenAI` binding covers both via `baseURL`. All
+  // server-only with defaults so the app boots without a chat backend.
+  CHAT_LLM_PROVIDER: z.enum(['ollama', 'openrouter']).default('ollama'),
+  OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
+  // Tag of the model actually `ollama pull`ed — set to the real Gemma tag.
+  OLLAMA_MODEL: z.string().default('gemma3:12b'),
+  OPENROUTER_API_KEY: z.string().default(''),
+  OPENROUTER_MODEL: z.string().default('google/gemma-3-12b-it'),
+  // Per-user monthly token ceiling; over it, the API refuses (429).
+  CHAT_MONTHLY_TOKEN_CAP: z.coerce.number().int().positive().default(100000),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

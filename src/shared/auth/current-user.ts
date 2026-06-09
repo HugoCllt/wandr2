@@ -16,6 +16,7 @@ export type CurrentUser = {
   email: string;
   name: string;
   cityId: string;
+  isPremium: boolean;
   onboardedAt: Date | null;
 };
 
@@ -30,7 +31,14 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, email: true, name: true, cityId: true, onboardedAt: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      cityId: true,
+      isPremium: true,
+      onboardedAt: true,
+    },
   });
   if (!user) throw new NotAuthenticatedError();
 

@@ -14,6 +14,7 @@ model User {
   emailVerified   Boolean                @default(false)
   image           String?
   bio             String?
+  isPremium       Boolean                @default(false)
   onboardedAt     DateTime?
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
@@ -26,6 +27,7 @@ model User {
   affinities      UserCategoryAffinity[]
   favorites       Favorite[]
   calendarEntries CalendarEntry[]
+  chatTokenUsage  ChatTokenUsage[]
 }
 
 // Better Auth core tables (shape per `npx @better-auth/cli generate`).
@@ -210,6 +212,21 @@ model CalendarEntry {
 
   @@unique([userId, activityId, scheduledAt])
   @@index([userId, scheduledAt])
+}
+
+model ChatTokenUsage {
+  id               String   @id @default(cuid())
+  userId           String
+  month            String // bucket "YYYY-MM"
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, month])
+  @@index([userId])
 }
 
 model RawActivityCandidate {

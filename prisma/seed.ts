@@ -694,6 +694,9 @@ async function main() {
       gender: 'MALE',
       birthDate: new Date('2000-06-28'),
       onboardedAt: new Date(),
+      // Premium is toggled manually in DB/seed (no in-app upgrade button).
+      // Seed user is premium so the gated /chat page is testable out of the box.
+      isPremium: true,
     },
   });
 

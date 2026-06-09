@@ -26,7 +26,7 @@ const PREMIUM_FEATURES = [
   },
 ];
 
-function PremiumModal({ onClose }: { onClose: () => void }) {
+export function PremiumModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
