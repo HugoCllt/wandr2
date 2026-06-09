@@ -26,6 +26,10 @@ export function createChatModel(): BaseChatModel {
     apiKey: 'ollama',
     temperature: 0.7,
     streamUsage: true,
+    // `reasoning_effort: 'none'` turns off the model's thinking (Ollama honours
+    // it on its OpenAI-compatible endpoint); 'low' | 'medium' | 'high' turn it
+    // on. Passed via modelKwargs since 'none' is outside OpenAI's typed enum.
+    modelKwargs: { reasoning_effort: env.CHAT_THINKING_EFFORT },
     configuration: { baseURL: `${env.OLLAMA_BASE_URL}/v1` },
   });
 }

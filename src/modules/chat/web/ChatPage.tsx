@@ -3,8 +3,10 @@
 import { useState, type KeyboardEvent } from 'react';
 
 import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
+import type { ChatStreamEvent, ChatStreamPhase } from '../../../shared/contracts/ChatStreamEvent';
 import { FlameRow } from '../../../shared/ui/icons/FlameRow';
 import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
+import { ChatStatusIndicator } from './ChatStatusIndicator';
 
 const PROMPTS: { text: string; icon: IconName; kind: 'warm' | 'cool' | 'cream' }[] = [
   { text: 'Romantic activity tonight in Old Montreal', icon: 'heart', kind: 'warm' },
@@ -15,13 +17,20 @@ const PROMPTS: { text: string; icon: IconName; kind: 'warm' | 'cool' | 'cream' }
   { text: 'Quiet café for a long read', icon: 'fork', kind: 'cream' },
 ];
 
-type SendResponse = {
-  userMessage: ChatMessageDTO;
-  assistantMessage: ChatMessageDTO;
-};
+/** The assistant turn as it streams in: its current phase + the text so far. */
+type Streaming = { phase: ChatStreamPhase; text: string };
+
+function newId(): string {
+  return `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function chatMessage(role: ChatMessageDTO['role'], text: string): ChatMessageDTO {
+  return { id: newId(), role, text, suggestedActivities: [], createdAt: new Date().toISOString() };
+}
 
 export function ChatPage() {
   const [thread, setThread] = useState<ChatMessageDTO[]>([]);
+  const [streaming, setStreaming] = useState<Streaming | null>(null);
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,23 +41,56 @@ export function ChatPage() {
     setPending(true);
     setError(null);
     setDraft('');
+
+    // Replay the thread as it stood *before* this turn, then optimistically show
+    // the user's message and the assistant's "thinking" state right away.
+    const history = thread.map((m) => ({ role: m.role, text: m.text }));
+    setThread((prev) => [...prev, chatMessage('user', t)]);
+    setStreaming({ phase: 'thinking', text: '' });
+
     try {
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Replay the visible thread so the assistant has multi-turn memory.
-        body: JSON.stringify({
-          text: t,
-          history: thread.map((m) => ({ role: m.role, text: m.text })),
-        }),
+        body: JSON.stringify({ text: t, history }),
         cache: 'no-store',
       });
-      if (!res.ok) throw new Error(`chat failed: ${res.status}`);
-      const dto = (await res.json()) as SendResponse;
-      setThread((prev) => [...prev, dto.userMessage, dto.assistantMessage]);
+      if (!res.ok || !res.body) throw new Error(`chat failed: ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let answer = '';
+      let streamError: string | null = null;
+
+      // Parse the NDJSON event stream one complete line at a time.
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (line.length === 0) continue;
+          const event = JSON.parse(line) as ChatStreamEvent;
+          if (event.type === 'status') {
+            setStreaming((s) => (s ? { ...s, phase: event.phase } : s));
+          } else if (event.type === 'token') {
+            answer += event.text;
+            setStreaming((s) => (s ? { ...s, text: answer } : s));
+          } else if (event.type === 'error') {
+            streamError = event.message;
+          }
+        }
+      }
+
+      if (streamError) throw new Error(streamError);
+      setThread((prev) => [...prev, chatMessage('assistant', answer)]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to send message.');
     } finally {
+      setStreaming(null);
       setPending(false);
     }
   }
@@ -172,6 +214,24 @@ export function ChatPage() {
               </div>
             ),
           )}
+
+          {streaming &&
+            (streaming.text.length === 0 ? (
+              // Pre-text: the dot-matrix bloom under the avatar (thinking / —
+              // later — reasoning or tool calls, which produce no answer yet).
+              <div className="chat-msg-ai is-pending">
+                <div className="chat-ai-avatar">W</div>
+                <ChatStatusIndicator phase={streaming.phase} />
+              </div>
+            ) : (
+              // Writing: tokens stream into the bubble.
+              <div className="chat-msg-ai">
+                <div className="chat-ai-avatar">W</div>
+                <div className="chat-ai-bubble">
+                  <p className="chat-ai-streaming">{streaming.text}</p>
+                </div>
+              </div>
+            ))}
         </div>
       )}
     </div>

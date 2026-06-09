@@ -1380,6 +1380,42 @@ img { display: block; max-width: 100%; }
   color: var(--charcoal-800);
 }
 .chat-ai-bubble p { margin: 0 0 14px; line-height: 1.55; }
+
+/* Assistant live status — dot-matrix bloom + phase label, sat next to the
+   avatar in the chat-msg-ai grid while the model works (pre-answer-text). */
+.chat-msg-ai.is-pending { align-items: center; }
+.chat-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  align-self: center;
+}
+.chat-status-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--smoke);
+  letter-spacing: 0.01em;
+}
+.dot-matrix { display: block; color: var(--smoke); flex: none; }
+.dm-dot {
+  fill: currentColor;
+  opacity: 0.12;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dm-bloom 2200ms cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes dm-bloom {
+  0%, 100% { opacity: 0.12; transform: scale(0.62); }
+  45%      { opacity: 0.92; transform: scale(1); }
+}
+/* The answer bubble fades in when the first token arrives (then text grows). */
+.chat-ai-streaming { animation: chat-token-in 0.22s ease both; }
+@keyframes chat-token-in { from { opacity: 0.4; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .dm-dot { animation: none; opacity: 0.42; transform: none; }
+  .chat-ai-streaming { animation: none; }
+}
+
 .chat-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;

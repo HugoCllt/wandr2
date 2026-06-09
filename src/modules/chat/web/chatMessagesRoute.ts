@@ -1,10 +1,9 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseBody } from '../../../shared/api/parse';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import { env } from '../../../shared/config/env';
-import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
+import type { ChatStreamEvent } from '../../../shared/contracts/ChatStreamEvent';
 import { prisma } from '../../../shared/db/prisma';
 import { SendChatMessageUseCase, type ChatTurn } from '../application/SendChatMessageUseCase';
 import { PremiumRequiredError } from '../domain/PremiumRequiredError';
@@ -26,11 +25,12 @@ function currentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function newId(): string {
-  return `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+/** Serialise one event as a single NDJSON line. */
+function encodeEvent(event: ChatStreamEvent): Uint8Array {
+  return new TextEncoder().encode(`${JSON.stringify(event)}\n`);
 }
 
-export async function chatMessagesPostHandler(request: Request): Promise<NextResponse> {
+export async function chatMessagesPostHandler(request: Request): Promise<Response> {
   const { text, history } = await parseBody(ChatMessageBodySchema, request);
 
   const user = await getCurrentUser();
@@ -44,28 +44,41 @@ export async function chatMessagesPostHandler(request: Request): Promise<NextRes
   });
 
   const turns: ChatTurn[] = history.map((m) => ({ role: m.role, content: m.text }));
-  const result = await useCase.execute({
+  const events = useCase.executeStream({
     userId: user.id,
     month: currentMonth(),
     text,
     history: turns,
   });
 
-  const nowIso = new Date().toISOString();
-  const userMessage: ChatMessageDTO = {
-    id: newId(),
-    role: 'user',
-    text,
-    suggestedActivities: [],
-    createdAt: nowIso,
-  };
-  const assistantMessage: ChatMessageDTO = {
-    id: newId(),
-    role: 'assistant',
-    text: result.text,
-    suggestedActivities: [],
-    createdAt: nowIso,
-  };
+  // Prime the generator so guard errors (cap reached / premium) surface as a
+  // normal HTTP status via handleApiError *before* the streamed body opens.
+  const iterator = events[Symbol.asyncIterator]();
+  const first = await iterator.next();
 
-  return NextResponse.json({ userMessage, assistantMessage });
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        if (!first.done) controller.enqueue(encodeEvent(first.value));
+        for (;;) {
+          const { value, done } = await iterator.next();
+          if (done) break;
+          controller.enqueue(encodeEvent(value));
+        }
+      } catch (err) {
+        // The body is already open — status can't change. Tell the client.
+        const message = err instanceof Error ? err.message : 'Stream failed.';
+        controller.enqueue(encodeEvent({ type: 'error', message }));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
 }

@@ -23,7 +23,11 @@ const EnvSchema = z.object({
   CHAT_LLM_PROVIDER: z.enum(['ollama', 'openrouter']).default('ollama'),
   OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
   // Tag of the model actually `ollama pull`ed — set to the real Gemma tag.
-  OLLAMA_MODEL: z.string().default('gemma3:12b'),
+  OLLAMA_MODEL: z.string().default('gemma4:12b'),
+  // Thinking toggle for the Ollama chat model, via the OpenAI-compatible
+  // `reasoning_effort` param Ollama honours: 'none' disables the model's
+  // chain-of-thought (cheaper, faster); 'low' | 'medium' | 'high' enable it.
+  CHAT_THINKING_EFFORT: z.enum(['none', 'low', 'medium', 'high']).default('none'),
   OPENROUTER_API_KEY: z.string().default(''),
   OPENROUTER_MODEL: z.string().default('google/gemma-3-12b-it'),
   // Per-user monthly token ceiling; over it, the API refuses (429).
