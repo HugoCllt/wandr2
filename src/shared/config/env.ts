@@ -32,6 +32,10 @@ const EnvSchema = z.object({
   OPENROUTER_MODEL: z.string().default('google/gemma-3-12b-it'),
   // Per-user monthly token ceiling; over it, the API refuses (429).
   CHAT_MONTHLY_TOKEN_CAP: z.coerce.number().int().positive().default(100000),
+  // Tavily web search — powers the chat recommendation graph. Server-only,
+  // default empty so the app boots without it; the pipeline degrades gracefully
+  // (no cards, honest message) when unset.
+  TAVILY_API_KEY: z.string().default(''),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

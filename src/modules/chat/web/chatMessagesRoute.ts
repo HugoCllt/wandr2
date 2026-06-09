@@ -9,6 +9,8 @@ import { SendChatMessageUseCase, type ChatTurn } from '../application/SendChatMe
 import { PremiumRequiredError } from '../domain/PremiumRequiredError';
 import { createChatModel } from '../infra/createChatModel';
 import { PrismaChatUsageRepository } from '../infra/PrismaChatUsageRepository';
+import { PrismaRecommendationContextRepository } from '../infra/PrismaRecommendationContextRepository';
+import { TavilyWebSearchProvider } from '../infra/TavilyWebSearchProvider';
 
 const ChatMessageBodySchema = z.object({
   text: z.string().trim().min(1, 'Message text required.'),
@@ -40,12 +42,15 @@ export async function chatMessagesPostHandler(request: Request): Promise<Respons
   const useCase = new SendChatMessageUseCase({
     model: createChatModel(),
     usage: new PrismaChatUsageRepository(prisma),
+    contextRepo: new PrismaRecommendationContextRepository(prisma),
+    webSearch: new TavilyWebSearchProvider(env.TAVILY_API_KEY),
     monthlyTokenCap: env.CHAT_MONTHLY_TOKEN_CAP,
   });
 
   const turns: ChatTurn[] = history.map((m) => ({ role: m.role, content: m.text }));
   const events = useCase.executeStream({
     userId: user.id,
+    cityId: user.cityId,
     month: currentMonth(),
     text,
     history: turns,
