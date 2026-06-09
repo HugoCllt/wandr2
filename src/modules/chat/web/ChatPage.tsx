@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, type KeyboardEvent } from 'react';
+import { useState, type KeyboardEvent, type ReactElement } from 'react';
 
+import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
+import { ImagelessActivityCard } from '../../activities/web/cards/ImagelessActivityCard';
 import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
+import type { ChatRecommendationDTO } from '../../../shared/contracts/ChatRecommendationDTO';
 import type { ChatStreamEvent, ChatStreamPhase } from '../../../shared/contracts/ChatStreamEvent';
-import { FlameRow } from '../../../shared/ui/icons/FlameRow';
 import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
 import { ChatStatusIndicator } from './ChatStatusIndicator';
 
@@ -17,15 +19,46 @@ const PROMPTS: { text: string; icon: IconName; kind: 'warm' | 'cool' | 'cream' }
   { text: 'Quiet café for a long read', icon: 'fork', kind: 'cream' },
 ];
 
-/** The assistant turn as it streams in: its current phase + the text so far. */
-type Streaming = { phase: ChatStreamPhase; text: string };
+/** The assistant turn as it streams in: its phase, the text + any cards so far. */
+type Streaming = { phase: ChatStreamPhase; text: string; recommendations: ChatRecommendationDTO[] };
 
 function newId(): string {
   return `m-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function chatMessage(role: ChatMessageDTO['role'], text: string): ChatMessageDTO {
-  return { id: newId(), role, text, suggestedActivities: [], createdAt: new Date().toISOString() };
+function chatMessage(
+  role: ChatMessageDTO['role'],
+  text: string,
+  recommendations: ChatRecommendationDTO[] = [],
+): ChatMessageDTO {
+  return {
+    id: newId(),
+    role,
+    text,
+    suggestedActivities: [],
+    recommendations,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/** The recommendation cards: the classic Tuile (photo) or its no-photo fallback,
+ * each with the assistant's personal "pourquoi" line underneath. */
+function Recommendations({ items }: { items: ChatRecommendationDTO[] }): ReactElement | null {
+  if (items.length === 0) return null;
+  return (
+    <div className="chat-recos">
+      {items.map((reco) => (
+        <div key={reco.activity.id} className="chat-reco">
+          {reco.activity.imageUrl ? (
+            <CoverActivityCard activity={reco.activity} />
+          ) : (
+            <ImagelessActivityCard activity={reco.activity} showPrice={false} />
+          )}
+          <p className="chat-reco-why">{reco.reason}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ChatPage() {
@@ -46,7 +79,7 @@ export function ChatPage() {
     // the user's message and the assistant's "thinking" state right away.
     const history = thread.map((m) => ({ role: m.role, text: m.text }));
     setThread((prev) => [...prev, chatMessage('user', t)]);
-    setStreaming({ phase: 'thinking', text: '' });
+    setStreaming({ phase: 'thinking', text: '', recommendations: [] });
 
     try {
       const res = await fetch('/api/chat/messages', {
@@ -61,6 +94,7 @@ export function ChatPage() {
       const decoder = new TextDecoder();
       let buffer = '';
       let answer = '';
+      let recommendations: ChatRecommendationDTO[] = [];
       let streamError: string | null = null;
 
       // Parse the NDJSON event stream one complete line at a time.
@@ -79,6 +113,9 @@ export function ChatPage() {
           } else if (event.type === 'token') {
             answer += event.text;
             setStreaming((s) => (s ? { ...s, text: answer } : s));
+          } else if (event.type === 'recommendations') {
+            recommendations = event.items;
+            setStreaming((s) => (s ? { ...s, recommendations } : s));
           } else if (event.type === 'error') {
             streamError = event.message;
           }
@@ -86,7 +123,7 @@ export function ChatPage() {
       }
 
       if (streamError) throw new Error(streamError);
-      setThread((prev) => [...prev, chatMessage('assistant', answer)]);
+      setThread((prev) => [...prev, chatMessage('assistant', answer, recommendations)]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to send message.');
     } finally {
@@ -184,32 +221,7 @@ export function ChatPage() {
                 <div className="chat-ai-avatar">W</div>
                 <div className="chat-ai-bubble">
                   <p>{m.text}</p>
-                  {m.suggestedActivities.length > 0 && (
-                    <div className="chat-cards">
-                      {m.suggestedActivities.map((c) => (
-                        <div key={c.id} className="chat-card">
-                          <div
-                            className="chat-card-img"
-                            style={{ backgroundImage: `url(${c.imageUrl})` }}
-                          />
-                          <div className="chat-card-body">
-                            <div className="chat-card-title">{c.title}</div>
-                            <div className="chat-card-meta">
-                              {c.neighborhood ?? 'Montréal'}
-                            </div>
-                            <div className="chat-card-foot">
-                              <FlameRow value={3} size={9} />
-                              <span className="chat-card-price">
-                                {c.priceMinCents > 0
-                                  ? `$${Math.round(c.priceMinCents / 100)}+`
-                                  : 'Free'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <Recommendations items={m.recommendations} />
                 </div>
               </div>
             ),
@@ -229,6 +241,7 @@ export function ChatPage() {
                 <div className="chat-ai-avatar">W</div>
                 <div className="chat-ai-bubble">
                   <p className="chat-ai-streaming">{streaming.text}</p>
+                  <Recommendations items={streaming.recommendations} />
                 </div>
               </div>
             ))}

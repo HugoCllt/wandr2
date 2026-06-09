@@ -10,6 +10,8 @@ import { formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenAc
 type Props = {
   activity: ActivityDTO;
   favoriteSlot?: ReactNode;
+  /** Hide the price line — e.g. synthetic chat recommendations carry no real price. */
+  showPrice?: boolean;
 };
 
 /**
@@ -17,10 +19,14 @@ type Props = {
  * footprint as a Tuile. Routed to when `activity.imageUrl` is null. Consumes
  * ActivityDTO → lives in activities/web.
  */
-export function ImagelessActivityCard({ activity, favoriteSlot }: Props): ReactElement {
+export function ImagelessActivityCard({
+  activity,
+  favoriteSlot,
+  showPrice = true,
+}: Props): ReactElement {
   const open = useOpenActivity();
   const primary = activity.categories.primary;
-  const price = formatActivityPrice(activity);
+  const price = showPrice ? formatActivityPrice(activity) : null;
 
   return (
     <article className="nophoto" onClick={() => open(activity)}>
