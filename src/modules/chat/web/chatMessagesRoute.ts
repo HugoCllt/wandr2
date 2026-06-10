@@ -32,6 +32,21 @@ function encodeEvent(event: ChatStreamEvent): Uint8Array {
   return new TextEncoder().encode(`${JSON.stringify(event)}\n`);
 }
 
+/** Module-level singleton: every dep is stateless (model client, Prisma repos),
+ * so the use case — and the graph it compiles in its constructor — is built
+ * once per process instead of once per request. */
+let useCaseSingleton: SendChatMessageUseCase | null = null;
+function getUseCase(): SendChatMessageUseCase {
+  useCaseSingleton ??= new SendChatMessageUseCase({
+    model: createChatModel(),
+    usage: new PrismaChatUsageRepository(prisma),
+    contextRepo: new PrismaRecommendationContextRepository(prisma),
+    webSearch: new TavilyWebSearchProvider(env.TAVILY_API_KEY),
+    monthlyTokenCap: env.CHAT_MONTHLY_TOKEN_CAP,
+  });
+  return useCaseSingleton;
+}
+
 export async function chatMessagesPostHandler(request: Request): Promise<Response> {
   const { text, history } = await parseBody(ChatMessageBodySchema, request);
 
@@ -39,21 +54,15 @@ export async function chatMessagesPostHandler(request: Request): Promise<Respons
   // Defence in depth: the page is gated in the UI, the API enforces it too.
   if (!user.isPremium) throw new PremiumRequiredError();
 
-  const useCase = new SendChatMessageUseCase({
-    model: createChatModel(),
-    usage: new PrismaChatUsageRepository(prisma),
-    contextRepo: new PrismaRecommendationContextRepository(prisma),
-    webSearch: new TavilyWebSearchProvider(env.TAVILY_API_KEY),
-    monthlyTokenCap: env.CHAT_MONTHLY_TOKEN_CAP,
-  });
-
   const turns: ChatTurn[] = history.map((m) => ({ role: m.role, content: m.text }));
-  const events = useCase.executeStream({
+  const events = getUseCase().executeStream({
     userId: user.id,
     cityId: user.cityId,
     month: currentMonth(),
     text,
     history: turns,
+    // Aborts the graph (LLM + search calls) when the client disconnects.
+    signal: request.signal,
   });
 
   // Prime the generator so guard errors (cap reached / premium) surface as a
@@ -77,6 +86,11 @@ export async function chatMessagesPostHandler(request: Request): Promise<Respons
       } finally {
         controller.close();
       }
+    },
+    // Reader cancelled (client gone) — release the generator; the abort signal
+    // above stops the in-flight LLM/search work.
+    async cancel() {
+      await iterator.return?.(undefined);
     },
   });
 

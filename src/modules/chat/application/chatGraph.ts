@@ -21,13 +21,15 @@ export type ChatGraphDeps = {
 /**
  * The deterministic multi-agent recommendation graph (plan-execute / deep-research
  * shape, adapted to a small local model — JSON-mode structured calls, no
- * tool-calling). The `router` forks: `clarify` streams a reply via `converse`;
- * `recommend` runs profile → strategy → search → synthesize → present, with
- * context isolated per axis until synthesis.
+ * tool-calling). `router` and `profile` run in the same superstep: the profile
+ * is a cheap DB read that `strategy` needs, so it loads while the router's LLM
+ * call is in flight (wasted on the clarify path — see tbd.md). BSP semantics
+ * guarantee `profile` has finished before `strategy` starts.
  *
  * ```
  * START → router ─(clarify)→  converse → END
- *                ─(recommend)→ profile → strategy → search → synthesize → present → END
+ *       ↘        ─(recommend)→ strategy → search → synthesize → present → END
+ *         profile → END                ↑ (profile's userContext, via state)
  * ```
  */
 export function buildChatGraph(deps: ChatGraphDeps) {
@@ -42,11 +44,12 @@ export function buildChatGraph(deps: ChatGraphDeps) {
     .addNode('synthesize', makeSynthesizeNode(model))
     .addNode('present', makePresentNode(model))
     .addEdge(START, 'router')
+    .addEdge(START, 'profile')
     .addConditionalEdges('router', (state: ChatStateType) =>
-      state.route === 'recommend' ? 'profile' : 'converse',
+      state.route === 'recommend' ? 'strategy' : 'converse',
     )
+    .addEdge('profile', END)
     .addEdge('converse', END)
-    .addEdge('profile', 'strategy')
     .addEdge('strategy', 'search')
     .addEdge('search', 'synthesize')
     .addEdge('synthesize', 'present')

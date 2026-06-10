@@ -1,23 +1,36 @@
 'use client';
 
-import { useState, type KeyboardEvent, type ReactElement } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactElement,
+} from 'react';
 
 import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
 import { ImagelessActivityCard } from '../../activities/web/cards/ImagelessActivityCard';
+import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
 import type { ChatRecommendationDTO } from '../../../shared/contracts/ChatRecommendationDTO';
 import type { ChatStreamEvent, ChatStreamPhase } from '../../../shared/contracts/ChatStreamEvent';
-import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
+import { Icon } from '../../../shared/ui/icons/Icon';
+import { ChatInspirationCarousel } from './ChatInspirationCarousel';
 import { ChatStatusIndicator } from './ChatStatusIndicator';
 
-const PROMPTS: { text: string; icon: IconName; kind: 'warm' | 'cool' | 'cream' }[] = [
-  { text: 'Romantic activity tonight in Old Montreal', icon: 'heart', kind: 'warm' },
-  { text: 'Cheap sport activity near downtown', icon: 'ball', kind: 'cool' },
-  { text: 'Hidden gem this weekend', icon: 'gem', kind: 'cream' },
-  { text: 'Group plan for 6 people', icon: 'users', kind: 'cool' },
-  { text: 'Best rooftop with a sunset view', icon: 'sparkle', kind: 'warm' },
-  { text: 'Quiet café for a long read', icon: 'fork', kind: 'cream' },
+/** Prompt ideas rotating in the idle input — nudges without the old static chips. */
+const IDEAS = [
+  'Une sortie romantique ce soir dans le Vieux-Montréal…',
+  'Un plan sportif pas cher près du centre-ville…',
+  'Une perle cachée à découvrir ce weekend…',
+  'Un plan pour un groupe de six ce samedi…',
+  'Un rooftop avec vue pour le coucher du soleil…',
+  'Un café tranquille pour bouquiner dimanche…',
+  'Une expo ou un musée à faire demain…',
+  'Une soirée qui sort de l’ordinaire…',
 ];
+const IDEA_ROTATE_MS = 3800;
 
 /** The assistant turn as it streams in: its phase, the text + any cards so far. */
 type Streaming = { phase: ChatStreamPhase; text: string; recommendations: ChatRecommendationDTO[] };
@@ -41,21 +54,41 @@ function chatMessage(
   };
 }
 
-/** The recommendation cards: the classic Tuile (photo) or its no-photo fallback,
- * each with the assistant's personal "pourquoi" line underneath. */
+/** One section per recommended activity: numbered axis eyebrow, the Home card
+ * (Tuile, or its no-photo fallback), the personal "pourquoi" beside it. */
 function Recommendations({ items }: { items: ChatRecommendationDTO[] }): ReactElement | null {
   if (items.length === 0) return null;
   return (
     <div className="chat-recos">
-      {items.map((reco) => (
-        <div key={reco.activity.id} className="chat-reco">
-          {reco.activity.imageUrl ? (
-            <CoverActivityCard activity={reco.activity} />
-          ) : (
-            <ImagelessActivityCard activity={reco.activity} showPrice={false} />
-          )}
-          <p className="chat-reco-why">{reco.reason}</p>
-        </div>
+      {items.map((reco, i) => (
+        <section key={reco.activity.id} className="chat-reco-section">
+          <div className="chat-reco-eyebrow">
+            <span className="chat-reco-num">{String(i + 1).padStart(2, '0')}</span>
+            <span>{reco.axisLabel}</span>
+          </div>
+          <div className="chat-reco-body">
+            <div className="chat-reco-card">
+              {reco.activity.imageUrl ? (
+                <CoverActivityCard activity={reco.activity} />
+              ) : (
+                <ImagelessActivityCard activity={reco.activity} showPrice={false} />
+              )}
+            </div>
+            <div className="chat-reco-text">
+              <p className="chat-reco-why">{reco.reason}</p>
+              {reco.sourceUrl && (
+                <a
+                  className="chat-reco-source"
+                  href={reco.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Voir la source <Icon name="arrow-right" size={11} />
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
       ))}
     </div>
   );
@@ -67,6 +100,43 @@ export function ChatPage() {
   const [draft, setDraft] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ideaIdx, setIdeaIdx] = useState(0);
+
+  const started = thread.length > 0;
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  const flipFrom = useRef<DOMRect | null>(null);
+  const threadEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Idle placeholder rotation — stops once the conversation starts.
+  useEffect(() => {
+    if (started) return;
+    const timer = setInterval(() => setIdeaIdx((i) => (i + 1) % IDEAS.length), IDEA_ROTATE_MS);
+    return () => clearInterval(timer);
+  }, [started]);
+
+  // FLIP: `send` snapshots the centered dock; once the layout flips to the
+  // conversation state, slide the dock from there to its bottom position.
+  useLayoutEffect(() => {
+    const from = flipFrom.current;
+    const dock = dockRef.current;
+    if (!from || !dock) return;
+    flipFrom.current = null;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const dy = from.top - dock.getBoundingClientRect().top;
+    if (Math.abs(dy) < 4) return;
+    dock.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], {
+      duration: 560,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    });
+  }, [started]);
+
+  // Keep the latest turn in view while messages and tokens arrive.
+  useEffect(() => {
+    if (!started) return;
+    threadEndRef.current?.scrollIntoView({ block: 'end' });
+  }, [started, thread, streaming]);
 
   async function send(text?: string) {
     const t = (text ?? draft).trim();
@@ -74,6 +144,9 @@ export function ChatPage() {
     setPending(true);
     setError(null);
     setDraft('');
+    if (thread.length === 0) {
+      flipFrom.current = dockRef.current?.getBoundingClientRect() ?? null;
+    }
 
     // Replay the thread as it stood *before* this turn, then optimistically show
     // the user's message and the assistant's "thinking" state right away.
@@ -125,7 +198,7 @@ export function ChatPage() {
       if (streamError) throw new Error(streamError);
       setThread((prev) => [...prev, chatMessage('assistant', answer, recommendations)]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send message.');
+      setError(e instanceof Error ? e.message : 'L’envoi du message a échoué.');
     } finally {
       setStreaming(null);
       setPending(false);
@@ -139,114 +212,116 @@ export function ChatPage() {
     }
   }
 
+  function pickInspiration(activity: ActivityDTO) {
+    setDraft(`Propose-moi une sortie dans le genre de « ${activity.title} »`);
+    textareaRef.current?.focus();
+  }
+
   return (
-    <div className="chat-wrap">
-      {thread.length === 0 ? (
-        <>
-          <div className="chat-eyebrow">Wandr Assistant</div>
+    <div className={`chat-shell${started ? ' is-chatting' : ''}`}>
+      {started ? (
+        <div className="chat-scroll">
+          <div className="chat-thread">
+            {thread.map((m) =>
+              m.role === 'user' ? (
+                <div key={m.id} className="chat-msg-user">
+                  {m.text}
+                </div>
+              ) : (
+                <div key={m.id} className="chat-msg-ai">
+                  <div className="chat-ai-avatar">W</div>
+                  <div className="chat-ai-content">
+                    <div className="chat-ai-bubble">
+                      <p>{m.text}</p>
+                    </div>
+                    <Recommendations items={m.recommendations} />
+                  </div>
+                </div>
+              ),
+            )}
+
+            {streaming &&
+              (streaming.text.length === 0 ? (
+                // Pre-text: the dot-matrix bloom under the avatar (thinking /
+                // searching / synthesizing — no answer tokens yet).
+                <div className="chat-msg-ai is-pending">
+                  <div className="chat-ai-avatar">W</div>
+                  <ChatStatusIndicator phase={streaming.phase} />
+                </div>
+              ) : (
+                // Writing: tokens stream into the bubble, cards follow.
+                <div className="chat-msg-ai">
+                  <div className="chat-ai-avatar">W</div>
+                  <div className="chat-ai-content">
+                    <div className="chat-ai-bubble">
+                      <p className="chat-ai-streaming">{streaming.text}</p>
+                    </div>
+                    <Recommendations items={streaming.recommendations} />
+                  </div>
+                </div>
+              ))}
+            <div ref={threadEndRef} />
+          </div>
+        </div>
+      ) : (
+        <div className="chat-hero">
+          <div className="chat-eyebrow">Assistant Wandr</div>
           <h1 className="chat-title">
-            What do you feel like
+            Qu&rsquo;est-ce qui te
             <br />
-            doing today?
+            tente aujourd&rsquo;hui&nbsp;?
           </h1>
           <p className="chat-sub">
-            Ask anything — a vibe, a budget, a neighborhood. We&rsquo;ll find the rest.
+            Une envie, un budget, un quartier — Wandr s&rsquo;occupe du reste.
           </p>
-        </>
-      ) : null}
+        </div>
+      )}
 
-      <div className="chat-input">
-        <textarea
-          placeholder="Tell me your mood, and I'll find the night…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={onKeyDown}
-        />
-        <div className="chat-input-foot">
-          <div className="chat-input-tools">
-            <button type="button" className="chat-tool">
-              <Icon name="pin" size={13} /> Near me
-            </button>
-            <button type="button" className="chat-tool">
-              <Icon name="calendar" size={13} /> Tonight
-            </button>
-            <button type="button" className="chat-tool">
-              <Icon name="users" size={13} /> Solo
+      <div className="chat-dock" ref={dockRef}>
+        {error && <p className="chat-error">{error}</p>}
+        <div className="chat-input">
+          <div className="chat-input-field">
+            <textarea
+              ref={textareaRef}
+              placeholder={started ? 'Réponds ou précise ton envie…' : ''}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={onKeyDown}
+            />
+            {!started && draft.length === 0 && (
+              // Rotating idea shown in place of the native placeholder; the key
+              // remounts the span so the fade replays at each rotation.
+              <span key={ideaIdx} className="chat-placeholder" aria-hidden>
+                {IDEAS[ideaIdx]}
+              </span>
+            )}
+          </div>
+          <div className="chat-input-foot">
+            <div className="chat-input-tools">
+              <button type="button" className="chat-tool">
+                <Icon name="pin" size={13} /> Près de moi
+              </button>
+              <button type="button" className="chat-tool">
+                <Icon name="calendar" size={13} /> Ce soir
+              </button>
+              <button type="button" className="chat-tool">
+                <Icon name="users" size={13} /> Solo
+              </button>
+            </div>
+            <button
+              type="button"
+              className="chat-send"
+              onClick={() => void send()}
+              aria-label="Envoyer"
+              disabled={pending}
+            >
+              <Icon name="arrow-right" size={16} />
             </button>
           </div>
-          <button
-            type="button"
-            className="chat-send"
-            onClick={() => void send()}
-            aria-label="Send"
-            disabled={pending}
-          >
-            <Icon name="arrow-right" size={16} />
-          </button>
         </div>
       </div>
 
-      {thread.length === 0 && (
-        <>
-          <div className="chat-prompt-eyebrow">Try one of these</div>
-          <div className="chat-prompts">
-            {PROMPTS.map((p) => (
-              <button
-                key={p.text}
-                type="button"
-                className="chat-prompt"
-                onClick={() => void send(p.text)}
-              >
-                <span className={'ico ' + p.kind}>
-                  <Icon name={p.icon} size={16} />
-                </span>
-                <span>{p.text}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {error && <p style={{ color: '#B42323', fontSize: 13 }}>{error}</p>}
-
-      {thread.length > 0 && (
-        <div className="chat-thread">
-          {thread.map((m) =>
-            m.role === 'user' ? (
-              <div key={m.id} className="chat-msg-user">
-                {m.text}
-              </div>
-            ) : (
-              <div key={m.id} className="chat-msg-ai">
-                <div className="chat-ai-avatar">W</div>
-                <div className="chat-ai-bubble">
-                  <p>{m.text}</p>
-                  <Recommendations items={m.recommendations} />
-                </div>
-              </div>
-            ),
-          )}
-
-          {streaming &&
-            (streaming.text.length === 0 ? (
-              // Pre-text: the dot-matrix bloom under the avatar (thinking / —
-              // later — reasoning or tool calls, which produce no answer yet).
-              <div className="chat-msg-ai is-pending">
-                <div className="chat-ai-avatar">W</div>
-                <ChatStatusIndicator phase={streaming.phase} />
-              </div>
-            ) : (
-              // Writing: tokens stream into the bubble.
-              <div className="chat-msg-ai">
-                <div className="chat-ai-avatar">W</div>
-                <div className="chat-ai-bubble">
-                  <p className="chat-ai-streaming">{streaming.text}</p>
-                  <Recommendations items={streaming.recommendations} />
-                </div>
-              </div>
-            ))}
-        </div>
-      )}
+      {!started && <ChatInspirationCarousel onPick={pickInspiration} />}
     </div>
   );
 }

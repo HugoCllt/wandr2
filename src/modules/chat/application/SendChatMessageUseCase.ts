@@ -21,7 +21,13 @@ export type SendChatMessageInput = {
   month: string;
   text: string;
   history: ChatTurn[];
+  /** Aborts the in-flight graph run (client gone) — tokens stop burning. */
+  signal?: AbortSignal;
 };
+
+/** Replay at most this many past messages (~ the last 6 exchanges) so a long
+ * conversation doesn't inflate every LLM call of the pipeline. */
+const MAX_HISTORY_MESSAGES = 12;
 
 export type SendChatMessageDeps = {
   model: BaseChatModel;
@@ -33,21 +39,33 @@ export type SendChatMessageDeps = {
 
 /**
  * The exact message list the recommendation graph starts from: the system
- * prompt heads it, the replayed client thread follows, the new turn closes it.
- * Pure so the conversation shape can be asserted without driving the model.
+ * prompt heads it, the replayed client thread follows (bounded to the most
+ * recent `MAX_HISTORY_MESSAGES`), the new turn closes it. Pure so the
+ * conversation shape can be asserted without driving the model.
  */
 export function buildChatMessages(history: ChatTurn[], text: string): BaseMessage[] {
   return [
     new SystemMessage(CHAT_SYSTEM_PROMPT),
-    ...history.map((turn) =>
-      turn.role === 'user' ? new HumanMessage(turn.content) : new AIMessage(turn.content),
-    ),
+    ...history
+      .slice(-MAX_HISTORY_MESSAGES)
+      .map((turn) =>
+        turn.role === 'user' ? new HumanMessage(turn.content) : new AIMessage(turn.content),
+      ),
     new HumanMessage(text),
   ];
 }
 
 export class SendChatMessageUseCase {
-  constructor(private readonly deps: SendChatMessageDeps) {}
+  /** Compiled once per use-case instance — the graph shape never changes per turn. */
+  private readonly graph: ReturnType<typeof buildChatGraph>;
+
+  constructor(private readonly deps: SendChatMessageDeps) {
+    this.graph = buildChatGraph({
+      model: deps.model,
+      contextRepo: deps.contextRepo,
+      webSearch: deps.webSearch,
+    });
+  }
 
   /**
    * Drives the recommendation graph and re-emits its progress as the wire event
@@ -61,7 +79,7 @@ export class SendChatMessageUseCase {
    * before the body opens. Usage is persisted before `done`.
    */
   async *executeStream(input: SendChatMessageInput): AsyncGenerator<ChatStreamEvent> {
-    const { model, usage, contextRepo, webSearch, monthlyTokenCap } = this.deps;
+    const { usage, monthlyTokenCap } = this.deps;
 
     const spent = await usage.getMonthlyTotal(input.userId, input.month);
     if (spent >= monthlyTokenCap) {
@@ -70,7 +88,6 @@ export class SendChatMessageUseCase {
 
     yield { type: 'status', phase: 'thinking' };
 
-    const graph = buildChatGraph({ model, contextRepo, webSearch });
     const initial = {
       messages: buildChatMessages(input.history, input.text),
       userId: input.userId,
@@ -80,7 +97,10 @@ export class SendChatMessageUseCase {
     let writing = false;
     let total: TokenUsage = ZERO_USAGE;
 
-    const stream = await graph.stream(initial, { streamMode: ['custom', 'values'] });
+    const stream = await this.graph.stream(initial, {
+      streamMode: ['custom', 'values'],
+      signal: input.signal,
+    });
 
     for await (const [mode, payload] of stream) {
       if (mode === 'custom') {

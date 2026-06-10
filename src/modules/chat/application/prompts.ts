@@ -52,8 +52,8 @@ export function synthesisPrompt(
 Pour chaque axe, choisis le meilleur résultat et compose une carte :
 - "axisIndex" : l'indice de l'axe (0, 1 ou 2)
 - "title" : nom concret de l'activité ou du lieu
-- "description" : 1 phrase descriptive, ancrée à Montréal
-- "reason" : "pourquoi ça pourrait te plaire", tutoiement, 1 à 2 phrases personnelles
+- "description" : 1 phrase factuelle (ce que c'est, où), ancrée à Montréal
+- "reason" : "pourquoi ça pourrait te plaire", tutoiement, 2 phrases personnelles qui parlent de la personne (son envie, son moment, ses goûts) — SANS redire ce que dit "description"
 - "sourceUrl" : l'URL du résultat choisi (copie-la telle quelle)
 
 Règles : n'invente JAMAIS de lieu — si un axe n'a aucun résultat exploitable, n'émets simplement pas de carte pour cet axe. Au plus une carte par axe, dans l'ordre des axes.
@@ -85,7 +85,7 @@ export function presentPrompt(count: number): string {
     count < 3
       ? ` Tu n'as trouvé que ${count} idée(s) solide(s) — mentionne-le honnêtement.`
       : '';
-  return `Tu présentes ${count} idée(s) d'activité à Montréal qui s'affichent sous ton message sous forme de cartes. Écris une courte intro chaleureuse en français (tutoiement), 1 à 2 phrases, SANS énumérer les cartes (elles s'affichent déjà).${note}`;
+  return `Tu présentes ${count} idée(s) d'activité à Montréal qui s'affichent sous ton message sous forme de cartes détaillées. Écris UNE seule phrase d'intro chaleureuse en français (tutoiement). Interdit : énumérer, nommer ou décrire les cartes — chacune a déjà son propre texte personnalisé en dessous.${note}`;
 }
 
 function formatContext(ctx: UserRecommendationContext): string {

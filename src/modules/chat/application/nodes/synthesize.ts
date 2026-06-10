@@ -57,26 +57,34 @@ export function makeSynthesizeNode(model: BaseChatModel) {
   };
 }
 
-/** One card per axis, in axis order — drops invalid indices and duplicates. */
+/** One card per axis, in axis order — drops invalid indices, duplicate axes,
+ * and cross-axis duplicates (two axes surfacing the same place — same title;
+ * URL is no signal: one listicle page can legitimately source two cards). */
 function toRecommendations(
   cards: SynthesisCard[],
   axes: SearchAxis[],
   searchResults: WebSearchResult[][],
 ): ChatRecommendationDTO[] {
   const seen = new Set<number>();
+  const seenPlaces = new Set<string>();
   const recos: { axisIndex: number; reco: ChatRecommendationDTO }[] = [];
 
   for (const card of cards) {
     const axis = axes[card.axisIndex];
     if (!axis || seen.has(card.axisIndex)) continue;
-    seen.add(card.axisIndex);
 
     const hits = searchResults[card.axisIndex] ?? [];
     const source = hits.find((r) => r.url === card.sourceUrl) ?? hits[0] ?? null;
+
+    const titleKey = slugify(card.title);
+    if (seenPlaces.has(titleKey)) continue;
+    seen.add(card.axisIndex);
+    seenPlaces.add(titleKey);
     recos.push({
       axisIndex: card.axisIndex,
       reco: {
         activity: syntheticActivity(card, axis, source),
+        axisLabel: axis.label,
         reason: card.reason,
         sourceUrl: card.sourceUrl || source?.url || null,
       },

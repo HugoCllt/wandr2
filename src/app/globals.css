@@ -1230,12 +1230,38 @@ img { display: block; max-width: 100%; }
 }
 
 /* ==================== PAGE: CHAT ==================== */
-.chat-wrap {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 32px 24px 80px;
+/* Full-height column. Empty state: hero + dock + carousel centered as a group;
+   once the conversation starts the thread takes the page flow and the dock
+   sticks to the bottom of the viewport (the FLIP animation in ChatPage covers
+   the move between the two positions). */
+.chat-shell {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 30px;
+  min-height: calc(100dvh - 170px);
+}
+.chat-shell.is-chatting { justify-content: flex-start; gap: 0; }
+.chat-scroll { flex: 1; padding-top: 8px; }
+.chat-dock { width: 100%; }
+.chat-shell.is-chatting .chat-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  /* Soft fade so streaming text slides under the bar instead of clipping. */
+  padding: 18px 0 22px;
+  background: linear-gradient(to top, var(--offwhite) 78%, transparent);
+}
+.chat-error {
+  margin: 0 6px 8px;
+  color: #B42323;
+  font-size: 13px;
 }
 .chat-eyebrow {
   font-family: var(--font-body);
@@ -1270,7 +1296,17 @@ img { display: block; max-width: 100%; }
   border-radius: 22px;
   padding: 20px 22px 16px;
   box-shadow: var(--shadow-md);
-  margin-bottom: 30px;
+}
+.chat-input-field { position: relative; }
+/* Rotating idea standing in for the native placeholder on the idle page. */
+.chat-placeholder {
+  position: absolute;
+  top: 0; left: 0; right: 44px;
+  color: var(--silver-2);
+  font-size: 15.5px;
+  line-height: 1.5;
+  pointer-events: none;
+  animation: chat-label-in 0.5s ease both;
 }
 .chat-input textarea {
   width: 100%;
@@ -1308,46 +1344,65 @@ img { display: block; max-width: 100%; }
 }
 .chat-send:hover { background: var(--ink); transform: translateY(-1px); }
 
-.chat-prompt-eyebrow {
+/* Inspiration marquee under the idle input: real activities with photos.
+   The track holds the list twice; sliding -50% then looping reads seamless
+   because each card carries its own right margin (no flex gap). */
+.chat-carousel { display: flex; flex-direction: column; gap: 12px; }
+.chat-carousel-eyebrow {
   font-family: var(--font-body);
   font-size: 10.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--smoke);
-  margin: 0 6px 12px;
+  margin: 0 6px;
 }
-.chat-prompts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 44px;
+.chat-carousel-mask {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
-.chat-prompt {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px 18px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--charcoal-800);
-  transition: background .15s, transform .15s, border-color .15s;
+.chat-carousel-track {
+  display: flex;
+  width: max-content;
+  animation: chat-marquee 45s linear infinite;
 }
-.chat-prompt:hover { transform: translateY(-2px); border-color: var(--line-2); background: var(--surface-2); }
-.chat-prompt .ico {
-  width: 36px; height: 36px;
-  border-radius: 12px;
-  background: var(--surface-3);
-  color: var(--ink);
-  display: inline-flex; align-items: center; justify-content: center;
+.chat-carousel-mask:hover .chat-carousel-track { animation-play-state: paused; }
+@keyframes chat-marquee { to { transform: translateX(-50%); } }
+.chat-carousel-card {
+  position: relative;
+  width: 172px;
+  height: 112px;
+  margin-right: 12px;
+  border-radius: 14px;
+  overflow: hidden;
   flex: none;
+  background: var(--ink-900);
+  cursor: pointer;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
 }
-.chat-prompt .ico.warm { background: var(--surface-3); color: var(--ink); }
-.chat-prompt .ico.cream { background: var(--surface-2); color: var(--charcoal-800); }
-.chat-prompt .ico.cool { background: var(--surface-3); color: var(--ink); }
+.chat-carousel-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.chat-carousel-img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+}
+.chat-carousel-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(5,5,5,0.78) 0%, rgba(5,5,5,0.18) 55%, rgba(5,5,5,0) 80%);
+}
+.chat-carousel-title {
+  position: absolute; left: 12px; right: 12px; bottom: 10px;
+  color: var(--offwhite);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
-.chat-thread { display: flex; flex-direction: column; gap: 22px; }
+.chat-thread { display: flex; flex-direction: column; gap: 22px; padding-bottom: 8px; }
 .chat-msg-user {
   align-self: flex-end;
   max-width: 70%;
@@ -1371,6 +1426,7 @@ img { display: block; max-width: 100%; }
   display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-weight: 600; font-size: 14px;
 }
+.chat-ai-content { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .chat-ai-bubble {
   background: #fff;
   border: 1px solid var(--line);
@@ -1378,8 +1434,9 @@ img { display: block; max-width: 100%; }
   border-radius: 6px 18px 18px 18px;
   font-size: 14.5px;
   color: var(--charcoal-800);
+  align-self: flex-start;
 }
-.chat-ai-bubble p { margin: 0 0 14px; line-height: 1.55; }
+.chat-ai-bubble p { margin: 0; line-height: 1.55; }
 
 /* Assistant live status — dot-matrix bloom + phase label, sat next to the
    avatar in the chat-msg-ai grid while the model works (pre-answer-text). */
@@ -1395,6 +1452,11 @@ img { display: block; max-width: 100%; }
   font-size: 13px;
   color: var(--smoke);
   letter-spacing: 0.01em;
+  animation: chat-label-in 0.45s ease both;
+}
+@keyframes chat-label-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
 }
 .dot-matrix { display: block; color: var(--smoke); flex: none; }
 .dm-dot {
@@ -1414,22 +1476,65 @@ img { display: block; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .dm-dot { animation: none; opacity: 0.42; transform: none; }
   .chat-ai-streaming { animation: none; }
+  .chat-status-label { animation: none; }
+  .chat-placeholder { animation: none; }
+  .chat-carousel-track { animation: none; }
 }
 
-/* Recommendation cards in a chat turn: the classic Tuile / no-photo card with
-   the assistant's personal "pourquoi" line under each. */
-.chat-recos {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 14px;
-  margin-top: 10px;
+/* Recommendations in a chat turn: one section per activity — numbered axis
+   eyebrow, the classic Tuile (or no-photo card), and the personal "pourquoi"
+   paragraph beside it. Stacks on narrow screens. */
+.chat-recos { display: flex; flex-direction: column; gap: 20px; }
+.chat-reco-section {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.chat-reco { display: flex; flex-direction: column; gap: 8px; }
+.chat-reco-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--smoke);
+}
+.chat-reco-num {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.chat-reco-body {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.chat-reco-text { display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
 .chat-reco-why {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--charcoal-800);
+}
+.chat-reco-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
   color: var(--smoke);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-2);
+  align-self: flex-start;
+  padding-bottom: 1px;
+}
+.chat-reco-source:hover { color: var(--ink); border-color: var(--ink); }
+@media (max-width: 640px) {
+  .chat-reco-body { grid-template-columns: 1fr; }
 }
 
 /* ==================== PAGE: PROFILE ==================== */
