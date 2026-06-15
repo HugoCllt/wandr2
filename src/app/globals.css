@@ -1950,6 +1950,21 @@ img { display: block; max-width: 100%; }
 .cal-event.faded {
   opacity: 0.5;
 }
+/* Reviewed past bookmarks: done reads confirmed (ink), missed reads muted + struck. */
+.cal-event.done {
+  background: var(--ink);
+  border-left-color: var(--ink);
+  color: #fff;
+}
+.cal-event.done .cal-event-dot { background: #fff; }
+.cal-event.missed {
+  background: var(--surface-2);
+  border-left-color: var(--silver-2);
+  color: var(--smoke);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.cal-event.missed .cal-event-dot { background: var(--silver-2); }
 .cal-event-dot {
   width: 6px; height: 6px; border-radius: 999px;
   background: var(--ink);
@@ -2005,6 +2020,30 @@ img { display: block; max-width: 100%; }
   color: var(--smoke);
   margin-top: 2px;
 }
+
+/* Pending-review list (past bookmarks awaiting a Fait / Raté verdict) */
+.cal-review-list { display: flex; flex-direction: column; gap: 10px; }
+.cal-review-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px; border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2, #fff);
+}
+.cal-review-info { min-width: 0; }
+.cal-review-title {
+  font-size: 14px; font-weight: 500; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cal-review-date { font-size: 12px; color: var(--smoke); margin-top: 2px; }
+.cal-review-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.cal-review-btn {
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--line-2); background: #fff; color: var(--ink);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.cal-review-btn.done:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+.cal-review-btn.missed:hover { background: var(--surface-3); color: var(--ink); }
 
 .cal-upcoming { display: flex; flex-direction: column; gap: 10px; }
 .cal-up-row {

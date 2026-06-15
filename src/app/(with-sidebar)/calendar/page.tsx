@@ -8,6 +8,8 @@ import {
 } from '../../../modules/calendar/web/CalendarMonthGrid';
 import { CalendarUpcomingList } from '../../../modules/calendar/web/CalendarUpcomingList';
 import { loadCalendarMonth } from '../../../modules/calendar/web/loadCalendarMonth';
+import { loadPendingReviews } from '../../../modules/calendar/web/loadPendingReviews';
+import { PendingReviews } from '../../../modules/calendar/web/PendingReviews';
 import { dayKeyInTZ } from '../../../shared/ui/format/formatInTZ';
 import { Icon } from '../../../shared/ui/icons/Icon';
 
@@ -53,6 +55,7 @@ export default async function CalendarPage({
   const monthParam = pickFirst(searchParams.month);
   const now = new Date();
   const data = await loadCalendarMonth(monthParam, now);
+  const pendingReviews = await loadPendingReviews(now);
   const todayKey = dayKeyInTZ(now);
 
   const cells = buildMonthGrid(data.year, data.monthIndex);
@@ -66,6 +69,7 @@ export default async function CalendarPage({
       venue: e.activity.neighborhood ?? 'Montréal',
       time: formatTime(e.scheduledAt),
       isPast: new Date(e.scheduledAt) < now,
+      outcome: e.outcome,
       activity: e.activity,
     };
     (eventsByDate[e.dayKey] = eventsByDate[e.dayKey] ?? []).push(ev);
@@ -158,6 +162,14 @@ export default async function CalendarPage({
             </div>
           </div>
         </div>
+
+        {pendingReviews.length > 0 ? (
+          <div className="cal-card">
+            <h3>À noter</h3>
+            <p>Vos sorties passées — dites-nous comment c&rsquo;était</p>
+            <PendingReviews items={pendingReviews} />
+          </div>
+        ) : null}
 
         <div className="cal-card">
           <h3>Upcoming</h3>

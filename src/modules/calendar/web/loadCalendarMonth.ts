@@ -5,6 +5,7 @@ import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { dayKeyInTZ } from '../../../shared/ui/format/formatInTZ';
 import { prisma } from '../../../shared/db/prisma';
 import { ListCalendarEntriesUseCase } from '../application/ListCalendarEntriesUseCase';
+import type { CalendarOutcome } from '../domain/CalendarEntry';
 import { parseMonthParam } from '../application/monthRange';
 import { PrismaCalendarRepository } from '../infra/PrismaCalendarRepository';
 
@@ -12,6 +13,7 @@ export type CalendarMonthEntry = {
   id: string;
   scheduledAt: string;
   notes: string | null;
+  outcome: CalendarOutcome;
   dayKey: string;
   activity: ActivityDTO;
 };
@@ -52,6 +54,7 @@ export async function loadCalendarMonth(
         id: entry.id,
         scheduledAt: entry.scheduledAt.toISOString(),
         notes: entry.notes,
+        outcome: entry.outcome,
         dayKey: dayKeyInTZ(entry.scheduledAt),
         activity: toActivityDTO(activity),
       },
