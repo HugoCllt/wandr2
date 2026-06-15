@@ -89,20 +89,20 @@ export function AddToCalendarDialog({
         cache: 'no-store',
       });
       if (res.status === 409) {
-        setError('You already have this activity at this time.');
+        setError('Cette activité est déjà dans votre calendrier.');
         return;
       }
       if (res.status === 404) {
-        setError('Activity not found.');
+        setError('Activité introuvable.');
         return;
       }
       if (!res.ok) {
-        throw new Error(`Save failed: ${res.status}`);
+        throw new Error(`Échec de l'enregistrement : ${res.status}`);
       }
       onSaved?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add to calendar.');
+      setError(err instanceof Error ? err.message : "Échec de l'ajout au calendrier.");
     } finally {
       setPending(false);
     }
@@ -118,7 +118,7 @@ export function AddToCalendarDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId} style={titleStyle}>
-          Add to calendar
+          Ajouter au calendrier
         </h2>
         <p style={subtitleStyle}>{activityTitle}</p>
 
@@ -136,7 +136,7 @@ export function AddToCalendarDialog({
           </label>
 
           <label style={fieldStyle}>
-            <span style={labelStyle}>Time</span>
+            <span style={labelStyle}>Heure</span>
             <select
               required
               value={time}
@@ -144,7 +144,7 @@ export function AddToCalendarDialog({
               style={inputStyle}
             >
               <option value="" disabled>
-                Pick a time
+                Choisir une heure
               </option>
               {TIME_SLOTS.map((slot) => (
                 <option key={slot} value={slot}>
@@ -155,14 +155,14 @@ export function AddToCalendarDialog({
           </label>
 
           <label style={fieldStyle}>
-            <span style={labelStyle}>Note (optional)</span>
+            <span style={labelStyle}>Note (optionnel)</span>
             <textarea
               maxLength={NOTES_MAX_LENGTH}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               style={{ ...inputStyle, resize: 'vertical' }}
-              placeholder="Optional"
+              placeholder="Optionnel"
             />
             <span style={counterStyle}>
               {notes.length}/{NOTES_MAX_LENGTH}
@@ -177,14 +177,14 @@ export function AddToCalendarDialog({
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
             <button type="button" onClick={onClose} style={ghostButtonStyle}>
-              Cancel
+              Annuler
             </button>
             <button
               type="submit"
               disabled={!valid || pending}
               style={primaryButtonStyle(!valid || pending)}
             >
-              {pending ? 'Saving…' : 'Save'}
+              {pending ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
         </form>
@@ -277,7 +277,7 @@ const ghostButtonStyle: CSSProperties = {
 
 function primaryButtonStyle(disabled: boolean): CSSProperties {
   return {
-    background: disabled ? '#E5DED1' : '#FF7A33',
+    background: disabled ? '#E5DED1' : '#0E0F12',
     color: disabled ? '#5A5C66' : '#FFFFFF',
     border: 0,
     borderRadius: 9999,
