@@ -71,6 +71,23 @@ export function SectionedFeed({
   const { sections, leftovers } = buildFeedSections(items, DEFAULT_FEED_SECTIONS, { excludeIds });
   const showTail = leftovers.length > 0 || nextCursor !== null;
 
+  // No section, no tail, no more pages: the active filters matched nothing.
+  // Render an explicit empty state so the feed keeps its height instead of
+  // collapsing — otherwise the Premium band would jump up and break the layout.
+  if (sections.length === 0 && !showTail) {
+    return (
+      <section className="feed-section feed-empty">
+        <div className="feed-empty-card">
+          <h2>Aucune activité</h2>
+          <p>
+            Aucune activité ne correspond à vos filtres pour le moment. Essayez d&apos;élargir vos
+            critères.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       {sections.map((section, i) => (
