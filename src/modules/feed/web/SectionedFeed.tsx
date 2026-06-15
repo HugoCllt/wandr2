@@ -1,12 +1,12 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 
 import type { FeedItemDTO } from '../../../shared/contracts/FeedResultDTO';
 import { DEFAULT_FEED_SECTIONS } from '../../../shared/presets/FEED_SECTIONS';
 import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
 import { ImagelessActivityCard } from '../../activities/web/cards/ImagelessActivityCard';
 import { MediaRowActivityCard } from '../../activities/web/cards/MediaRowActivityCard';
-import { FavoriteButton } from '../../favorites/web/FavoriteButton';
 import { buildFeedSections, type RenderedSection } from './buildFeedSections';
+import { CardActions } from './CardActions';
 import { FeedGrid } from './FeedGrid';
 
 type SectionedFeedProps = {
@@ -18,16 +18,12 @@ type SectionedFeedProps = {
   excludeIds?: ReadonlySet<string>;
 };
 
-function favoriteSlot(a: FeedItemDTO): ReactNode {
-  return <FavoriteButton activityId={a.id} initialFavorited={a.isFavorited} />;
-}
-
 /** Routes a grid item to the Tuile (has photo) or the Imageless card. */
 function GridCard({ item }: { item: FeedItemDTO }): ReactElement {
   return item.imageUrl ? (
-    <CoverActivityCard activity={item} showPrice favoriteSlot={favoriteSlot(item)} />
+    <CoverActivityCard activity={item} showPrice actionsSlot={<CardActions item={item} />} />
   ) : (
-    <ImagelessActivityCard activity={item} favoriteSlot={favoriteSlot(item)} />
+    <ImagelessActivityCard activity={item} actionsSlot={<CardActions item={item} />} />
   );
 }
 

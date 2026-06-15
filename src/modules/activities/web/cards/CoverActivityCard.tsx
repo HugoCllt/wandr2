@@ -12,7 +12,8 @@ type Props = {
   live?: boolean;
   badge?: Badge;
   showPrice?: boolean;
-  favoriteSlot?: ReactNode;
+  /** Consumer-injected card controls (favorite + signet), overlaid on hover. */
+  actionsSlot?: ReactNode;
 };
 
 function deriveBadge(activity: ActivityDTO): Badge | null {
@@ -22,15 +23,15 @@ function deriveBadge(activity: ActivityDTO): Badge | null {
 
 /**
  * Tuile — the workhorse full-bleed photo card. Title/meta/price overlaid on a
- * bottom scrim; optional favorite (save) top-right; optional trending badge.
- * No rating dots (no rating field) and no calendar button (decision D4).
+ * bottom scrim; optional hover-revealed actions (favorite + signet) on the
+ * right edge; optional trending badge. No rating dots (no rating field).
  */
 export function CoverActivityCard({
   activity,
   live = false,
   badge,
   showPrice = false,
-  favoriteSlot,
+  actionsSlot,
 }: Props): ReactElement {
   const open = useOpenActivity();
   const activeBadge = live ? null : badge ?? deriveBadge(activity);
@@ -46,7 +47,7 @@ export function CoverActivityCard({
         </span>
       )}
       {activeBadge && <span className="tuile-badge">{activeBadge.label}</span>}
-      {favoriteSlot}
+      {actionsSlot}
       <div className="tuile-body">
         <h3 className="tuile-title">{activity.title}</h3>
         <div className="tuile-meta">

@@ -9,7 +9,8 @@ import { formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenAc
 
 type Props = {
   activity: ActivityDTO;
-  favoriteSlot?: ReactNode;
+  /** Consumer-injected card controls (favorite + signet), overlaid on hover. */
+  actionsSlot?: ReactNode;
   /** Hide the price line — e.g. synthetic chat recommendations carry no real price. */
   showPrice?: boolean;
 };
@@ -21,7 +22,7 @@ type Props = {
  */
 export function ImagelessActivityCard({
   activity,
-  favoriteSlot,
+  actionsSlot,
   showPrice = true,
 }: Props): ReactElement {
   const open = useOpenActivity();
@@ -30,6 +31,7 @@ export function ImagelessActivityCard({
 
   return (
     <article className="nophoto" onClick={() => open(activity)}>
+      {actionsSlot}
       <div className="nophoto-top">
         <span className="nophoto-cat">{categoryLabelFor(primary)}</span>
         <span className="nophoto-mark">
@@ -44,7 +46,6 @@ export function ImagelessActivityCard({
       </div>
       <div className="nophoto-foot">
         {price ? <span className="nophoto-price">{price}</span> : <span />}
-        {favoriteSlot}
       </div>
     </article>
   );

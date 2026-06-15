@@ -1099,22 +1099,57 @@ img { display: block; max-width: 100%; }
 .map-panel-list .cover-card-content { padding: 12px 14px; }
 .map-panel-list .cover-card-title { font-size: 17px; }
 
-/* Card action buttons (favorite + add-to-calendar), overlaid on cover cards */
-.card-fav-btn {
+/* Card actions (favorite + signet) — stacked on the card's right edge, hidden
+   at rest and revealed on hover, sliding in from the right (and back out, left
+   to right, when the pointer leaves). Mirrors the filter-rail's quiet overlay. */
+.card-actions {
   position: absolute;
   top: 12px; right: 12px;
-  z-index: 3;
-  width: 32px; height: 32px;
-  background: rgba(255,255,255,0.95);
-  border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--ink);
-  transition: transform .15s, background .15s;
+  z-index: 4;
+  display: flex; flex-direction: column; gap: 10px;
+  opacity: 0;
+  transform: translateX(14px);
+  transition: opacity .3s var(--ease), transform .42s var(--ease);
+  pointer-events: none;
 }
-.card-fav-btn:hover { transform: scale(1.06); background: #fff; }
-.card-fav-btn.saved { background: var(--ink); color: #fff; }
-.card-cal-btn { color: var(--silver); display: inline-flex; }
-.card-cal-btn:hover { color: #fff; }
+.tuile:hover .card-actions,
+.tuile:focus-within .card-actions,
+.nophoto:hover .card-actions,
+.nophoto:focus-within .card-actions {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.card-action-btn {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.55);
+  color: #fff;
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  box-shadow: var(--shadow-sm);
+  transition: background .15s, color .15s, transform .15s, border-color .15s;
+}
+.card-action-btn:hover { background: rgba(255,255,255,0.34); transform: translateY(-1px); }
+.card-action-btn.on { background: #fff; border-color: #fff; color: var(--ink); }
+.card-action-fav.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.card-action-btn[data-loading] { opacity: 0.6; }
+/* Imageless card sits on light paper — use a dark translucent treatment. */
+.nophoto .card-action-btn {
+  background: rgba(20,22,24,0.05);
+  border-color: var(--line);
+  color: var(--ink);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.nophoto .card-action-btn:hover { background: rgba(20,22,24,0.11); }
+.nophoto .card-action-btn.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+/* Touch devices have no hover — keep the actions visible. */
+@media (hover: none) {
+  .card-actions { opacity: 1; transform: none; pointer-events: auto; }
+}
 
 
 .classes-grid {
@@ -2648,9 +2683,6 @@ img { display: block; max-width: 100%; }
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .nophoto-price { font-size: 15px; font-weight: 500; color: var(--ink-900); letter-spacing: -0.01em; white-space: nowrap; }
-/* The shared FavoriteButton renders an absolute .card-fav-btn; inside the
-   imageless foot we want it inline (price left, save right). */
-.nophoto-foot .card-fav-btn { position: static; top: auto; right: auto; }
 
 /* ===========================================================
    FEED SHELL (reskin) — editorial whitespace, 3-col grid

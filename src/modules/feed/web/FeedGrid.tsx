@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { CoverActivityCard } from '../../activities/web/cards/CoverActivityCard';
 import { ImagelessActivityCard } from '../../activities/web/cards/ImagelessActivityCard';
-import { FavoriteButton } from '../../favorites/web/FavoriteButton';
+import { CardActions } from './CardActions';
 
 type FeedGridProps = {
   initialItems: FeedItemDTO[];
@@ -81,17 +81,10 @@ export function FeedGrid({
               <CoverActivityCard
                 activity={item}
                 showPrice
-                favoriteSlot={
-                  <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
-                }
+                actionsSlot={<CardActions item={item} />}
               />
             ) : (
-              <ImagelessActivityCard
-                activity={item}
-                favoriteSlot={
-                  <FavoriteButton activityId={item.id} initialFavorited={item.isFavorited} />
-                }
-              />
+              <ImagelessActivityCard activity={item} actionsSlot={<CardActions item={item} />} />
             )}
           </div>
         ))}
