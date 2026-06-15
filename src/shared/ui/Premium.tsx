@@ -1,5 +1,6 @@
 'use client';
 
+import { useLenis } from 'lenis/react';
 import { useEffect, useState } from 'react';
 
 import { Icon } from './icons/Icon';
@@ -27,6 +28,12 @@ const PREMIUM_FEATURES = [
 ];
 
 export function PremiumModal({ onClose }: { onClose: () => void }) {
+  // The page scroll is driven by a global Lenis instance, so toggling
+  // `body.overflow` alone doesn't stop the wheel from scrolling the page behind
+  // the overlay (which let the fixed modal drift under the footer/text). Pause
+  // Lenis while the modal is open and resume on close; keep `body.overflow` as a
+  // fallback for the brief window before Lenis is wired up.
+  const lenis = useLenis();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -34,11 +41,13 @@ export function PremiumModal({ onClose }: { onClose: () => void }) {
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    lenis?.stop();
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
+      lenis?.start();
     };
-  }, [onClose]);
+  }, [onClose, lenis]);
 
   return (
     <div className="prem-overlay" onClick={onClose}>

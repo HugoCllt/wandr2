@@ -2672,6 +2672,19 @@ img { display: block; max-width: 100%; }
   letter-spacing: -0.035em; line-height: 1;
   color: var(--ink-900); margin: 0;
 }
+.feed-empty { display: flex; align-items: center; justify-content: center; min-height: 320px; }
+.feed-empty-card {
+  max-width: 46ch; text-align: center;
+  padding: 48px 40px; border-radius: 22px;
+  border: 1px solid var(--line); background: var(--paper);
+}
+.feed-empty-card h2 {
+  font-family: var(--font); font-weight: 300; font-size: 30px;
+  letter-spacing: -0.03em; line-height: 1.05; color: var(--ink-900); margin: 0;
+}
+.feed-empty-card p {
+  margin: 14px 0 0; color: var(--smoke); font-size: 15px; line-height: 1.55;
+}
 .feed-stack { display: flex; flex-direction: column; gap: 24px; }
 .feed-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
