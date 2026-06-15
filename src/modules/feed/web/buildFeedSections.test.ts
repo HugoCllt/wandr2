@@ -38,6 +38,7 @@ function item(overrides: Partial<FeedItemDTO> = {}): FeedItemDTO {
     updatedAt: '2026-04-01T00:00:00.000Z',
     matchScore: 5,
     isFavorited: false,
+    isBookmarked: false,
     ...overrides,
   };
 }

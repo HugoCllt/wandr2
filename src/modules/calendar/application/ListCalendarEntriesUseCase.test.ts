@@ -1,51 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CalendarEntry, CalendarEntryCreateInput } from '../domain/CalendarEntry';
-import { DuplicateCalendarEntryError } from '../domain/DuplicateCalendarEntryError';
-import type { CalendarRangeQuery, ICalendarRepository } from '../domain/ICalendarRepository';
 import { ListCalendarEntriesUseCase } from './ListCalendarEntriesUseCase';
-
-class FakeCalendarRepository implements ICalendarRepository {
-  readonly entries: CalendarEntry[] = [];
-  private nextId = 1;
-
-  async add(input: CalendarEntryCreateInput): Promise<CalendarEntry> {
-    const exists = this.entries.find(
-      (e) =>
-        e.userId === input.userId &&
-        e.activityId === input.activityId &&
-        e.scheduledAt.getTime() === input.scheduledAt.getTime(),
-    );
-    if (exists) {
-      throw new DuplicateCalendarEntryError(input.userId, input.activityId, input.scheduledAt);
-    }
-    const entry: CalendarEntry = {
-      id: `entry_${this.nextId++}`,
-      userId: input.userId,
-      activityId: input.activityId,
-      scheduledAt: input.scheduledAt,
-      notes: input.notes ?? null,
-      createdAt: new Date('2026-05-06T00:00:00.000Z'),
-    };
-    this.entries.push(entry);
-    return entry;
-  }
-
-  async removeById(_userId: string, _id: string): Promise<boolean> {
-    return false;
-  }
-
-  async listInRange(query: CalendarRangeQuery): Promise<CalendarEntry[]> {
-    return this.entries
-      .filter(
-        (e) =>
-          e.userId === query.userId &&
-          e.scheduledAt.getTime() >= query.from.getTime() &&
-          e.scheduledAt.getTime() <= query.to.getTime(),
-      )
-      .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
-  }
-}
+import { FakeCalendarRepository } from './testFakes';
 
 describe('ListCalendarEntriesUseCase', () => {
   it('returns entries inside the range sorted by scheduledAt ascending', async () => {
