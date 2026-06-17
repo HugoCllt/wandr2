@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { GetUserAffinityMapUseCase } from '../../affinity/application/GetUserAffinityMapUseCase';
 import { PrismaAffinityRepository } from '../../affinity/infra/PrismaAffinityRepository';
+import { PrismaCalendarRepository } from '../../calendar/infra/PrismaCalendarRepository';
 import { GetFeedUseCase } from '../../feed/application/GetFeedUseCase';
 import { DEFAULT_FEED_LIMIT } from '../../feed/domain/FeedQuery';
 import { parseFilters } from '../../filters/application/url-codec';
@@ -26,6 +27,10 @@ export async function loadFavoritesFeedDTO(searchParams: URLSearchParams): Promi
     new PrismaAffinityRepository(prisma),
   ).execute(user.id);
 
+  const bookmarkedIds = new Set(
+    await new PrismaCalendarRepository(prisma).listActivityIdsForUser(user.id),
+  );
+
   const favoriteRepo = new PrismaFavoriteRepository(prisma);
   const useCase = new ListFavoritesUseCase(
     favoriteRepo,
@@ -48,6 +53,7 @@ export async function loadFavoritesFeedDTO(searchParams: URLSearchParams): Promi
         ...toActivityDTO(item),
         matchScore: item.matchScore,
         isFavorited: true,
+        isBookmarked: bookmarkedIds.has(item.id),
       }),
     ),
     nextCursor: result.nextCursor,

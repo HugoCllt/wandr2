@@ -135,6 +135,14 @@ enum Gender {
   OTHER
 }
 
+// Outcome of a bookmarked (calendar) activity once its date has passed.
+// PENDING until the user reviews it; DONE / MISSED feed back into affinity.
+enum CalendarOutcome {
+  PENDING
+  DONE
+  MISSED
+}
+
 model Activity {
   id            String           @id @default(cuid())
   slug          String           @unique
@@ -201,17 +209,24 @@ model Favorite {
 }
 
 model CalendarEntry {
-  id          String   @id @default(cuid())
-  userId      String
-  activityId  String
-  scheduledAt DateTime
-  notes       String?
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
-  activity    Activity @relation(fields: [activityId], references: [id])
+  id           String          @id @default(cuid())
+  userId       String
+  activityId   String
+  scheduledAt  DateTime
+  notes        String?
+  outcome      CalendarOutcome @default(PENDING)
+  satisfaction Int?
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime        @default(now())
+  user         User            @relation(fields: [userId], references: [id])
+  activity     Activity        @relation(fields: [activityId], references: [id])
 
-  @@unique([userId, activityId, scheduledAt])
+  // One bookmark (signet) per activity per user; the activity appears once on
+  // the calendar at its scheduled date.
+  @@unique([userId, activityId])
   @@index([userId, scheduledAt])
+  @@index([userId, outcome, scheduledAt])
 }
 
 model ChatTokenUsage {

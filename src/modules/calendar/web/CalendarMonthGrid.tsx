@@ -2,6 +2,7 @@
 
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import { useOpenActivity } from '../../activities/web/cards/helpers';
+import type { CalendarOutcome } from '../domain/CalendarEntry';
 import type { CalendarGridCell } from './buildMonthGrid';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -13,8 +14,15 @@ export type CalendarGridEvent = {
   venue: string;
   time: string;
   isPast: boolean;
+  outcome: CalendarOutcome;
   activity: ActivityDTO;
 };
+
+function eventClass(e: CalendarGridEvent): string {
+  if (e.outcome === 'DONE') return 'cal-event done';
+  if (e.outcome === 'MISSED') return 'cal-event missed';
+  return 'cal-event' + (e.isPast ? ' ink faded' : '');
+}
 
 type CalendarMonthGridProps = {
   cells: CalendarGridCell[];
@@ -52,7 +60,7 @@ export function CalendarMonthGrid({ cells, eventsByDate, todayKey }: CalendarMon
               {evs.slice(0, 3).map((e) => (
                 <div
                   key={e.id}
-                  className={'cal-event ' + (e.isPast ? 'ink faded' : '')}
+                  className={eventClass(e)}
                   onClick={(ev) => {
                     ev.stopPropagation();
                     open(e.activity);

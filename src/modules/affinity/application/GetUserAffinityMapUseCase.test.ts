@@ -20,6 +20,26 @@ class FakeAffinityRepository implements IAffinityRepository {
     const list = await this.listByUserId(userId);
     return new Map(list.map((a) => [a.category, a.score]));
   }
+
+  async adjustScore(userId: string, category: ActivityCategory, delta: number): Promise<number> {
+    const list = this.byUser.get(userId) ?? [];
+    const existing = list.find((a) => a.category === category);
+    const base = existing?.score ?? 5;
+    const next = Math.max(0, Math.min(10, Math.round(base + delta)));
+    if (existing) {
+      existing.score = next;
+    } else {
+      list.push({
+        id: `aff_${userId}_${category}`,
+        userId,
+        category,
+        score: next,
+        updatedAt: new Date('2026-05-01T00:00:00.000Z'),
+      });
+      this.byUser.set(userId, list);
+    }
+    return next;
+  }
 }
 
 function affinity(userId: string, category: ActivityCategory, score: number): UserCategoryAffinity {

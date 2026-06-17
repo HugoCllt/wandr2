@@ -11,6 +11,7 @@ import {
 import { prisma } from '../../../shared/db/prisma';
 import { AddToCalendarUseCase } from '../application/AddToCalendarUseCase';
 import { ListCalendarEntriesUseCase } from '../application/ListCalendarEntriesUseCase';
+import { RemoveBookmarkUseCase } from '../application/RemoveBookmarkUseCase';
 import { CALENDAR_NOTES_MAX_LENGTH } from '../domain/CalendarEntry';
 import { PrismaCalendarRepository } from '../infra/PrismaCalendarRepository';
 
@@ -20,6 +21,10 @@ const AddBodySchema = z.object({
     message: 'Invalid ISO timestamp',
   }),
   notes: z.string().max(CALENDAR_NOTES_MAX_LENGTH).nullable().optional(),
+});
+
+const RemoveBookmarkQuerySchema = z.object({
+  activityId: z.string().min(1),
 });
 
 const RangeQuerySchema = z
@@ -53,6 +58,15 @@ export async function addToCalendarRouteHandler(request: Request): Promise<NextR
     notes: data.notes ?? null,
   });
   return NextResponse.json(toCalendarEntryDTO(entry), { status: 201 });
+}
+
+export async function removeBookmarkRouteHandler(request: Request): Promise<NextResponse> {
+  const url = new URL(request.url);
+  const { activityId } = parseQuery(RemoveBookmarkQuerySchema, url.searchParams);
+  const user = await getCurrentUser();
+  const useCase = new RemoveBookmarkUseCase(new PrismaCalendarRepository(prisma));
+  const result = await useCase.execute(user.id, activityId);
+  return NextResponse.json(result);
 }
 
 export async function listCalendarEntriesRouteHandler(request: Request): Promise<NextResponse> {

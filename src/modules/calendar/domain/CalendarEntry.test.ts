@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { CALENDAR_NOTES_MAX_LENGTH, createCalendarEntry } from './CalendarEntry';
+import {
+  CALENDAR_NOTES_MAX_LENGTH,
+  CALENDAR_REVIEW_NOTE_MAX_LENGTH,
+  createCalendarEntry,
+  validateCalendarReview,
+} from './CalendarEntry';
 
 describe('CalendarEntry', () => {
   it('accepts a valid future entry', () => {
@@ -81,5 +86,43 @@ describe('CalendarEntry', () => {
         notes: 'a'.repeat(CALENDAR_NOTES_MAX_LENGTH + 1),
       }),
     ).toThrow(/200/);
+  });
+});
+
+describe('validateCalendarReview', () => {
+  it('accepts DONE with a 1–5 satisfaction and optional note', () => {
+    expect(() =>
+      validateCalendarReview({ outcome: 'DONE', satisfaction: 5, reviewNote: 'Great' }),
+    ).not.toThrow();
+  });
+
+  it('accepts MISSED with no satisfaction', () => {
+    expect(() => validateCalendarReview({ outcome: 'MISSED' })).not.toThrow();
+  });
+
+  it('rejects DONE without a satisfaction', () => {
+    expect(() => validateCalendarReview({ outcome: 'DONE' })).toThrow(/satisfaction/);
+  });
+
+  it('rejects an out-of-range satisfaction', () => {
+    expect(() => validateCalendarReview({ outcome: 'DONE', satisfaction: 6 })).toThrow(
+      /satisfaction/,
+    );
+  });
+
+  it('rejects a satisfaction on a MISSED review', () => {
+    expect(() => validateCalendarReview({ outcome: 'MISSED', satisfaction: 3 })).toThrow(
+      /only allowed when DONE/,
+    );
+  });
+
+  it('rejects a review note longer than the max length', () => {
+    expect(() =>
+      validateCalendarReview({
+        outcome: 'DONE',
+        satisfaction: 4,
+        reviewNote: 'a'.repeat(CALENDAR_REVIEW_NOTE_MAX_LENGTH + 1),
+      }),
+    ).toThrow(/280/);
   });
 });

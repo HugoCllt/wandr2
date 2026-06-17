@@ -1,6 +1,10 @@
 import type { CalendarEntry as PrismaCalendarEntry, Prisma, PrismaClient } from '@prisma/client';
 
-import type { CalendarEntry, CalendarEntryCreateInput } from '../domain/CalendarEntry';
+import type {
+  CalendarEntry,
+  CalendarEntryCreateInput,
+  CalendarReviewInput,
+} from '../domain/CalendarEntry';
 import { DuplicateCalendarEntryError } from '../domain/DuplicateCalendarEntryError';
 import type { CalendarRangeQuery, ICalendarRepository } from '../domain/ICalendarRepository';
 
@@ -22,7 +26,7 @@ export class PrismaCalendarRepository implements ICalendarRepository {
       return toCalendarEntry(created);
     } catch (error) {
       if (isPrismaUniqueViolation(error)) {
-        throw new DuplicateCalendarEntryError(input.userId, input.activityId, input.scheduledAt);
+        throw new DuplicateCalendarEntryError(input.userId, input.activityId);
       }
       throw error;
     }
@@ -31,6 +35,13 @@ export class PrismaCalendarRepository implements ICalendarRepository {
   async removeById(userId: string, id: string): Promise<boolean> {
     const result = await this.prisma.calendarEntry.deleteMany({
       where: { id, userId },
+    });
+    return result.count > 0;
+  }
+
+  async removeByActivityId(userId: string, activityId: string): Promise<boolean> {
+    const result = await this.prisma.calendarEntry.deleteMany({
+      where: { userId, activityId },
     });
     return result.count > 0;
   }
@@ -45,6 +56,42 @@ export class PrismaCalendarRepository implements ICalendarRepository {
     });
     return rows.map(toCalendarEntry);
   }
+
+  async listActivityIdsForUser(userId: string): Promise<string[]> {
+    const rows = await this.prisma.calendarEntry.findMany({
+      where: { userId },
+      select: { activityId: true },
+    });
+    return rows.map((r) => r.activityId);
+  }
+
+  async listPendingReviews(userId: string, before: Date, limit: number): Promise<CalendarEntry[]> {
+    const rows = await this.prisma.calendarEntry.findMany({
+      where: { userId, outcome: 'PENDING', scheduledAt: { lt: before } },
+      orderBy: { scheduledAt: 'desc' },
+      take: limit,
+    });
+    return rows.map(toCalendarEntry);
+  }
+
+  async review(
+    userId: string,
+    id: string,
+    input: CalendarReviewInput,
+  ): Promise<CalendarEntry | null> {
+    const result = await this.prisma.calendarEntry.updateMany({
+      where: { id, userId },
+      data: {
+        outcome: input.outcome,
+        satisfaction: input.satisfaction ?? null,
+        reviewNote: input.reviewNote ?? null,
+        reviewedAt: new Date(),
+      },
+    });
+    if (result.count === 0) return null;
+    const row = await this.prisma.calendarEntry.findUnique({ where: { id } });
+    return row ? toCalendarEntry(row) : null;
+  }
 }
 
 function toCalendarEntry(row: PrismaCalendarEntry): CalendarEntry {
@@ -54,6 +101,10 @@ function toCalendarEntry(row: PrismaCalendarEntry): CalendarEntry {
     activityId: row.activityId,
     scheduledAt: row.scheduledAt,
     notes: row.notes,
+    outcome: row.outcome,
+    satisfaction: row.satisfaction,
+    reviewNote: row.reviewNote,
+    reviewedAt: row.reviewedAt,
     createdAt: row.createdAt,
   };
 }
