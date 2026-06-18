@@ -29,6 +29,7 @@ export async function loadProfileView(): Promise<ProfileViewDTO> {
     stats: view.stats,
     breakdown: view.breakdown,
     history: view.history,
+    counts: view.counts,
   };
 }
 

@@ -7,18 +7,14 @@ import type { ProfileFormDTO } from '../../../shared/contracts/ProfileFormDTO';
 import { Icon } from '../../../shared/ui/icons/Icon';
 import { SignOutButton } from '../../auth/web/SignOutButton';
 import { ProfileFormModal, type ProfileFormInitial } from './ProfileFormModal';
+import { saveProfile } from './saveProfile';
 
 export function ProfileHeaderActions({ initial }: { initial: ProfileFormInitial }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
   async function onSubmit(form: ProfileFormDTO) {
-    const res = await fetch('/api/profile', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (!res.ok) throw new Error('save failed');
+    await saveProfile(form);
     setOpen(false);
     router.refresh();
   }

@@ -128,6 +128,7 @@ export class PrismaProfileRepository implements IProfileRepository, IProfileWrit
       ],
       breakdown,
       history,
+      counts: { favorites: favoritesCount, history: calendarCount },
     };
   }
 }
