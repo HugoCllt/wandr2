@@ -19,6 +19,9 @@ const ChatMessageBodySchema = z.object({
     .array(z.object({ role: z.enum(['user', 'assistant']), text: z.string() }))
     .max(50)
     .default([]),
+  // Optional context from the input toggles (near me / tonight / solo), folded
+  // into the agent's turn without appearing in the user's message bubble.
+  context: z.string().trim().max(500).optional(),
 });
 
 /** `YYYY-MM` token-usage bucket for the current month (web may read the clock). */
@@ -48,7 +51,7 @@ function getUseCase(): SendChatMessageUseCase {
 }
 
 export async function chatMessagesPostHandler(request: Request): Promise<Response> {
-  const { text, history } = await parseBody(ChatMessageBodySchema, request);
+  const { text, history, context } = await parseBody(ChatMessageBodySchema, request);
 
   const user = await getCurrentUser();
   // Defence in depth: the page is gated in the UI, the API enforces it too.
@@ -60,6 +63,7 @@ export async function chatMessagesPostHandler(request: Request): Promise<Respons
     cityId: user.cityId,
     month: currentMonth(),
     text,
+    context,
     history: turns,
     // Aborts the graph (LLM + search calls) when the client disconnects.
     signal: request.signal,

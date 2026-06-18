@@ -6,7 +6,8 @@ import { PrismaAffinityRepository } from '../../affinity/infra/PrismaAffinityRep
 import { PrismaCalendarRepository } from '../../calendar/infra/PrismaCalendarRepository';
 import { PrismaFavoriteRepository } from '../../favorites/infra/PrismaFavoriteRepository';
 import { parseFilters } from '../../filters/application/url-codec';
-import { getCurrentUser } from '../../../shared/auth/current-user';
+import { getOptionalUser } from '../../../shared/auth/current-user';
+import type { ActivityCategory } from '../../activities/domain/Activity';
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { toActivityDTO } from '../../../shared/contracts/toActivityDTO';
 import { prisma } from '../../../shared/db/prisma';
@@ -36,16 +37,20 @@ export async function loadFeedDTO(
   const cursor = searchParams.get('cursor');
   const limit = parseLimit(searchParams.get('limit'));
 
-  const user = await getCurrentUser();
-  const affinityMap = await new GetUserAffinityMapUseCase(
-    new PrismaAffinityRepository(prisma),
-  ).execute(user.id);
-  const favoritedIds = new Set(
-    await new PrismaFavoriteRepository(prisma).listActivityIdsForUser(user.id),
-  );
-  const bookmarkedIds = new Set(
-    await new PrismaCalendarRepository(prisma).listActivityIdsForUser(user.id),
-  );
+  // Anonymous browsing is allowed on the feed pages: without a session the feed
+  // is generic (no affinity ranking, no favourites/bookmarks), scoped to the
+  // default city.
+  const user = await getOptionalUser();
+  const affinityMap = user
+    ? await new GetUserAffinityMapUseCase(new PrismaAffinityRepository(prisma)).execute(user.id)
+    : new Map<ActivityCategory, number>();
+  const favoritedIds = user
+    ? new Set(await new PrismaFavoriteRepository(prisma).listActivityIdsForUser(user.id))
+    : new Set<string>();
+  const bookmarkedIds = user
+    ? new Set(await new PrismaCalendarRepository(prisma).listActivityIdsForUser(user.id))
+    : new Set<string>();
+  const cityId = user?.cityId ?? (await defaultCityId());
 
   const useCase = new GetFeedUseCase(new PrismaActivityRepository(prisma));
   const result = await useCase.execute({
@@ -54,7 +59,7 @@ export async function loadFeedDTO(
     limit,
     affinityMap,
     now: new Date(),
-    cityId: user.cityId,
+    cityId,
     baseFilters,
   });
 
@@ -74,6 +79,12 @@ export async function loadFeedDTO(
 export async function feedRouteHandler(request: Request): Promise<NextResponse> {
   const dto = await loadFeedDTO(new URL(request.url).searchParams);
   return NextResponse.json(dto);
+}
+
+/** The only seeded city — backs the generic feed for anonymous visitors. */
+async function defaultCityId(): Promise<string> {
+  const city = await prisma.city.findUniqueOrThrow({ where: { slug: 'montreal' } });
+  return city.id;
 }
 
 function parseLimit(raw: string | null): number {

@@ -214,6 +214,20 @@ img { display: block; max-width: 100%; }
   background: var(--charcoal-700);
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.nav-login {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--offwhite);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+}
+.nav-login:hover { transform: translateY(-1px); }
 
 /* ---------- SIDEBAR ---------- */
 .sidebar {
@@ -1369,6 +1383,11 @@ img { display: block; max-width: 100%; }
   border: 1px solid var(--line);
 }
 .chat-tool:hover { background: var(--surface-2); }
+.chat-tool.is-active {
+  background: var(--ink);
+  color: var(--offwhite);
+  border-color: var(--ink);
+}
 .chat-send {
   width: 40px; height: 40px;
   background: var(--ink);

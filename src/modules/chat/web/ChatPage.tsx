@@ -15,9 +15,18 @@ import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import type { ChatMessageDTO } from '../../../shared/contracts/ChatMessageDTO';
 import type { ChatRecommendationDTO } from '../../../shared/contracts/ChatRecommendationDTO';
 import type { ChatStreamEvent, ChatStreamPhase } from '../../../shared/contracts/ChatStreamEvent';
-import { Icon } from '../../../shared/ui/icons/Icon';
+import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
 import { ChatInspirationCarousel } from './ChatInspirationCarousel';
 import { ChatStatusIndicator } from './ChatStatusIndicator';
+
+/** Quick-context toggles under the input. When active, their `hint` is folded
+ * into the message the agent receives (not the bubble the user sees). */
+type ChatTool = { id: string; label: string; icon: IconName; hint: string };
+const CHAT_TOOLS: ChatTool[] = [
+  { id: 'nearby', label: 'Près de moi', icon: 'pin', hint: 'près de moi, à proximité' },
+  { id: 'tonight', label: 'Ce soir', icon: 'calendar', hint: 'pour ce soir' },
+  { id: 'solo', label: 'Solo', icon: 'users', hint: 'en solo, je serai seul·e' },
+];
 
 /** Prompt ideas rotating in the idle input — nudges without the old static chips. */
 const IDEAS = [
@@ -101,6 +110,7 @@ export function ChatPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ideaIdx, setIdeaIdx] = useState(0);
+  const [activeTools, setActiveTools] = useState<string[]>([]);
 
   const started = thread.length > 0;
 
@@ -154,11 +164,16 @@ export function ChatPage() {
     setThread((prev) => [...prev, chatMessage('user', t)]);
     setStreaming({ phase: 'thinking', text: '', recommendations: [] });
 
+    // Fold the active toggles into the agent's input only (the bubble keeps `t`).
+    const hints = CHAT_TOOLS.filter((tool) => activeTools.includes(tool.id)).map((tool) => tool.hint);
+    const context =
+      hints.length > 0 ? `Contexte : je cherche quelque chose ${hints.join(', ')}.` : undefined;
+
     try {
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: t, history }),
+        body: JSON.stringify({ text: t, history, context }),
         cache: 'no-store',
       });
       if (!res.ok || !res.body) throw new Error(`chat failed: ${res.status}`);
@@ -298,15 +313,24 @@ export function ChatPage() {
           </div>
           <div className="chat-input-foot">
             <div className="chat-input-tools">
-              <button type="button" className="chat-tool">
-                <Icon name="pin" size={13} /> Près de moi
-              </button>
-              <button type="button" className="chat-tool">
-                <Icon name="calendar" size={13} /> Ce soir
-              </button>
-              <button type="button" className="chat-tool">
-                <Icon name="users" size={13} /> Solo
-              </button>
+              {CHAT_TOOLS.map((tool) => {
+                const active = activeTools.includes(tool.id);
+                return (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    className={`chat-tool${active ? ' is-active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() =>
+                      setActiveTools((cur) =>
+                        active ? cur.filter((id) => id !== tool.id) : [...cur, tool.id],
+                      )
+                    }
+                  >
+                    <Icon name={tool.icon} size={13} /> {tool.label}
+                  </button>
+                );
+              })}
             </div>
             <button
               type="button"

@@ -125,6 +125,14 @@ describe('buildChatMessages', () => {
     expect(messages).toHaveLength(4);
     expect(String(messages[messages.length - 1].content)).toBe('Idée romantique ce soir');
   });
+
+  it('folds input-toggle context into the new turn when provided', () => {
+    const messages = buildChatMessages([], 'Un bar sympa', 'Contexte : je cherche quelque chose pour ce soir.');
+
+    expect(String(messages[messages.length - 1].content)).toBe(
+      'Un bar sympa\n\nContexte : je cherche quelque chose pour ce soir.',
+    );
+  });
 });
 
 describe('SendChatMessageUseCase.executeStream', () => {
