@@ -21,13 +21,13 @@ export type CurrentUser = {
 };
 
 /**
- * Resolves the authenticated user from the Better Auth DB session. Throws
- * `NotAuthenticatedError` (→ 401) when there is no session. No caching, no
- * seed-email fallback: every request is scoped to its own session.
+ * Resolves the authenticated user from the Better Auth DB session, or `null`
+ * when there is no session. Use this where anonymous browsing is allowed
+ * (the public feed pages); use `getCurrentUser` where a user is required.
  */
-export async function getCurrentUser(): Promise<CurrentUser> {
+export async function getOptionalUser(): Promise<CurrentUser | null> {
   const session = await auth.api.getSession({ headers: headers() });
-  if (!session?.user) throw new NotAuthenticatedError();
+  if (!session?.user) return null;
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -40,7 +40,16 @@ export async function getCurrentUser(): Promise<CurrentUser> {
       onboardedAt: true,
     },
   });
-  if (!user) throw new NotAuthenticatedError();
+  return user ?? null;
+}
 
+/**
+ * Resolves the authenticated user from the Better Auth DB session. Throws
+ * `NotAuthenticatedError` (→ 401) when there is no session. No caching, no
+ * seed-email fallback: every request is scoped to its own session.
+ */
+export async function getCurrentUser(): Promise<CurrentUser> {
+  const user = await getOptionalUser();
+  if (!user) throw new NotAuthenticatedError();
   return user;
 }

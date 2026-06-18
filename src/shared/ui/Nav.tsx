@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { useSession } from '../auth/auth-client';
 import { CATEGORY_KEYS, CATEGORY_PRESETS } from '../presets/CATEGORY_PRESETS';
+import { avatarUrl } from './avatarUrl';
 import { Icon, type IconName } from './icons/Icon';
 
 type NavLink = { name: string; href: string; icon: IconName };
@@ -24,11 +26,9 @@ const PRIMARY_LINKS: NavLink[] = [
 ];
 const OVERFLOW_LINKS: NavLink[] = categoryLinks.filter((l) => l.nav === 'overflow');
 
-const AVATAR_URL =
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80';
-
 export function Nav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [overflowOpen, setOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement | null>(null);
 
@@ -125,9 +125,15 @@ export function Nav() {
           >
             <Icon name="calendar" size={16} />
           </Link>
-          <Link className="avatar" href="/profile" aria-label="Profile">
-            <img src={AVATAR_URL} alt="" />
-          </Link>
+          {session?.user ? (
+            <Link className="avatar" href="/profile" aria-label="Profile">
+              <img src={avatarUrl(session.user.id)} alt="" />
+            </Link>
+          ) : (
+            <Link className="nav-login" href="/login">
+              Connexion
+            </Link>
+          )}
         </div>
       </div>
     </nav>

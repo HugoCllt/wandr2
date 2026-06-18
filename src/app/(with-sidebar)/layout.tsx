@@ -3,21 +3,15 @@ import type { ReactNode } from 'react';
 import { listNeighborhoods } from '../../modules/activities/web/listNeighborhoods';
 import { TopFilters } from '../../modules/filters/web/TopFilters';
 import { OnboardingGate } from '../../modules/profile/web/OnboardingGate';
-import { requireSession } from '../../shared/auth/require-session';
-import { prisma } from '../../shared/db/prisma';
+import { getOptionalUser } from '../../shared/auth/current-user';
 import { Premium } from '../../shared/ui/Premium';
 import { SiteFooter } from '../../shared/ui/SiteFooter';
 import { SmoothScroll } from '../../shared/ui/SmoothScroll';
 
 export default async function WithSidebarLayout({ children }: { children: ReactNode }) {
-  const session = await requireSession();
-  const [user, neighborhoods] = await Promise.all([
-    prisma.user.findUniqueOrThrow({
-      where: { id: session.user.id },
-      select: { onboardedAt: true, cityId: true },
-    }),
-    listNeighborhoods(),
-  ]);
+  // Login is not mandatory here — anonymous visitors browse the feed. The
+  // onboarding popup only surfaces for a signed-in user's first connection.
+  const [user, neighborhoods] = await Promise.all([getOptionalUser(), listNeighborhoods()]);
 
   return (
     <SmoothScroll>
@@ -27,7 +21,7 @@ export default async function WithSidebarLayout({ children }: { children: ReactN
         <Premium />
       </div>
       <SiteFooter />
-      <OnboardingGate onboardedAt={user.onboardedAt} cityId={user.cityId} />
+      {user && <OnboardingGate onboardedAt={user.onboardedAt} cityId={user.cityId} />}
     </SmoothScroll>
   );
 }

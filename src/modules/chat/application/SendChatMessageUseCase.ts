@@ -20,6 +20,8 @@ export type SendChatMessageInput = {
   cityId: string;
   month: string;
   text: string;
+  /** Input-toggle context (near me / tonight / solo) folded into the turn. */
+  context?: string;
   history: ChatTurn[];
   /** Aborts the in-flight graph run (client gone) — tokens stop burning. */
   signal?: AbortSignal;
@@ -43,7 +45,11 @@ export type SendChatMessageDeps = {
  * recent `MAX_HISTORY_MESSAGES`), the new turn closes it. Pure so the
  * conversation shape can be asserted without driving the model.
  */
-export function buildChatMessages(history: ChatTurn[], text: string): BaseMessage[] {
+export function buildChatMessages(
+  history: ChatTurn[],
+  text: string,
+  context?: string,
+): BaseMessage[] {
   return [
     new SystemMessage(CHAT_SYSTEM_PROMPT),
     ...history
@@ -51,7 +57,7 @@ export function buildChatMessages(history: ChatTurn[], text: string): BaseMessag
       .map((turn) =>
         turn.role === 'user' ? new HumanMessage(turn.content) : new AIMessage(turn.content),
       ),
-    new HumanMessage(text),
+    new HumanMessage(context ? `${text}\n\n${context}` : text),
   ];
 }
 
@@ -89,7 +95,7 @@ export class SendChatMessageUseCase {
     yield { type: 'status', phase: 'thinking' };
 
     const initial = {
-      messages: buildChatMessages(input.history, input.text),
+      messages: buildChatMessages(input.history, input.text, input.context),
       userId: input.userId,
       cityId: input.cityId,
     };

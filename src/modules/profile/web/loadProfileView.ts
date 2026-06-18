@@ -5,6 +5,7 @@ import {
 } from '../../../shared/contracts/ProfileFormDTO';
 import type { ProfileViewDTO } from '../../../shared/contracts/ProfileViewDTO';
 import { prisma } from '../../../shared/db/prisma';
+import { avatarUrl } from '../../../shared/ui/avatarUrl';
 import { GetProfileViewUseCase } from '../application/GetProfileViewUseCase';
 import { PrismaProfileRepository } from '../infra/PrismaProfileRepository';
 import type { ProfileFormInitial } from './ProfileFormModal';
@@ -21,7 +22,8 @@ export async function loadProfileView(): Promise<ProfileViewDTO> {
       id: view.profile.id,
       name: view.profile.name,
       vibe: view.profile.vibe,
-      avatarUrl: view.profile.avatarUrl,
+      // Random generated avatar, never the Google photo.
+      avatarUrl: avatarUrl(user.id),
       tags: view.profile.tags,
     },
     stats: view.stats,
