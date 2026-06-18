@@ -8,6 +8,8 @@ export type ProfileView = {
   stats: UserStats;
   breakdown: UserCategoryBreakdown;
   history: UserActivityHistoryEntry[];
+  /** Live totals backing the Quick Actions tiles. */
+  counts: { favorites: number; history: number };
 };
 
 export interface IProfileRepository {

@@ -2,6 +2,7 @@ import type { ProfileViewDTO } from '../../../shared/contracts/ProfileViewDTO';
 import { Avatar } from '../../../shared/ui/Avatar';
 import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
 import { ProfileHeaderActions } from './ProfileHeaderActions';
+import { QuickActions } from './QuickActions';
 import type { ProfileFormInitial } from './ProfileFormModal';
 
 const KNOWN_ICON_NAMES: ReadonlySet<string> = new Set([
@@ -20,13 +21,6 @@ function asIconName(key: string, fallback: IconName = 'sparkle'): IconName {
   return KNOWN_ICON_NAMES.has(key) ? (key as IconName) : fallback;
 }
 
-const QUICK_ACTIONS: { name: string; meta: string; icon: IconName; kind: '' | 'warm' | 'ink' | 'cream' }[] = [
-  { name: 'Favorites', meta: '23 saved', icon: 'heart', kind: 'warm' },
-  { name: 'Preferences', meta: 'Vibe & filters', icon: 'sparkle', kind: 'ink' },
-  { name: 'History', meta: '47 activities', icon: 'calendar', kind: 'cream' },
-  { name: 'Settings', meta: 'Account & privacy', icon: 'compass', kind: '' },
-];
-
 export function ProfilePage({
   view,
   formInitial,
@@ -34,7 +28,7 @@ export function ProfilePage({
   view: ProfileViewDTO;
   formInitial: ProfileFormInitial;
 }) {
-  const { profile, stats, breakdown, history } = view;
+  const { profile, stats, breakdown, history, counts } = view;
 
   return (
     <div className="profile-shell">
@@ -71,23 +65,7 @@ export function ProfilePage({
       </section>
 
       <section className="profile-actions-wrap">
-        <div className="profile-actions">
-          <h3>Quick Actions</h3>
-          <div className="qa-grid">
-            {QUICK_ACTIONS.map((a) => (
-              <button key={a.name} type="button" className="qa-btn">
-                <span className={'qa-icon ' + a.kind}>
-                  <Icon name={a.icon} size={18} />
-                </span>
-                <span>
-                  <div>{a.name}</div>
-                  <div className="qa-meta">{a.meta}</div>
-                </span>
-                <Icon name="chev-right" size={14} />
-              </button>
-            ))}
-          </div>
-        </div>
+        <QuickActions counts={counts} formInitial={formInitial} />
 
         <div className="category-card">
           <h3>Category Breakdown</h3>

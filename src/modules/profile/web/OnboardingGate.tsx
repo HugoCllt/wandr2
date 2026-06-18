@@ -8,6 +8,7 @@ import {
   type ProfileFormDTO,
 } from '../../../shared/contracts/ProfileFormDTO';
 import { ProfileFormModal, type ProfileFormInitial } from './ProfileFormModal';
+import { saveProfile } from './saveProfile';
 
 const DEFAULT_AFFINITY = 5;
 
@@ -41,12 +42,7 @@ export function OnboardingGate({
   };
 
   async function onSubmit(form: ProfileFormDTO) {
-    const res = await fetch('/api/profile', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (!res.ok) throw new Error('save failed');
+    await saveProfile(form);
     router.refresh();
   }
 

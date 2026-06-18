@@ -34,4 +34,5 @@ export type ProfileViewDTO = {
   stats: ProfileStatDTO[];
   breakdown: ProfileBreakdownItemDTO[];
   history: ProfileHistoryEntryDTO[];
+  counts: { favorites: number; history: number };
 };

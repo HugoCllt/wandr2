@@ -1729,6 +1729,7 @@ img { display: block; max-width: 100%; }
   font-size: 13.5px;
   color: var(--ink);
   font-weight: 500;
+  text-decoration: none;
   transition: background .15s, transform .15s;
 }
 .qa-btn:hover { background: var(--surface-2); transform: translateY(-1px); }
