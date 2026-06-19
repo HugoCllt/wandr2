@@ -33,10 +33,7 @@ function Section({ section, index }: { section: RenderedSection; index: number }
   return (
     <section className="feed-section">
       <div className="feed-head">
-        <div>
-          {section.spec.eyebrow ? <div className="feed-eyebrow">{section.spec.eyebrow}</div> : null}
-          <h2>{section.spec.title}</h2>
-        </div>
+        <h2>{section.spec.title}</h2>
       </div>
       <div className="feed-stack">
         <MediaRowActivityCard activity={feature} flip={index % 2 === 1} />

@@ -1,3 +1,4 @@
+import { SpotlightActivityCard } from '../../modules/activities/web/cards/SpotlightActivityCard';
 import { FeaturedHero } from '../../modules/activities/web/FeaturedHero';
 import { listFeaturedActivities } from '../../modules/activities/web/listFeaturedActivities';
 import { MapSection } from '../../modules/activities/web/MapSection';
@@ -22,12 +23,30 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   ]);
 
   const filterQueryString = serializeFilters(filters).toString();
-  const excludeIds = new Set(featured.map((a) => a.id));
+
+  // The curated `isFeatured` pool drives the hero. When nothing is flagged
+  // featured, fall back to the feed pool (like category pages) so the hero
+  // carousel still shows real, image-bearing activities.
+  const featuredWithImage = featured.filter((a) => Boolean(a.imageUrl));
+  const heroItems =
+    featuredWithImage.length > 0
+      ? featuredWithImage
+      : pool.items.filter((a) => Boolean(a.imageUrl)).slice(0, 3);
+  const excludeIds = new Set(heroItems.map((a) => a.id));
+
+  // First image-bearing pool item not already shown in the hero drives the
+  // spotlight band below the map.
+  const spotlight = pool.items.find((a) => Boolean(a.imageUrl) && !excludeIds.has(a.id));
 
   return (
     <>
-      <FeaturedHero activities={featured} eyebrow="THIS WEEK IN MONTREAL" />
+      <FeaturedHero activities={heroItems} eyebrow="THIS WEEK IN MONTREAL" />
       <MapSection nearbyActivities={pool.items} />
+      {spotlight && (
+        <section className="spotlight-section">
+          <SpotlightActivityCard activity={spotlight} />
+        </section>
+      )}
       <SectionedFeed
         items={pool.items}
         nextCursor={pool.nextCursor}

@@ -5,8 +5,6 @@ export type FeedSectionSpec = {
   key: string;
   /** User-facing title (honest, literal — no subtitle). */
   title: string;
-  /** Small uppercase kicker above the title (design eyebrow). */
-  eyebrow?: string;
   source: FeedSectionSource;
 };
 
@@ -16,7 +14,7 @@ export type FeedSectionSpec = {
  * Reorder / rename / drop a theme by editing this array.
  */
 export const DEFAULT_FEED_SECTIONS: FeedSectionSpec[] = [
-  { key: 'top', title: 'Pour toi', eyebrow: 'Sélection', source: 'top' },
-  { key: 'outdoor', title: 'En plein air', eyebrow: 'Grand air', source: 'outdoor' },
-  { key: 'free', title: 'Gratuit', eyebrow: 'Sans dépenser', source: 'free' },
+  { key: 'top', title: 'Pour toi', source: 'top' },
+  { key: 'outdoor', title: 'D’autres ont aussi aimé', source: 'outdoor' },
+  { key: 'free', title: 'Gratuit', source: 'free' },
 ];

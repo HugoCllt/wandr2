@@ -2,6 +2,7 @@
 
 import { useLenis } from 'lenis/react';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Icon } from './icons/Icon';
 
@@ -49,7 +50,11 @@ export function PremiumModal({ onClose }: { onClose: () => void }) {
     };
   }, [onClose, lenis]);
 
-  return (
+  // Portal to <body> so the fixed overlay escapes the `.premium` stacking
+  // context (`position: relative; z-index: 1`). Without this, the modal's
+  // `z-index: 200` only ranks inside that context and the later `.site-footer`
+  // paints over it.
+  return createPortal(
     <div className="prem-overlay" onClick={onClose}>
       <div className="prem-modal" onClick={(e) => e.stopPropagation()}>
         <button className="prem-close" onClick={onClose} aria-label="Fermer">
@@ -96,7 +101,8 @@ export function PremiumModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

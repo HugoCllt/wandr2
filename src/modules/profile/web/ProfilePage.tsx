@@ -1,8 +1,8 @@
 import type { ProfileViewDTO } from '../../../shared/contracts/ProfileViewDTO';
 import { Avatar } from '../../../shared/ui/Avatar';
 import { Icon, type IconName } from '../../../shared/ui/icons/Icon';
+import { FavoritesSection } from '../../favorites/web/FavoritesSection';
 import { ProfileHeaderActions } from './ProfileHeaderActions';
-import { QuickActions } from './QuickActions';
 import type { ProfileFormInitial } from './ProfileFormModal';
 
 const KNOWN_ICON_NAMES: ReadonlySet<string> = new Set([
@@ -28,7 +28,7 @@ export function ProfilePage({
   view: ProfileViewDTO;
   formInitial: ProfileFormInitial;
 }) {
-  const { profile, stats, breakdown, history, counts } = view;
+  const { profile, stats, breakdown, counts } = view;
 
   return (
     <div className="profile-shell">
@@ -65,7 +65,7 @@ export function ProfilePage({
       </section>
 
       <section className="profile-actions-wrap">
-        <QuickActions counts={counts} formInitial={formInitial} />
+        <FavoritesSection favoritesCount={counts.favorites} />
 
         <div className="category-card">
           <h3>Category Breakdown</h3>
@@ -84,23 +84,6 @@ export function ProfilePage({
             </div>
           ))}
         </div>
-      </section>
-
-      <section className="activity-list">
-        <h3>Recent Activity</h3>
-        {history.map((a) => (
-          <div key={a.id} className="activity-row">
-            <div className="activity-thumb" style={{ backgroundImage: `url(${a.imageUrl})` }} />
-            <div>
-              <div className="activity-title">{a.title}</div>
-              <div className="activity-meta">{a.meta}</div>
-            </div>
-            <div className="activity-date">{a.date}</div>
-            <span className={'activity-status ' + a.status}>
-              {a.status === 'went' ? 'Went' : a.status === 'saved' ? 'Saved' : 'Upcoming'}
-            </span>
-          </div>
-        ))}
       </section>
     </div>
   );

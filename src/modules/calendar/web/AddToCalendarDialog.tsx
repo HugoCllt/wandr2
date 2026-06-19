@@ -10,6 +10,7 @@ import {
   type FormEvent,
   type ReactElement,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 const NOTES_MAX_LENGTH = 200;
 
@@ -68,7 +69,7 @@ export function AddToCalendarDialog({
 
   const valid = useMemo(() => date.length > 0 && time.length > 0, [date, time]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -108,7 +109,7 @@ export function AddToCalendarDialog({
     }
   }
 
-  return (
+  return createPortal(
     <div role="presentation" style={overlayStyle} onClick={onClose}>
       <div
         role="dialog"
@@ -189,7 +190,8 @@ export function AddToCalendarDialog({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
