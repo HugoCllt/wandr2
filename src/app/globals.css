@@ -2878,6 +2878,21 @@ img { display: block; max-width: 100%; }
   gap: 48px; margin-top: 0;
 }
 
+/* ----- FEED MASONRY (continuous "Toutes les activités" / Favoris) ----- */
+/* 3 flex columns with deterministic 20%-shorter cards + light per-column
+   parallax (driven by FeedGrid via --p-col-*). Column count is set in JS. */
+.feed-masonry { display: flex; gap: 36px; align-items: flex-start; }
+.feed-col {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 36px;
+  transform: translate3d(0, var(--p, 0px), 0); will-change: transform;
+}
+.feed-masonry[data-cols="3"] .feed-col[data-col="0"] { --p: var(--p-col-0, 0px); }
+.feed-masonry[data-cols="3"] .feed-col[data-col="1"] { --p: var(--p-col-1, 0px); }
+.feed-masonry[data-cols="3"] .feed-col[data-col="2"] { --p: var(--p-col-2, 0px); }
+/* 20% shorter: 4/3.15 * 0.8 → 4/2.52, applied to both card types. */
+.feed-cell--short .tuile,
+.feed-cell--short .nophoto { aspect-ratio: 4 / 2.52; }
+
 /* ----- TUILE (full-bleed photo card) ----- */
 .tuile {
   position: relative; display: block; width: 100%;

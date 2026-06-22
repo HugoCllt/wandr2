@@ -1,5 +1,6 @@
 'use client';
 
+import { useLenis } from 'lenis/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
@@ -15,6 +16,38 @@ type FeedGridProps = {
   emptyMessage?: string;
 };
 
+/**
+ * Deterministic masonry: at 3 columns, every odd grid row carries exactly one
+ * 20%-shorter card, the reduced column cycling col2 → col1 → col3. Even rows are
+ * all normal. Cards are distributed round-robin (`i % cols`), so global index `i`
+ * lands at row `floor(i/3)`, column `i % 3`. See plan for the truth table.
+ */
+function isShort(i: number): boolean {
+  const row = Math.floor(i / 3);
+  if (row % 2 === 0) return false;
+  const col = i % 3;
+  const reducedCol = [1, 0, 2][((row - 1) / 2) % 3];
+  return col === reducedCol;
+}
+
+/** Columns for the current width: 3 desktop, 2 ≤1080px, 1 ≤760px. */
+function useColumnCount(): number {
+  const [cols, setCols] = useState(3);
+  useEffect(() => {
+    const mqOne = window.matchMedia('(max-width: 760px)');
+    const mqTwo = window.matchMedia('(max-width: 1080px)');
+    const update = () => setCols(mqOne.matches ? 1 : mqTwo.matches ? 2 : 3);
+    update();
+    mqOne.addEventListener('change', update);
+    mqTwo.addEventListener('change', update);
+    return () => {
+      mqOne.removeEventListener('change', update);
+      mqTwo.removeEventListener('change', update);
+    };
+  }, []);
+  return cols;
+}
+
 export function FeedGrid({
   initialItems,
   initialCursor,
@@ -27,6 +60,29 @@ export function FeedGrid({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const masonryRef = useRef<HTMLDivElement | null>(null);
+  const cols = useColumnCount();
+
+  // Subtle per-column parallax (3-col only): the columns drift at slightly
+  // different rates as the section crosses the viewport, so their bottoms never
+  // realign. Driven imperatively via CSS vars (no per-frame re-render), mirroring
+  // FeaturedHero. Disabled for reduced-motion users.
+  const reduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  useLenis(
+    () => {
+      const el = masonryRef.current;
+      if (!el || reduced || cols !== 3) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const d = ((vh - rect.top) / (vh + rect.height) - 0.5) * 2;
+      el.style.setProperty('--p-col-0', `${d * -80}px`);
+      el.style.setProperty('--p-col-1', `${d * 40}px`);
+      el.style.setProperty('--p-col-2', `${d * -8}px`);
+    },
+    [reduced, cols],
+  );
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -72,20 +128,37 @@ export function FeedGrid({
     return <p className="feed-empty">{emptyMessage}</p>;
   }
 
+  const columns: { item: FeedItemDTO; i: number }[][] = Array.from({ length: cols }, () => []);
+  items.forEach((item, i) => columns[i % cols].push({ item, i }));
+
   return (
     <div>
-      <div className="feed-grid" role="list" aria-label="Activities">
-        {items.map((item) => (
-          <div role="listitem" key={item.id}>
-            {item.imageUrl ? (
-              <CoverActivityCard
-                activity={item}
-                showPrice
-                actionsSlot={<CardActions item={item} />}
-              />
-            ) : (
-              <ImagelessActivityCard activity={item} actionsSlot={<CardActions item={item} />} />
-            )}
+      <div
+        className="feed-masonry"
+        ref={masonryRef}
+        data-cols={cols}
+        role="list"
+        aria-label="Activities"
+      >
+        {columns.map((col, c) => (
+          <div className="feed-col" data-col={c} key={c}>
+            {col.map(({ item, i }) => (
+              <div
+                role="listitem"
+                key={item.id}
+                className={cols === 3 && isShort(i) ? 'feed-cell feed-cell--short' : 'feed-cell'}
+              >
+                {item.imageUrl ? (
+                  <CoverActivityCard
+                    activity={item}
+                    showPrice
+                    actionsSlot={<CardActions item={item} />}
+                  />
+                ) : (
+                  <ImagelessActivityCard activity={item} actionsSlot={<CardActions item={item} />} />
+                )}
+              </div>
+            ))}
           </div>
         ))}
       </div>
