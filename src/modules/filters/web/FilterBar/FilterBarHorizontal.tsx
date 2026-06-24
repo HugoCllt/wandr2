@@ -10,13 +10,13 @@ import { FilterPill } from './FilterPill';
 import { FreePaidToggle } from './FreePaidToggle';
 import { IndoorOutdoorToggle } from './IndoorOutdoorToggle';
 import { KindToggle } from './KindToggle';
-import { NeighborhoodFilter } from './NeighborhoodFilter';
+import { NeighborhoodFilter, type NeighborhoodOption } from './NeighborhoodFilter';
 import { PriceFilter } from './PriceFilter';
 
 type FilterBarHorizontalProps = {
   value: FilterValueDTO;
   onChange: (next: FilterValueDTO) => void;
-  neighborhoods: ReadonlyArray<string>;
+  neighborhoods: ReadonlyArray<NeighborhoodOption>;
   visibleFilters?: FilterKey[];
   /** "rail" stacks the pills vertically and opens popovers to the right. */
   orientation?: 'horizontal' | 'rail';
@@ -126,7 +126,7 @@ export function FilterBarHorizontal({
           onClear={() => clear('priceMax')}
           side={side}
           variant={variant}
-          icon="gem"
+          icon="dollar"
         >
           <PriceFilter value={value.priceMax} onChange={(priceMax) => update({ priceMax })} />
         </FilterPill>

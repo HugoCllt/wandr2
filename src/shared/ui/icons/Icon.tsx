@@ -9,6 +9,7 @@ export type IconName =
   | 'calendar'
   | 'sparkle'
   | 'gem'
+  | 'dollar'
   | 'grid'
   | 'ball'
   | 'fork'
@@ -126,6 +127,13 @@ export function Icon({ name, size = 18, stroke = 1.6, className }: IconProps) {
         <svg {...common}>
           <path d="M6 4h12l3 5-9 11L3 9l3-5Z" />
           <path d="M3 9h18M9 4l-3 5 6 11M15 4l3 5-6 11" />
+        </svg>
+      );
+    case 'dollar':
+      return (
+        <svg {...common}>
+          <path d="M12 3v18" />
+          <path d="M16.5 7.5C16.5 6 14.8 5 12.5 5S8.5 6 8.5 8s2 2.5 4 3 4 1 4 3-1.8 3-4 3-4-1-4-2.5" />
         </svg>
       );
     case 'grid':

@@ -3,9 +3,15 @@ import type { ReactElement } from 'react';
 import type { FilterValueDTO } from '../../../../shared/contracts/FilterValueDTO';
 import { filterStyles } from './styles';
 
+/** A selectable neighborhood; `disabled` greys out ones with no data in context. */
+export type NeighborhoodOption = {
+  name: string;
+  disabled?: boolean;
+};
+
 type NeighborhoodFilterProps = {
   value: FilterValueDTO['neighborhood'];
-  options: ReadonlyArray<string>;
+  options: ReadonlyArray<NeighborhoodOption>;
   onChange: (next: FilterValueDTO['neighborhood']) => void;
 };
 
@@ -32,22 +38,25 @@ export function NeighborhoodFilter({
       <legend style={filterStyles.legend}>Neighborhood</legend>
       <div style={filterStyles.chipRow}>
         {options.map((option) => {
-          const isSelected = selected.has(option);
+          const isSelected = selected.has(option.name);
+          // Never disable a chip that's already picked, so it can be cleared.
+          const isDisabled = option.disabled === true && !isSelected;
           return (
             <button
-              key={option}
+              key={option.name}
               type="button"
               role="checkbox"
               aria-checked={isSelected}
+              disabled={isDisabled}
               data-selected={isSelected || undefined}
-              onClick={() => toggle(option)}
-              style={
-                isSelected
-                  ? { ...filterStyles.chip, ...filterStyles.chipSelected }
-                  : filterStyles.chip
-              }
+              onClick={() => toggle(option.name)}
+              style={{
+                ...filterStyles.chip,
+                ...(isSelected ? filterStyles.chipSelected : null),
+                ...(isDisabled ? filterStyles.chipDisabled : null),
+              }}
             >
-              {option}
+              {option.name}
             </button>
           );
         })}

@@ -28,7 +28,7 @@ class FakeActivityRepository implements IActivityRepository {
   async slugExists(_slug: string): Promise<boolean> {
     return false;
   }
-  async listNeighborhoods(): Promise<string[]> {
+  async listNeighborhoodFacets() {
     return [];
   }
   async listFeatured(limit: number): Promise<Activity[]> {

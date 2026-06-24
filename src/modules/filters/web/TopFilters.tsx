@@ -4,13 +4,16 @@ import { useLenis } from 'lenis/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState, type ReactElement } from 'react';
 
+import type { ActivityCategory } from '../../activities/domain/Activity';
+import type { NeighborhoodFacet } from '../../activities/domain/IActivityRepository';
 import type { FilterValueDTO } from '../../../shared/contracts/FilterValueDTO';
+import { CATEGORY_PRESETS, isCategoryKey } from '../../../shared/presets/CATEGORY_PRESETS';
 import { Icon } from '../../../shared/ui/icons/Icon';
 import { FilterBarHorizontal } from './FilterBar';
 import { parseFilters, serializeFilters } from '../application/url-codec';
 
 type TopFiltersProps = {
-  neighborhoods: ReadonlyArray<string>;
+  neighborhoods: ReadonlyArray<NeighborhoodFacet>;
 };
 
 const PRESERVED_KEYS = new Set<string>();
@@ -35,6 +38,14 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
   const params = new URLSearchParams();
   search.forEach((v, k) => params.set(k, v));
   const value = parseFilters(params);
+
+  // On a category page, grey out neighborhoods with no activity in that
+  // category. On Home (no category) every neighborhood stays enabled.
+  const currentCategory = categoryFromPathname(pathname);
+  const neighborhoodOptions = neighborhoods.map((n) => ({
+    name: n.name,
+    disabled: currentCategory !== undefined && !n.categories.includes(currentCategory),
+  }));
 
   function handleChange(next: FilterValueDTO): void {
     const filterParams = serializeFilters(next);
@@ -68,11 +79,20 @@ export function TopFilters({ neighborhoods }: TopFiltersProps): ReactElement {
           orientation="rail"
           value={value}
           onChange={handleChange}
-          neighborhoods={neighborhoods}
+          neighborhoods={neighborhoodOptions}
         />
       </aside>
     </>
   );
+}
+
+/** Maps a route like `/sport` to the category its preset filters on. */
+function categoryFromPathname(pathname: string): ActivityCategory | undefined {
+  const segment = pathname.split('/').filter(Boolean)[0];
+  if (segment && isCategoryKey(segment)) {
+    return CATEGORY_PRESETS[segment].baseFilters.category?.[0];
+  }
+  return undefined;
 }
 
 const FILTER_KEYS = new Set([

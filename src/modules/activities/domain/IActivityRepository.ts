@@ -1,10 +1,16 @@
-import type { Activity, ActivityCreateInput, ActivityKind } from './Activity';
+import type { Activity, ActivityCategory, ActivityCreateInput, ActivityKind } from './Activity';
 import type { ActivityCandidateCriteria } from './ActivityCandidateCriteria';
 
 export type ActivityListFilter = {
   kind?: ActivityKind;
   withoutImage?: boolean;
   limit?: number;
+};
+
+/** A neighborhood with the set of categories that have published activities there. */
+export type NeighborhoodFacet = {
+  name: string;
+  categories: ActivityCategory[];
 };
 
 export interface IActivityRepository {
@@ -15,7 +21,7 @@ export interface IActivityRepository {
   findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]>;
   getOrCreateSourceIdByName(name: string): Promise<string>;
   slugExists(slug: string): Promise<boolean>;
-  listNeighborhoods(): Promise<string[]>;
+  listNeighborhoodFacets(): Promise<NeighborhoodFacet[]>;
   listFeatured(limit: number): Promise<Activity[]>;
   listForUpdate(cityId: string, filter: ActivityListFilter): Promise<Activity[]>;
 }
