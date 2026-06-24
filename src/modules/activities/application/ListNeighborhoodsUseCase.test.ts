@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Activity, ActivityCreateInput } from '../domain/Activity';
-import type { IActivityRepository } from '../domain/IActivityRepository';
+import type { IActivityRepository, NeighborhoodFacet } from '../domain/IActivityRepository';
 import { ListNeighborhoodsUseCase } from './ListNeighborhoodsUseCase';
 
 class FakeActivityRepository implements IActivityRepository {
-  constructor(private readonly neighborhoods: string[]) {}
+  constructor(private readonly facets: NeighborhoodFacet[]) {}
 
   async create(_input: ActivityCreateInput): Promise<Activity> {
     throw new Error('not used in this test');
@@ -28,8 +28,8 @@ class FakeActivityRepository implements IActivityRepository {
   async slugExists(_slug: string): Promise<boolean> {
     return false;
   }
-  async listNeighborhoods(): Promise<string[]> {
-    return this.neighborhoods;
+  async listNeighborhoodFacets(): Promise<NeighborhoodFacet[]> {
+    return this.facets;
   }
   async listFeatured(_limit: number): Promise<Activity[]> {
     return [];
@@ -40,13 +40,18 @@ class FakeActivityRepository implements IActivityRepository {
 }
 
 describe('ListNeighborhoodsUseCase', () => {
-  it('returns the repository neighborhoods sorted alphabetically', async () => {
-    const repo = new FakeActivityRepository(['Mile End', 'Plateau-Mont-Royal', 'Verdun']);
+  it('passes the repository neighborhood facets through', async () => {
+    const facets: NeighborhoodFacet[] = [
+      { name: 'Mile End', categories: ['FOOD'] },
+      { name: 'Plateau-Mont-Royal', categories: ['SPORT', 'CULTURE'] },
+      { name: 'Verdun', categories: ['OUTDOOR'] },
+    ];
+    const repo = new FakeActivityRepository(facets);
 
     const useCase = new ListNeighborhoodsUseCase(repo);
     const result = await useCase.execute();
 
-    expect(result).toEqual(['Mile End', 'Plateau-Mont-Royal', 'Verdun']);
+    expect(result).toEqual(facets);
   });
 
   it('returns an empty list when the catalog has no neighborhoods', async () => {

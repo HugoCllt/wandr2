@@ -58,12 +58,8 @@ class FakeActivityRepository implements IActivityRepository {
     return this.bySlug.has(slug);
   }
 
-  async listNeighborhoods(): Promise<string[]> {
-    const set = new Set<string>();
-    for (const a of this.bySlug.values()) {
-      if (a.neighborhood) set.add(a.neighborhood);
-    }
-    return Array.from(set).sort();
+  async listNeighborhoodFacets() {
+    return [];
   }
 
   async listFeatured(limit: number): Promise<Activity[]> {

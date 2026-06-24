@@ -57,8 +57,9 @@ class FakeActivityRepository implements IActivityRepository {
       if (criteria.neighborhoods) {
         if (!a.neighborhood || !criteria.neighborhoods.includes(a.neighborhood)) return false;
       }
-      if (criteria.priceMaxCents !== undefined && a.priceMinCents > criteria.priceMaxCents) {
-        return false;
+      if (criteria.priceMaxCents !== undefined) {
+        const cap = a.priceMaxCents ?? a.priceMinCents;
+        if (cap > criteria.priceMaxCents) return false;
       }
       if (criteria.indoor === true && a.indoor !== true) return false;
       if (criteria.outdoor === true && a.outdoor !== true) return false;
@@ -85,12 +86,8 @@ class FakeActivityRepository implements IActivityRepository {
     return this.bySlug.has(slug);
   }
 
-  async listNeighborhoods(): Promise<string[]> {
-    const set = new Set<string>();
-    for (const a of this.bySlug.values()) {
-      if (a.neighborhood) set.add(a.neighborhood);
-    }
-    return Array.from(set).sort();
+  async listNeighborhoodFacets() {
+    return [];
   }
 
   async listFeatured(limit: number): Promise<Activity[]> {

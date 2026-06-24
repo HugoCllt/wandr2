@@ -46,6 +46,10 @@ export const filterStyles: Record<string, CSSProperties> = {
     color: 'var(--offwhite)',
     borderColor: 'var(--ink)',
   },
+  chipDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+  },
   rangeRow: {
     display: 'flex',
     alignItems: 'center',

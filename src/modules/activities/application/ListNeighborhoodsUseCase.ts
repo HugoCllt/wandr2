@@ -1,9 +1,9 @@
-import type { IActivityRepository } from '../domain/IActivityRepository';
+import type { IActivityRepository, NeighborhoodFacet } from '../domain/IActivityRepository';
 
 export class ListNeighborhoodsUseCase {
   constructor(private readonly activities: IActivityRepository) {}
 
-  async execute(): Promise<string[]> {
-    return this.activities.listNeighborhoods();
+  async execute(): Promise<NeighborhoodFacet[]> {
+    return this.activities.listNeighborhoodFacets();
   }
 }

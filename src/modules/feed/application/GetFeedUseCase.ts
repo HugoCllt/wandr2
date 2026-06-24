@@ -66,10 +66,14 @@ function toCriteria(filters: FilterValue, now: Date, cityId: string): ActivityCa
   if (filters.priceMax !== undefined) {
     criteria.priceMaxCents = filters.priceMax * CENTS_PER_DOLLAR;
   }
-  if (filters.indoor === true) criteria.indoor = true;
-  if (filters.outdoor === true) criteria.outdoor = true;
-  if (filters.free === true) criteria.free = true;
-  if (filters.paid === true) criteria.paid = true;
+  // Indoor/outdoor and free/paid are "either" toggles: selecting both is the
+  // same as selecting neither (no constraint), so only constrain when exactly
+  // one side is on. Otherwise "Indoor + Outdoor" would demand both flags and
+  // "Free + Paid" would be an impossible price (= 0 and > 0).
+  if (filters.indoor === true && filters.outdoor !== true) criteria.indoor = true;
+  if (filters.outdoor === true && filters.indoor !== true) criteria.outdoor = true;
+  if (filters.free === true && filters.paid !== true) criteria.free = true;
+  if (filters.paid === true && filters.free !== true) criteria.paid = true;
   if (filters.date !== undefined) {
     criteria.eventDateWindow = resolveEventDateWindow(filters.date, now);
   }

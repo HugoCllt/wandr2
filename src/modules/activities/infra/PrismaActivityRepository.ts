@@ -2,13 +2,17 @@ import type { Activity as PrismaActivityModel, Prisma } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 
 import type { Activity, ActivityCreateInput } from '../domain/Activity';
-import type { ActivityCategorySet } from '../domain/ActivityCategorySet';
+import type { ActivityCategory, ActivityCategorySet } from '../domain/ActivityCategorySet';
 import type { ActivityCandidateCriteria } from '../domain/ActivityCandidateCriteria';
 import type {
   FreshnessUpdate,
   IActivityIngestionRepository,
 } from '../domain/IActivityIngestionRepository';
-import type { ActivityListFilter, IActivityRepository } from '../domain/IActivityRepository';
+import type {
+  ActivityListFilter,
+  IActivityRepository,
+  NeighborhoodFacet,
+} from '../domain/IActivityRepository';
 
 export class PrismaActivityRepository
   implements IActivityRepository, IActivityIngestionRepository
@@ -60,7 +64,15 @@ export class PrismaActivityRepository
       where.neighborhood = { in: criteria.neighborhoods };
     }
     if (criteria.priceMaxCents !== undefined) {
-      and.push({ priceMinCents: { lte: criteria.priceMaxCents } });
+      // "Fits the budget": the activity's top price must be within budget. When
+      // there is no known ceiling (priceMaxCents null) we fall back to its
+      // entry price (priceMinCents).
+      and.push({
+        OR: [
+          { priceMaxCents: { lte: criteria.priceMaxCents } },
+          { priceMaxCents: null, priceMinCents: { lte: criteria.priceMaxCents } },
+        ],
+      });
     }
     if (criteria.indoor === true) {
       where.indoor = true;
@@ -129,14 +141,25 @@ export class PrismaActivityRepository
     return activity !== null;
   }
 
-  async listNeighborhoods(): Promise<string[]> {
+  async listNeighborhoodFacets(): Promise<NeighborhoodFacet[]> {
     const rows = await this.prisma.activity.findMany({
       where: { status: 'PUBLISHED', neighborhood: { not: null } },
-      select: { neighborhood: true },
-      distinct: ['neighborhood'],
-      orderBy: { neighborhood: 'asc' },
+      select: { neighborhood: true, categories: true },
     });
-    return rows.map((r) => r.neighborhood).filter((n): n is string => n !== null);
+
+    const byName = new Map<string, Set<ActivityCategory>>();
+    for (const row of rows) {
+      if (!row.neighborhood) continue;
+      const set = byName.get(row.neighborhood) ?? new Set<ActivityCategory>();
+      const cats = row.categories as unknown as ActivityCategorySet;
+      set.add(cats.primary);
+      for (const c of cats.secondary) set.add(c);
+      byName.set(row.neighborhood, set);
+    }
+
+    return [...byName.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, set]) => ({ name, categories: [...set] }));
   }
 
   async listFeatured(limit: number): Promise<Activity[]> {
