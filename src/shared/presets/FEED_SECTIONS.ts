@@ -1,4 +1,4 @@
-export type FeedSectionSource = 'top' | 'outdoor' | 'free';
+export type FeedSectionSource = 'top';
 
 export type FeedSectionSpec = {
   /** Stable React key + section id. */
@@ -10,11 +10,9 @@ export type FeedSectionSpec = {
 
 /**
  * The single shared section list driving every Category page AND Home.
- * `top` ("Pour toi") is the affinity catch-all — assigned last, rendered first.
- * Reorder / rename / drop a theme by editing this array.
+ * `top` ("Pour toi") claims the first ranked items; the remainder spills into the
+ * trailing "D’autres ont aussi aimé" grid. Rename the band by editing this entry.
  */
 export const DEFAULT_FEED_SECTIONS: FeedSectionSpec[] = [
   { key: 'top', title: 'Pour toi', source: 'top' },
-  { key: 'outdoor', title: 'D’autres ont aussi aimé', source: 'outdoor' },
-  { key: 'free', title: 'Gratuit', source: 'free' },
 ];

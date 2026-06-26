@@ -1148,7 +1148,8 @@ img { display: block; max-width: 100%; }
   box-shadow: var(--shadow-sm);
   transition: background .15s, color .15s, transform .15s, border-color .15s;
 }
-.card-action-btn:hover { background: rgba(255,255,255,0.34); transform: translateY(-1px); }
+.card-action-btn:hover { background: rgba(255,255,255,0.34); }
+.card-action-btn:hover svg { fill: currentColor; }
 .card-action-btn.on { background: #fff; border-color: #fff; color: var(--ink); }
 .card-action-fav.on { background: var(--ink); border-color: var(--ink); color: #fff; }
 .card-action-btn[data-loading] { opacity: 0.6; }
@@ -2845,8 +2846,8 @@ img { display: block; max-width: 100%; }
 .feed-section { padding: 0 0 92px; }
 .feed-section:last-child { padding-bottom: 64px; }
 .feed-head {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 24px; margin-bottom: 34px;
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 24px; margin-bottom: 34px; text-align: center;
 }
 .feed-eyebrow {
   font-size: 11px; font-weight: 600;
@@ -2855,7 +2856,7 @@ img { display: block; max-width: 100%; }
 }
 .feed-head h2 {
   font-family: var(--font);
-  font-weight: 300; font-size: 38px;
+  font-weight: 700; font-size: 38px;
   letter-spacing: -0.035em; line-height: 1;
   color: var(--ink-900); margin: 0;
 }
@@ -3191,45 +3192,65 @@ img { display: block; max-width: 100%; }
 /* Lives inside .main (which already applies the --rail-col insets), so take no
    extra horizontal padding — matches .feed-section's full content width. */
 .spotlight-section { position: relative; z-index: 1; margin-bottom: 80px; }
+
+/* Coloured break between the curated band and the long tail. The section keeps
+   its normal-flow box (so title + card stay aligned with the feed grid), while
+   a full-bleed pseudo-element paints the band edge-to-edge behind the content,
+   extending above the title and an equal amount below the card. */
+.spotlight-band { position: relative; padding: 92px 0; margin-bottom: 56px; }
+.spotlight-band::before {
+  content: '';
+  position: absolute; top: 0; bottom: 0;
+  left: calc(50% - 50vw); width: 100vw;
+  background: #E4D721; z-index: -1;
+}
 .spotlight {
-  position: relative; cursor: pointer; overflow: hidden;
-  background: transparent; border: 2px solid var(--charcoal-900, #161616); border-radius: 26px;
+  position: relative; cursor: pointer; overflow: visible;
+  background: transparent; border: none; border-radius: 0;
   /* Match the rendered height of the large feature cards in "Pour toi". */
-  min-height: 460px;
+  min-height: 506px;
   /* Image column ~20% wider than the text column. */
   display: grid; grid-template-columns: 1fr 1.2fr; align-items: stretch;
-  /* Generous breathing room between border, text and photo. */
-  padding: 44px; gap: 48px;
+  /* No outer inset: the photo runs flush to the card edges so it lines up with
+     the feed grid cards on both axes; only a gap separates text and photo. */
+  padding: 0; gap: 48px;
 }
 
+/* Body is a stack of flush white chips (no gap, no margin) sitting on the
+   coloured band, with a contrasting dark CTA button at the bottom. */
 .spotlight-body {
   position: relative; z-index: 2;
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 0;
 }
-.spotlight-eyebrow {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--smoke);
+.spotlight-block {
+  margin: 0;
+  background: #fff; border-radius: 16px;
 }
+.spotlight-head { padding: 26px 36px; }
 .spotlight-title {
-  font-weight: 300; font-size: 32px; line-height: 1.06; letter-spacing: -0.035em;
-  color: var(--ink-900); margin: 14px 0 0; max-width: 18ch; text-wrap: balance;
+  font-weight: 300; font-size: 36px; line-height: 1.1; letter-spacing: -0.035em;
+  color: var(--ink-900); margin: 0; max-width: 18ch; text-wrap: balance;
 }
 .spotlight-desc {
-  color: var(--ink-700); font-size: 15px; line-height: 1.6; font-weight: 300;
-  margin: 14px 0 0; max-width: 46ch;
+  color: var(--ink-700); font-size: 16px; line-height: 1.6; font-weight: 300;
+  margin: 12px 0 0; max-width: 46ch;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .spotlight-meta {
-  display: flex; align-items: center; gap: 10px; margin-top: 18px;
-  color: var(--smoke); font-size: 13.5px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 36px;
+  color: var(--ink-700); font-size: 16px;
 }
-.spotlight-meta .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--smoke-3); }
-.spotlight-foot { display: flex; align-items: center; gap: 20px; margin-top: 26px; flex-wrap: wrap; }
-.spotlight-price { color: var(--ink-700); font-size: 14px; }
-.spotlight-price b { color: var(--ink-900); font-weight: 500; font-size: 17px; letter-spacing: -0.01em; }
+.spotlight-meta .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--ink-700); }
+.spotlight-price { padding: 18px 36px; color: var(--ink-900); font-size: 16px; }
+.spotlight-price b { color: var(--ink-900); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
 .spotlight-cta {
   display: inline-flex; align-items: center; gap: 8px;
-  color: var(--ink-900); font-size: 14px; font-weight: 500;
+  background: var(--charcoal-900, #161616); color: #fff;
+  font-size: 16px; font-weight: 500;
+  padding: 16px 36px; border-radius: 16px; cursor: pointer;
+  margin-top: 16px;
 }
 
 .spotlight-media {
@@ -3245,12 +3266,13 @@ img { display: block; max-width: 100%; }
 }
 
 @media (max-width: 980px) {
-  .spotlight { grid-template-columns: 1fr; gap: 32px; padding: 36px; min-height: 0; }
+  .spotlight-band { padding: 66px 0; margin-bottom: 32px; }
+  .spotlight { grid-template-columns: 1fr; gap: 32px; padding: 0; min-height: 0; }
   .spotlight-body { order: 2; }
   .spotlight-media { order: 1; min-height: 240px; border-radius: 18px 18px 86px 18px; }
 }
 @media (max-width: 760px) {
-  .spotlight { padding: 24px; gap: 24px; }
+  .spotlight { gap: 24px; }
   .spotlight-title { font-size: 27px; }
 }
 
@@ -3302,11 +3324,12 @@ img { display: block; max-width: 100%; }
    =========================================================== */
 .map-explorer { position: relative; z-index: 1; margin-bottom: 80px; }
 .map-explorer-head {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px;
+  display: flex; align-items: flex-end; justify-content: center; gap: 24px;
+  margin-bottom: 22px; text-align: center;
 }
 .map-explorer-head .feed-eyebrow { margin-bottom: 11px; }
 .map-explorer-head h2 {
-  font-family: var(--font); font-weight: 300; font-size: 32px;
+  font-family: var(--font); font-weight: 700; font-size: 32px;
   letter-spacing: -0.03em; line-height: 1; color: var(--ink-900); margin: 0;
 }
 .map-explorer-head p { margin: 6px 0 0; color: var(--smoke); font-size: 14px; }
@@ -3320,21 +3343,21 @@ img { display: block; max-width: 100%; }
 .map-volet {
   position: relative; flex: 0 0 0; width: 0; opacity: 0; overflow: hidden;
   transition: flex-basis .5s var(--ease), width .5s var(--ease), opacity .35s var(--ease);
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex;
 }
 .map-explorer-stage.open .map-volet { flex: 0 0 360px; width: 360px; opacity: 1; }
-.map-volet-card { flex: 1; min-height: 0; }
+.map-volet-card { position: relative; flex: 1; min-width: 0; }
 .map-volet-card .tuile { height: 100%; aspect-ratio: auto; }
-.map-volet-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.map-volet-count { font-size: 12.5px; color: var(--smoke); letter-spacing: 0.04em; }
-.map-volet-btns { display: flex; gap: 8px; }
-.map-volet-btn {
-  width: 40px; height: 40px; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--white); border: 1px solid var(--line-2); color: var(--ink-800);
-  transition: background .15s, transform .15s;
+.map-volet-nav {
+  position: absolute; top: 50%; left: 12px; right: 12px; z-index: 4;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  transform: translateY(-50%);
 }
-.map-volet-btn:hover { background: var(--silver-100); transform: translateY(-1px); }
+.map-volet-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: #fff;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.45));
+}
 .map-volet-close {
   position: absolute; top: 10px; right: 10px; z-index: 5;
   width: 34px; height: 34px; border-radius: 999px;

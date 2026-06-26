@@ -35,23 +35,30 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const excludeIds = new Set(heroItems.map((a) => a.id));
 
   // First image-bearing pool item not already shown in the hero drives the
-  // spotlight band below the map.
+  // "Coup de cœur" spotlight, injected between "Pour toi" and the long tail.
+  // Exclude it from the feed so it never shows twice.
   const spotlight = pool.items.find((a) => Boolean(a.imageUrl) && !excludeIds.has(a.id));
+  if (spotlight) excludeIds.add(spotlight.id);
 
   return (
     <>
       <FeaturedHero activities={heroItems} eyebrow="THIS WEEK IN MONTREAL" />
       <MapSection nearbyActivities={pool.items} />
-      {spotlight && (
-        <section className="spotlight-section">
-          <SpotlightActivityCard activity={spotlight} />
-        </section>
-      )}
       <SectionedFeed
         items={pool.items}
         nextCursor={pool.nextCursor}
         filterQueryString={filterQueryString}
         excludeIds={excludeIds}
+        interludeSlot={
+          spotlight ? (
+            <section className="spotlight-band">
+              <div className="feed-head">
+                <h2>Coup de cœur</h2>
+              </div>
+              <SpotlightActivityCard activity={spotlight} />
+            </section>
+          ) : undefined
+        }
       />
     </>
   );

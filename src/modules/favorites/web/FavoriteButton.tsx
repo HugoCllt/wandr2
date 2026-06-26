@@ -77,7 +77,7 @@ export function FavoriteButton({
       data-loading={pending ? '' : undefined}
       className={'card-action-btn card-action-fav ' + (favorited ? 'on' : '')}
     >
-      <Icon name="fire" size={14} />
+      <Icon name={favorited ? 'heart-fill' : 'heart'} size={14} />
     </button>
   );
 }

@@ -14,8 +14,6 @@ import {
 
 type Props = {
   activity: ActivityDTO;
-  /** Eyebrow above the title. */
-  eyebrow?: string;
 };
 
 /**
@@ -23,32 +21,33 @@ type Props = {
  * panel (premium-band aesthetic), with generous padding. The photo's inner
  * bottom-left corner carries an exaggerated squircle crop while the other three
  * corners stay lightly rounded. Text-left / image-right. Clicking opens the
- * activity modal.
+ * activity modal. The section heading ("Coup de cœur") is supplied by the
+ * wrapping `feed-section`, so this card carries no eyebrow.
  */
-export function SpotlightActivityCard({
-  activity,
-  eyebrow = 'Coup de cœur',
-}: Props): ReactElement {
+export function SpotlightActivityCard({ activity }: Props): ReactElement {
   const open = useOpenActivity();
   const price = formatActivityPrice(activity);
 
   return (
     <article className="spotlight" onClick={() => open(activity)}>
       <div className="spotlight-body">
-        <div className="spotlight-eyebrow">{eyebrow}</div>
-        <h3 className="spotlight-title">{activity.title}</h3>
-        <p className="spotlight-desc">{activity.description}</p>
-        <div className="spotlight-meta">
+        <div className="spotlight-block spotlight-head">
+          <h3 className="spotlight-title">{activity.title}</h3>
+          <p className="spotlight-desc">{activity.description}</p>
+        </div>
+        <div className="spotlight-block spotlight-meta">
           <span>{formatActivityWhen(activity)}</span>
           <span className="dot" />
           <span>{formatActivityWhere(activity)}</span>
         </div>
-        <div className="spotlight-foot">
-          <span className="spotlight-price">{price ? <b>{price}</b> : null}</span>
-          <span className="spotlight-cta">
-            Découvrir <Icon name="arrow-right" size={16} />
-          </span>
-        </div>
+        {price ? (
+          <div className="spotlight-block spotlight-price">
+            <b>{price}</b>
+          </div>
+        ) : null}
+        <span className="spotlight-cta">
+          Découvrir <Icon name="arrow-right" size={16} />
+        </span>
       </div>
       <div className="spotlight-media">
         <div

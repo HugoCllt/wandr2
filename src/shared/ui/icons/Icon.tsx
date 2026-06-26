@@ -19,11 +19,13 @@ export type IconName =
   | 'moon'
   | 'spa'
   | 'heart'
+  | 'heart-fill'
   | 'users'
   | 'mountain'
   | 'map'
   | 'pin'
   | 'bookmark'
+  | 'bookmark-fill'
   | 'plus'
   | 'minus'
   | 'locate'
@@ -197,6 +199,12 @@ export function Icon({ name, size = 18, stroke = 1.6, className }: IconProps) {
           <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" />
         </svg>
       );
+    case 'heart-fill':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" />
+        </svg>
+      );
     case 'users':
       return (
         <svg {...common}>
@@ -230,6 +238,12 @@ export function Icon({ name, size = 18, stroke = 1.6, className }: IconProps) {
     case 'bookmark':
       return (
         <svg {...common}>
+          <path d="M6 4h12v17l-6-4-6 4V4Z" />
+        </svg>
+      );
+    case 'bookmark-fill':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
           <path d="M6 4h12v17l-6-4-6 4V4Z" />
         </svg>
       );

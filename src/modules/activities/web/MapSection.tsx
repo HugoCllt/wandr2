@@ -17,7 +17,11 @@ const MARKER_CAP = 24;
 export function MapSection({ nearbyActivities }: MapSectionProps) {
   const mapRef = useRef<MapViewHandle | null>(null);
   const blockRef = useRef<HTMLElement | null>(null);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  // Panel is open by default (first activity on the side). `engaged` is a
+  // separate, opt-in state that hands the mouse wheel to the map — it only turns
+  // on once the user clicks the map, so the page scrolls past until then.
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [engaged, setEngaged] = useState(false);
 
   const pins = useMemo(
     () =>
@@ -27,13 +31,11 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
     [nearbyActivities],
   );
 
-  const open = activeIndex !== null;
-  const activeActivity = open ? pins[activeIndex] : null;
-
-  const close = useCallback(() => setActiveIndex(null), []);
+  const activeActivity = pins[activeIndex] ?? null;
 
   const goTo = useCallback(
     (index: number) => {
+      if (pins.length === 0) return;
       const next = (index + pins.length) % pins.length;
       setActiveIndex(next);
       const a = pins[next];
@@ -42,14 +44,15 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
     [pins],
   );
 
-  // Escape closes; click outside the block closes.
+  // Escape or a click outside the block disengages the wheel zoom; the panel
+  // stays open so the page scrolls normally again.
   useEffect(() => {
-    if (!open) return;
+    if (!engaged) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') setEngaged(false);
     };
     const onDown = (e: MouseEvent) => {
-      if (blockRef.current && !blockRef.current.contains(e.target as Node)) close();
+      if (blockRef.current && !blockRef.current.contains(e.target as Node)) setEngaged(false);
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('mousedown', onDown);
@@ -57,7 +60,7 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('mousedown', onDown);
     };
-  }, [open, close]);
+  }, [engaged]);
 
   const markers: MapMarkerData[] = pins.map((a, i) => ({
     id: a.id,
@@ -65,7 +68,10 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
     lat: a.latitude,
     label: a.title,
     color: a.kind === 'EVENT' ? 'orange' : 'blue',
-    onClick: () => goTo(i),
+    onClick: () => {
+      setEngaged(true);
+      goTo(i);
+    },
   }));
 
   if (markers.length === 0) return null;
@@ -76,60 +82,53 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
         <div>
           <div className="feed-eyebrow">Sur la carte</div>
           <h2>Explorez autour de vous</h2>
-          <p>Des activités triées sur le volet à Montréal — cliquez sur un point pour l&apos;ouvrir.</p>
+          <p>Des activités triées sur le volet à Montréal — cliquez sur la carte pour l&apos;explorer.</p>
         </div>
       </div>
 
-      <div className={'map-explorer-stage' + (open ? ' open' : '')}>
+      <div className="map-explorer-stage open">
         <div
           className="map-explorer-map"
-          data-lenis-prevent-wheel={open ? '' : undefined}
-          onClick={(e) => {
-            // Click on the map background (not a pin) closes the volet.
-            if (open && e.target === e.currentTarget) close();
-          }}
+          data-lenis-prevent-wheel={engaged ? '' : undefined}
+          onClick={() => setEngaged(true)}
         >
           <MapView
             ref={mapRef}
             center={MONTREAL_CENTER}
             zoom={12}
             markers={markers}
-            scrollZoom={open}
+            scrollZoom={engaged}
             activeId={activeActivity?.id}
           />
         </div>
 
-        <aside className="map-volet" aria-hidden={!open}>
+        <aside className="map-volet">
           {activeActivity && (
-            <>
-              <button className="map-volet-close" onClick={close} aria-label="Fermer">
-                <Icon name="close" size={16} stroke={2.2} />
-              </button>
-              <div className="map-volet-card">
-                <CoverActivityCard activity={activeActivity} showPrice />
-              </div>
+            <div className="map-volet-card">
+              <CoverActivityCard activity={activeActivity} showPrice />
               <div className="map-volet-nav">
-                <span className="map-volet-count">
-                  {activeIndex! + 1} / {pins.length}
-                </span>
-                <div className="map-volet-btns">
-                  <button
-                    className="map-volet-btn"
-                    onClick={() => goTo(activeIndex! - 1)}
-                    aria-label="Précédent"
-                  >
-                    <Icon name="chev-left" size={18} />
-                  </button>
-                  <button
-                    className="map-volet-btn"
-                    onClick={() => goTo(activeIndex! + 1)}
-                    aria-label="Suivant"
-                  >
-                    <Icon name="chev-right" size={18} />
-                  </button>
-                </div>
+                <button
+                  className="map-volet-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goTo(activeIndex - 1);
+                  }}
+                  aria-label="Précédent"
+                >
+                  <Icon name="chev-left" size={26} stroke={2.6} />
+                </button>
+                <button
+                  className="map-volet-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    goTo(activeIndex + 1);
+                  }}
+                  aria-label="Suivant"
+                >
+                  <Icon name="chev-right" size={26} stroke={2.6} />
+                </button>
               </div>
-            </>
+            </div>
           )}
         </aside>
       </div>

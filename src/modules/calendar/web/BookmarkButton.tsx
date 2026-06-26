@@ -125,7 +125,7 @@ export function BookmarkButton({
         data-loading={pending ? '' : undefined}
         className={'card-action-btn ' + (bookmarked ? 'on' : '')}
       >
-        <Icon name="bookmark" size={15} />
+        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={15} />
       </button>
       <AddToCalendarDialog
         activityId={activityId}

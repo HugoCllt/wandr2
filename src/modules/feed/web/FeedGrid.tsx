@@ -14,6 +14,8 @@ type FeedGridProps = {
   filterQueryString: string;
   feedApiPath?: string;
   emptyMessage?: string;
+  /** When false, the grid is static: no infinite-scroll sentinel, no end message. */
+  paginate?: boolean;
 };
 
 /**
@@ -54,6 +56,7 @@ export function FeedGrid({
   filterQueryString,
   feedApiPath = '/api/feed',
   emptyMessage = 'Aucune activité ne correspond à vos filtres.',
+  paginate = true,
 }: FeedGridProps): ReactElement {
   const [items, setItems] = useState<FeedItemDTO[]>(initialItems);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
@@ -64,9 +67,14 @@ export function FeedGrid({
   const cols = useColumnCount();
 
   // Subtle per-column parallax (3-col only): the columns drift at slightly
-  // different rates as the section crosses the viewport, so their bottoms never
-  // realign. Driven imperatively via CSS vars (no per-frame re-render), mirroring
-  // FeaturedHero. Disabled for reduced-motion users.
+  // different rates, anchored to the top of the grid. Progress `d` is 0 while
+  // the grid's top sits at (or below) the viewport top — the three top cards are
+  // aligned — and grows to 1 across the section's full scroll extent, reaching
+  // the cap exactly when the grid's bottom meets the viewport bottom. Clamping
+  // to [0,1] means scrolling back up realigns the top, and once the section has
+  // left the viewport the offset is frozen, so the rest of the page never shifts
+  // the columns. Driven imperatively via CSS vars (no per-frame re-render),
+  // mirroring FeaturedHero. Disabled for reduced-motion users.
   const reduced =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -76,7 +84,7 @@ export function FeedGrid({
       if (!el || reduced || cols !== 3) return;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      const d = ((vh - rect.top) / (vh + rect.height) - 0.5) * 2;
+      const d = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - vh)));
       el.style.setProperty('--p-col-0', `${d * -80}px`);
       el.style.setProperty('--p-col-1', `${d * 40}px`);
       el.style.setProperty('--p-col-2', `${d * -8}px`);
@@ -85,6 +93,7 @@ export function FeedGrid({
   );
 
   useEffect(() => {
+    if (!paginate) return;
     const node = sentinelRef.current;
     if (!node) return;
     if (cursor === null) return;
@@ -122,7 +131,7 @@ export function FeedGrid({
         setLoading(false);
       }
     }
-  }, [cursor, loading, filterQueryString, feedApiPath]);
+  }, [cursor, loading, filterQueryString, feedApiPath, paginate]);
 
   if (items.length === 0) {
     return <p className="feed-empty">{emptyMessage}</p>;
@@ -162,12 +171,16 @@ export function FeedGrid({
           </div>
         ))}
       </div>
-      <div ref={sentinelRef} style={{ height: 1, width: '100%' }} aria-hidden="true" />
-      {loading ? <p className="feed-status">Chargement…</p> : null}
-      {error ? <p className="feed-error">{error}</p> : null}
-      {cursor === null && items.length > 0 ? (
-        <p className="feed-status">Vous avez tout vu.</p>
-      ) : null}
+      {paginate && (
+        <>
+          <div ref={sentinelRef} style={{ height: 1, width: '100%' }} aria-hidden="true" />
+          {loading ? <p className="feed-status">Chargement…</p> : null}
+          {error ? <p className="feed-error">{error}</p> : null}
+          {cursor === null && items.length > 0 ? (
+            <p className="feed-status">Vous avez tout vu.</p>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
