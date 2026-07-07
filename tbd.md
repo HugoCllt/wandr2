@@ -36,6 +36,8 @@ Deferrals captured per `CLAUDE.md` §3.1. Nothing speculative ships in code; eve
 
 ## Future changes
 
+- **Agent API hardening.** `/api/agent/**` (SuperMes/Hermes edge) ships with a single static bearer token, no rate limiting and no pagination on the read endpoint (`limit` caps at 200). Add per-agent tokens + rate limits before opening it to more than our own scouts; add cursor pagination if a city outgrows one page. — `src/modules/activities/web/agentApiRoutes.ts`.
+- **MCP server vs agent API duplication.** The MCP tools (`src/mcp/tools/*`) and the agent API share the same use cases but duplicate the thin glue (Zod payload schema, staging sentinel, city resolution). If the MCP edge is retired once all scouts run on Hermes, delete `src/mcp` and keep the HTTP edge as the only machine entry point. — `src/modules/activities/web/agentApiRoutes.ts`, `src/mcp/tools/ingestActivity.ts`.
 - **Email verification.** Better Auth is ready (`emailAndPassword.requireEmailVerification` + `sendVerificationEmail`); left off for the POC. `User.emailVerified` exists but is only set by OAuth. Wire when an email provider (e.g. Resend) is configured. — `src/shared/auth/auth.ts`.
 - **Password reset flow.** Better Auth is ready (`emailAndPassword.sendResetPassword`); not wired for the POC (no email provider). — `src/shared/auth/auth.ts`.
 - **Custom avatar upload.** The avatar is now a generated DiceBear image seeded by user id (Nav + profile), never the Google photo and no upload surface. The initials-fallback `shared/ui/Avatar.tsx` still backs the case where no `src` is given. — `src/shared/ui/avatarUrl.ts`, `src/modules/profile/web/loadProfileView.ts`.
