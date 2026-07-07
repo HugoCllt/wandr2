@@ -3,6 +3,10 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   DATABASE_URL: z.string().url(),
   ADMIN_TOKEN: z.string().min(1),
+  // Agent API (/api/agent/**) — bearer token for external agent runtimes
+  // (SuperMes/Hermes scouts). Separate from ADMIN_TOKEN so machine access can
+  // be rotated independently. Empty (default) = agent API disabled (401).
+  AGENT_API_TOKEN: z.string().default(''),
   SEED_USER_EMAIL: z.string().email(),
   SEED_USER_NAME: z.string().min(1),
   // Seed user password — lets `prisma/seed.ts` register Hugo through the real
