@@ -4,6 +4,8 @@ Single source of truth for working principles, architecture rules, and tooling. 
 
 > **Stage:** personal POC. Single locale, single user, single deployment. Anything that does not serve "make Phase 1 work end-to-end" is out of scope until it does.
 
+> **Mobile:** the iOS/Android migration analysis (Expo, backend reuse, DB, BYOK chat, store constraints) lives in [`MOBILE_MIGRATION.md`](./MOBILE_MIGRATION.md) — exploratory, nothing in `src/` targets mobile today.
+
 ---
 
 ## 1. Think Before Coding
