@@ -16,44 +16,39 @@ type Props = {
   activity: ActivityDTO;
 };
 
-/**
- * Spotlight — an editorial text/photo split wrapped in a charcoal gradient
- * panel (premium-band aesthetic), with generous padding. The photo's inner
- * bottom-left corner carries an exaggerated squircle crop while the other three
- * corners stay lightly rounded. Text-left / image-right. Clicking opens the
- * activity modal. The section heading ("Coup de cœur") is supplied by the
- * wrapping `feed-section`, so this card carries no eyebrow.
- */
 export function SpotlightActivityCard({ activity }: Props): ReactElement {
   const open = useOpenActivity();
   const price = formatActivityPrice(activity);
 
   return (
     <article className="spotlight" onClick={() => open(activity)}>
+      <div className="spotlight-media">
+        <div className="img" style={{ backgroundImage: `url(${coverImageUrl(activity)})` }} />
+      </div>
+      <div className="spotlight-scrim" />
       <div className="spotlight-body">
-        <div className="spotlight-block spotlight-head">
-          <h3 className="spotlight-title">{activity.title}</h3>
+        <span className="spotlight-eyebrow">
+          <Icon name="heart-fill" size={14} />
+          Coup de cœur
+        </span>
+        <h3 className="spotlight-title">{activity.title}</h3>
+        {activity.description ? (
           <p className="spotlight-desc">{activity.description}</p>
-        </div>
-        <div className="spotlight-block spotlight-meta">
+        ) : null}
+        <div className="spotlight-meta">
           <span>{formatActivityWhen(activity)}</span>
           <span className="dot" />
           <span>{formatActivityWhere(activity)}</span>
+          {price ? (
+            <>
+              <span className="dot" />
+              <span>{price}</span>
+            </>
+          ) : null}
         </div>
-        {price ? (
-          <div className="spotlight-block spotlight-price">
-            <b>{price}</b>
-          </div>
-        ) : null}
         <span className="spotlight-cta">
           Découvrir <Icon name="arrow-right" size={16} />
         </span>
-      </div>
-      <div className="spotlight-media">
-        <div
-          className="img"
-          style={{ backgroundImage: `url(${coverImageUrl(activity)})` }}
-        />
       </div>
     </article>
   );

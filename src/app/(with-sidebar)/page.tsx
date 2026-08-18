@@ -51,10 +51,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
         excludeIds={excludeIds}
         interludeSlot={
           spotlight ? (
-            <section className="spotlight-band">
-              <div className="feed-head">
-                <h2>Coup de cœur</h2>
-              </div>
+            <section className="spotlight-band" aria-label="Coup de cœur">
               <SpotlightActivityCard activity={spotlight} />
             </section>
           ) : undefined

@@ -8,12 +8,13 @@ const EXPLORE = [
   { label: 'Gastronomie', href: '/dining' },
   { label: 'Culture', href: '/culture' },
   { label: 'Plein air', href: '/outdoor' },
+  { label: 'Vie nocturne', href: '/nightlife' },
 ];
 const ABOUT = [
-  { label: 'Notre mission', href: '/' },
-  { label: 'Premium', href: '/' },
-  { label: 'Calendrier', href: '/calendar' },
   { label: 'Assistant', href: '/chat' },
+  { label: 'Calendrier', href: '/calendar' },
+  { label: 'Favoris', href: '/favorites' },
+  { label: 'Profil', href: '/profile' },
 ];
 
 /**
@@ -40,7 +41,7 @@ export function SiteFooter() {
           ))}
         </div>
         <div className="footer-col">
-          <h4>À propos</h4>
+          <h4>Découvrir</h4>
           {ABOUT.map((l) => (
             <Link key={l.label} href={l.href}>
               {l.label}

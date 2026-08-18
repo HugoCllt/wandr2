@@ -1,129 +1,183 @@
 'use client';
 
+import * as Popover from '@radix-ui/react-popover';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useSession } from '../auth/auth-client';
 import { CATEGORY_KEYS, CATEGORY_PRESETS } from '../presets/CATEGORY_PRESETS';
 import { avatarUrl } from './avatarUrl';
-import { Icon, type IconName } from './icons/Icon';
+import { Icon } from './icons/Icon';
 
-type NavLink = { name: string; href: string; icon: IconName };
-
-const HOME_LINK: NavLink = { name: 'Home', href: '/', icon: 'home' };
-
-// Nav derives from CATEGORY_PRESETS — adding a category to the registry adds it
-// here automatically. `nav: 'primary' | 'overflow'` per preset decides where.
-const categoryLinks = CATEGORY_KEYS.map((key) => {
+const CATEGORY_LINKS = CATEGORY_KEYS.map((key) => {
   const cfg = CATEGORY_PRESETS[key];
-  return { name: cfg.label, href: `/${key}`, icon: cfg.icon, nav: cfg.nav };
+  return {
+    key,
+    name: cfg.label,
+    href: `/${key}`,
+    icon: cfg.icon,
+    image: cfg.heroImage.replace('w=1600', 'w=480'),
+  };
 });
 
-const PRIMARY_LINKS: NavLink[] = [
-  HOME_LINK,
-  ...categoryLinks.filter((l) => l.nav === 'primary'),
+const SEARCH_EXAMPLES = [
+  'rooftop jazz tonight',
+  'a candle-lit table for two',
+  'padel courts this weekend',
+  'first-snow trails on the mountain',
+  'late-night ramen in the Plateau',
+  'galleries open right now',
 ];
-const OVERFLOW_LINKS: NavLink[] = categoryLinks.filter((l) => l.nav === 'overflow');
+
+function useTypewriter(phrases: string[], enabled: boolean): string {
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setText(phrases[0]);
+      return;
+    }
+
+    let phrase = 0;
+    let chars = 0;
+    let deleting = false;
+    let id: ReturnType<typeof setTimeout>;
+
+    const step = () => {
+      const current = phrases[phrase];
+      chars += deleting ? -1 : 1;
+      setText(current.slice(0, chars));
+
+      let delay = deleting ? 32 : 58;
+      if (!deleting && chars === current.length) {
+        deleting = true;
+        delay = 1900;
+      } else if (deleting && chars === 0) {
+        deleting = false;
+        phrase = (phrase + 1) % phrases.length;
+        delay = 360;
+      }
+      id = setTimeout(step, delay);
+    };
+
+    id = setTimeout(step, 500);
+    return () => clearTimeout(id);
+  }, [phrases, enabled]);
+
+  return text;
+}
+
+function NavSearch() {
+  const [value, setValue] = useState('');
+  const [focused, setFocused] = useState(false);
+  const animating = !focused && value.length === 0;
+  const example = useTypewriter(SEARCH_EXAMPLES, animating);
+
+  return (
+    <label className="search">
+      <Icon name="search" size={16} />
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={animating ? `Search ${example}` : 'Search Montréal…'}
+        aria-label="Search activities, places and vibes"
+      />
+      <span className="search-kbd" aria-hidden="true">
+        ⌘ K
+      </span>
+    </label>
+  );
+}
 
 export function Nav() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [overflowOpen, setOverflowOpen] = useState(false);
-  const overflowRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!overflowOpen) return;
-    const onClick = (e: MouseEvent) => {
-      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
-        setOverflowOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, [overflowOpen]);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
     return pathname?.startsWith(href);
   };
+  const categoryActive = CATEGORY_KEYS.some((key) => pathname?.startsWith(`/${key}`));
 
   return (
     <nav className="nav">
       <div className="nav-inner">
-        <Link className="logo" href="/chat" aria-label="Open Wandr chat">
-          <span>wandr</span>
-          <span className="logo-spark" aria-hidden="true">
-            <Icon name="chat" size={22} stroke={1.8} />
-          </span>
-        </Link>
+        <div className="nav-left">
+          <Link className="logo" href="/chat" aria-label="Open Wandr chat">
+            <span>wandr</span>
+            <span className="logo-spark" aria-hidden="true">
+              <Icon name="chat" size={22} stroke={1.8} />
+            </span>
+          </Link>
 
-        <div className="nav-links">
-          {PRIMARY_LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={'nav-link ' + (isActive(l.href) ? 'active' : '')}
-            >
-              <Icon name={l.icon} size={16} /> {l.name}
+          <div className="nav-links">
+            <Link href="/" className={'nav-link ' + (isActive('/') ? 'active' : '')}>
+              <Icon name="home" size={16} /> Home
             </Link>
-          ))}
-          <div className="nav-overflow" ref={overflowRef} style={{ position: 'relative' }}>
-            <button
-              type="button"
-              className={'nav-link ' + (overflowOpen ? 'active' : '')}
-              onClick={() => setOverflowOpen((o) => !o)}
-              aria-label="More categories"
-              aria-expanded={overflowOpen}
-            >
-              <Icon name="menu" size={16} />
-            </button>
-            {overflowOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  background: 'var(--panel)',
-                  border: '1px solid var(--line-dark)',
-                  borderRadius: 12,
-                  boxShadow: 'var(--shadow-md)',
-                  padding: 6,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minWidth: 180,
-                  zIndex: 50,
-                }}
-              >
-                {OVERFLOW_LINKS.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className={'nav-link ' + (isActive(l.href) ? 'active' : '')}
-                    onClick={() => setOverflowOpen(false)}
-                    style={{ width: '100%', justifyContent: 'flex-start' }}
-                  >
-                    <Icon name={l.icon} size={16} /> {l.name}
-                  </Link>
-                ))}
-              </div>
-            )}
+
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <button
+                  type="button"
+                  className={'nav-link nav-explore ' + (categoryActive ? 'active' : '')}
+                  aria-label="Explore activity categories"
+                >
+                  <Icon name="compass" size={16} /> Explore
+                  <span className="nav-explore-chev" aria-hidden="true">
+                    <Icon name="chev-down" size={12} />
+                  </span>
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  className="explore-panel"
+                  side="bottom"
+                  align="start"
+                  sideOffset={12}
+                  collisionPadding={16}
+                >
+                  <div className="explore-grid">
+                    {CATEGORY_LINKS.map((l) => (
+                      <Popover.Close asChild key={l.href}>
+                        <Link
+                          href={l.href}
+                          className="explore-card"
+                          data-active={pathname?.startsWith(l.href) || undefined}
+                        >
+                          <span
+                            className="explore-card-img"
+                            style={{ backgroundImage: `url(${l.image})` }}
+                          />
+                          <span className="explore-card-scrim" />
+                          <span className="explore-card-label">
+                            <Icon name={l.icon} size={15} />
+                            {l.name}
+                          </span>
+                        </Link>
+                      </Popover.Close>
+                    ))}
+                  </div>
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-          <label className="search">
-            <Icon name="search" size={16} />
-            <input placeholder="Search activities, places, sports, vibes…" />
-            <span className="search-kbd">⌘ K</span>
-          </label>
+        <div className="nav-search-cell">
+          <NavSearch />
+        </div>
+
+        <div className="nav-right">
           <Link
             href="/calendar"
-            className={'nav-link ' + (isActive('/calendar') ? 'active' : '')}
+            className={'nav-link nav-icon ' + (isActive('/calendar') ? 'active' : '')}
             aria-label="Calendar"
-            style={{ padding: '8px 10px' }}
           >
-            <Icon name="calendar" size={16} />
+            <Icon name="calendar" size={18} />
           </Link>
           {session?.user ? (
             <Link className="avatar" href="/profile" aria-label="Profile">

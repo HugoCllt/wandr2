@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { Icon, type IconName } from '../../../../shared/ui/icons/Icon';
@@ -44,8 +44,20 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
   const when = formatWhen(a);
   const { price, unit } = formatPrice(a);
 
+  useEffect(() => {
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+    const prevOverflow = document.body.style.overflow;
+    const prevPad = document.body.style.paddingRight;
+    document.body.style.overflow = 'hidden';
+    if (scrollbarW > 0) document.body.style.paddingRight = `${scrollbarW}px`;
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPad;
+    };
+  }, []);
+
   return (
-    <div className="act-overlay" onClick={onClose}>
+    <div className="act-overlay" data-lenis-prevent onClick={onClose}>
       <div className="act-modal" onClick={(e) => e.stopPropagation()}>
         <button className="act-close" onClick={onClose} aria-label="Fermer">
           <Icon name="close" size={16} stroke={2.2} />
@@ -134,20 +146,22 @@ export function ActivityModal({ activity, onClose }: ActivityModalProps) {
                   interactive={false}
                 />
               </div>
-              <div className="act-address">
-                <span className="ico">
-                  <Icon name="pin" size={14} />
-                </span>
-                <span>{a.address}</span>
+              <div className="act-address-row">
+                <div className="act-address">
+                  <span className="ico">
+                    <Icon name="pin" size={14} />
+                  </span>
+                  <span>{a.address}</span>
+                </div>
+                <a
+                  className="act-directions"
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Itinéraire <Icon name="arrow-right" size={13} />
+                </a>
               </div>
-              <a
-                className="act-directions"
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Itinéraire <Icon name="arrow-right" size={13} />
-              </a>
             </div>
           </div>
         </div>
