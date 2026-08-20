@@ -25,7 +25,7 @@ const AdminActivitySchema = z.object({
   longitude: z.number(),
   dateStart: z.string().datetime().nullable().optional(),
   dateEnd: z.string().datetime().nullable().optional(),
-  priceMinCents: z.number().int().nonnegative(),
+  priceMinCents: z.number().int().nonnegative().nullable(),
   priceMaxCents: z.number().int().nonnegative().nullable().optional(),
   externalUrl: z.string().url().nullable().optional(),
   indoor: z.boolean().optional(),

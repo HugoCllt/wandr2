@@ -10,8 +10,6 @@ type SectionedFeedProps = {
   nextCursor: string | null;
   filterQueryString: string;
   feedApiPath?: string;
-  /** Activity ids already shown elsewhere on the page (e.g. the Home hero). */
-  excludeIds?: ReadonlySet<string>;
   /** Optional band rendered between the curated "Pour toi" grid and the long tail. */
   interludeSlot?: ReactNode;
 };
@@ -27,10 +25,9 @@ export function SectionedFeed({
   nextCursor,
   filterQueryString,
   feedApiPath,
-  excludeIds,
   interludeSlot,
 }: SectionedFeedProps): ReactElement {
-  const { sections, leftovers } = buildFeedSections(items, DEFAULT_FEED_SECTIONS, { excludeIds });
+  const { sections, leftovers } = buildFeedSections(items, DEFAULT_FEED_SECTIONS);
   const showTail = leftovers.length > 0 || nextCursor !== null;
 
   // No section, no tail, no more pages: the active filters matched nothing.

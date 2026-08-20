@@ -81,14 +81,11 @@ describe('buildFeedSections', () => {
     expect(total).toBe(items.length);
   });
 
-  it('removes excludeIds from both the band and leftovers', () => {
-    const keep = Array.from({ length: 6 }, () => item());
-    const dropped = item();
-    const excludeIds = new Set([dropped.id]);
-    const { sections, leftovers } = buildFeedSections([dropped, ...keep], SPECS, { excludeIds });
+  it('keeps every pool item, including those already shown in the hero or on the map', () => {
+    const items = Array.from({ length: 3 }, () => item());
+    const { sections, leftovers } = buildFeedSections(items, SPECS);
 
     const all = [...sections.flatMap((s) => s.items), ...leftovers].map((a) => a.id);
-    expect(all).not.toContain(dropped.id);
-    expect(all).toHaveLength(keep.length);
+    expect(all).toEqual(ids(items));
   });
 });

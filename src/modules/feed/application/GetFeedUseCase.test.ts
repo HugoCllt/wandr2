@@ -58,13 +58,15 @@ class FakeActivityRepository implements IActivityRepository {
         if (!a.neighborhood || !criteria.neighborhoods.includes(a.neighborhood)) return false;
       }
       if (criteria.priceMaxCents !== undefined) {
+        // Mirrors SQL: an unknown price (null) satisfies no comparison, so it
+        // matches neither a budget cap nor `free` nor `paid`.
         const cap = a.priceMaxCents ?? a.priceMinCents;
-        if (cap > criteria.priceMaxCents) return false;
+        if (cap === null || cap > criteria.priceMaxCents) return false;
       }
       if (criteria.indoor === true && a.indoor !== true) return false;
       if (criteria.outdoor === true && a.outdoor !== true) return false;
       if (criteria.free === true && a.priceMinCents !== 0) return false;
-      if (criteria.paid === true && a.priceMinCents <= 0) return false;
+      if (criteria.paid === true && (a.priceMinCents === null || a.priceMinCents <= 0)) return false;
       if (criteria.eventDateWindow) {
         const window = criteria.eventDateWindow;
         if (a.kind === 'EVENT') {
@@ -156,6 +158,30 @@ describe('GetFeedUseCase', () => {
 
     expect(result.items).toEqual([]);
     expect(result.nextCursor).toBeNull();
+  });
+
+  it('excludes an unknown price from both the free and the paid filter', async () => {
+    const repo = new FakeActivityRepository();
+    repo.seed([
+      activity({ id: 'free', slug: 'free', priceMinCents: 0 }),
+      activity({ id: 'paid', slug: 'paid', priceMinCents: 2500 }),
+      activity({ id: 'unknown', slug: 'unknown', priceMinCents: null }),
+    ]);
+    const useCase = new GetFeedUseCase(repo);
+    const run = (filters: { free?: boolean; paid?: boolean }) =>
+      useCase.execute({
+        filters,
+        cursor: null,
+        affinityMap: EMPTY_AFFINITY,
+        now: NOW,
+        cityId: 'city_mtl',
+      });
+
+    const free = await run({ free: true });
+    const paid = await run({ paid: true });
+
+    expect(free.items.map((a) => a.id)).toEqual(['free']);
+    expect(paid.items.map((a) => a.id)).toEqual(['paid']);
   });
 
   it('returns ranked items respecting featured and matchScore', async () => {

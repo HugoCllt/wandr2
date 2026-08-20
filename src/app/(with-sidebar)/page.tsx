@@ -35,13 +35,13 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
     featuredWithImage.length > 0
       ? featuredWithImage
       : pool.items.filter((a) => Boolean(a.imageUrl)).slice(0, 3);
-  const excludeIds = new Set(heroItems.map((a) => a.id));
+  const heroIds = new Set(heroItems.map((a) => a.id));
 
   // First image-bearing pool item not already shown in the hero drives the
   // "Coup de cœur" spotlight, injected between "Pour toi" and the long tail.
-  // Exclude it from the feed so it never shows twice.
-  const spotlight = pool.items.find((a) => Boolean(a.imageUrl) && !excludeIds.has(a.id));
-  if (spotlight) excludeIds.add(spotlight.id);
+  // The highlights (hero, map volet, spotlight) never shrink the feed: with a
+  // filter on, the pool is often small enough that removing them would empty it.
+  const spotlight = pool.items.find((a) => Boolean(a.imageUrl) && !heroIds.has(a.id));
 
   return (
     <>
@@ -52,7 +52,6 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
         items={pool.items}
         nextCursor={pool.nextCursor}
         filterQueryString={filterQueryString}
-        excludeIds={excludeIds}
         interludeSlot={
           spotlight ? (
             <section className="spotlight-band" aria-label="Coup de cœur">

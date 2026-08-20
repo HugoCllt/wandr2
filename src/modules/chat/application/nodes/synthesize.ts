@@ -118,7 +118,7 @@ function syntheticActivity(
     longitude: city.centerLng,
     dateStart: null,
     dateEnd: null,
-    priceMinCents: 0,
+    priceMinCents: null,
     priceMaxCents: null,
     externalUrl: card.sourceUrl || source?.url || null,
     indoor: false,

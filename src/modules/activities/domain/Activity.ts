@@ -22,7 +22,7 @@ export type Activity = {
   longitude: number;
   dateStart: Date | null;
   dateEnd: Date | null;
-  priceMinCents: number;
+  priceMinCents: number | null;
   priceMaxCents: number | null;
   externalUrl: string | null;
   indoor: boolean;
@@ -85,13 +85,16 @@ export function validateActivity(input: ActivityCreateInput | Activity): void {
     throw new Error('PLACE activities must not have dateStart or dateEnd.');
   }
 
-  if (!Number.isInteger(input.priceMinCents) || input.priceMinCents < 0) {
-    throw new Error('priceMinCents must be a non-negative integer.');
+  if (
+    input.priceMinCents !== null &&
+    (!Number.isInteger(input.priceMinCents) || input.priceMinCents < 0)
+  ) {
+    throw new Error('priceMinCents must be a non-negative integer, or null when unknown.');
   }
 
   if (
     input.priceMaxCents !== null &&
-    (!Number.isInteger(input.priceMaxCents) || input.priceMaxCents < input.priceMinCents)
+    (!Number.isInteger(input.priceMaxCents) || input.priceMaxCents < (input.priceMinCents ?? 0))
   ) {
     throw new Error('priceMaxCents must be greater than or equal to priceMinCents.');
   }

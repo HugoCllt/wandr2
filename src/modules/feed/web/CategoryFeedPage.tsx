@@ -25,7 +25,6 @@ export function CategoryFeedPage({
     : `preset=${categoryKey}`;
 
   const heroItems = initialFeed.items.filter((a) => Boolean(a.imageUrl)).slice(0, 3);
-  const heroIds = new Set(heroItems.map((a) => a.id));
 
   return (
     <>
@@ -41,7 +40,6 @@ export function CategoryFeedPage({
           items={initialFeed.items}
           nextCursor={initialFeed.nextCursor}
           filterQueryString={presetQuery}
-          excludeIds={heroIds}
         />
       </div>
     </>

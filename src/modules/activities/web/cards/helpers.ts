@@ -7,7 +7,8 @@ import { useActivityContext } from '../ActivityModal/ActivityProvider';
 
 export { coverImageUrl } from './coverImage';
 
-export function formatActivityPrice(activity: ActivityDTO): string {
+export function formatActivityPrice(activity: ActivityDTO): string | null {
+  if (activity.priceMinCents === null) return null;
   if (activity.priceMinCents <= 0 && (activity.priceMaxCents === null || activity.priceMaxCents === 0)) {
     return 'Gratuit';
   }

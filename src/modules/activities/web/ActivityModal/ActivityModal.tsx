@@ -14,6 +14,7 @@ type ActivityModalProps = {
 };
 
 function formatPrice(a: ActivityDTO): { price: string | null; unit: string | null } {
+  if (a.priceMinCents === null) return { price: null, unit: null };
   if (a.priceMinCents <= 0) return { price: null, unit: 'Entrée gratuite' };
   const min = (a.priceMinCents / 100).toFixed(0);
   if (a.priceMaxCents && a.priceMaxCents > a.priceMinCents) {

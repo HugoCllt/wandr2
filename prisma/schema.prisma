@@ -157,7 +157,7 @@ model Activity {
   longitude     Float
   dateStart     DateTime?
   dateEnd       DateTime?
-  priceMinCents Int
+  priceMinCents Int?
   priceMaxCents Int?
   externalUrl   String?
   indoor        Boolean          @default(false)

@@ -20,7 +20,7 @@ export type ExtractedActivityPayload = {
   longitude: number;
   dateStart: string | null;
   dateEnd: string | null;
-  priceMinCents: number;
+  priceMinCents: number | null;
   priceMaxCents: number | null;
   externalUrl: string | null;
   indoor: boolean;

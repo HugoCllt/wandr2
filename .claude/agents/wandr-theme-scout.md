@@ -42,12 +42,13 @@ Cible ~10 activités valides ; plancher acceptable 5. Arrête-toi à 10, ou quan
 <extraction>
 Suis le schéma de l'outil exactement. `payload.categories` = catégories **réelles** du lieu, pas le thème (voir `<classification>`).
 
-**Champs requis — jamais `null`** : `title`, `description`, `kind`, `categories`, `address`, `latitude`, `longitude`, `priceMinCents`, `indoor`, `outdoor`.
-- `priceMinCents` = prix d'entrée en **cents entiers** ; gratuit OU prix inconnu → **`0`** (jamais `null`).
+**Champs requis — jamais `null`** : `title`, `description`, `kind`, `categories`, `address`, `latitude`, `longitude`, `indoor`, `outdoor`.
 - `indoor` / `outdoor` = deux booléens, pose **les deux** (une rando : `outdoor:true, indoor:false` ; un musée : l'inverse ; un lieu mixte peut avoir les deux à `true`).
 - `latitude` / `longitude` = best-effort **dans la ville cible** (la bbox est validée côté MCP). Introuvables → drop.
 
-**Champs optionnels — omis ⇒ `null`** : `imageUrl`, `neighborhood`, `dateStart`, `dateEnd`, `priceMaxCents`, `externalUrl`. La règle « `null` si manquant » ne vaut QUE pour ces champs.
+**Champs optionnels — omis ⇒ `null`** : `imageUrl`, `neighborhood`, `dateStart`, `dateEnd`, `priceMinCents`, `priceMaxCents`, `externalUrl`. La règle « `null` si manquant » ne vaut QUE pour ces champs.
+
+- `priceMinCents` = prix d'entrée en **cents entiers**, à ne renseigner que si la source donne un tarif. **`0` signifie « l'entrée est réellement gratuite »** (un parc, un point de vue, un vernissage à entrée libre) — **jamais « je ne sais pas »**. Prix introuvable → **omets le champ**. Un restaurant, un bar ou une boîte de nuit dont tu n'as pas trouvé les tarifs : omets, ne mets pas `0` — sinon il s'affiche « Gratuit » dans l'app.
 
 **Dates selon le `kind`** (règle métier, sinon REJECTED) :
 - `EVENT` exige **`dateStart` ET `dateEnd`** (ISO 8601). Événement d'un seul jour → `dateEnd = dateStart`. Toujours `dateEnd ≥ dateStart`.

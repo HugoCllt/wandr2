@@ -54,6 +54,7 @@ export function FeaturedHero({ activities, eyebrow }: FeaturedHeroProps) {
 
   const safeIdx = Math.min(idx, slides.length - 1);
   const active = slides[safeIdx];
+  const activePrice = formatActivityPrice(active);
   const next = () => setIdx((i) => (i + 1) % slides.length);
   const prev = () => setIdx((i) => (i - 1 + slides.length) % slides.length);
   const titleLines = active.title.split('\n');
@@ -80,8 +81,12 @@ export function FeaturedHero({ activities, eyebrow }: FeaturedHeroProps) {
           <span>{formatActivityWhere(active, city.name)}</span>
           <span className="dot" />
           <span>{formatActivityWhen(active)}</span>
-          <span className="dot" />
-          <span>{formatActivityPrice(active)}</span>
+          {activePrice ? (
+            <>
+              <span className="dot" />
+              <span>{activePrice}</span>
+            </>
+          ) : null}
         </div>
         <div className="page-hero-actions">
           <button type="button" className="btn-charcoal" onClick={() => open(active)}>
