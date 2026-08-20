@@ -39,7 +39,7 @@ export async function loadProfileFormInitial(): Promise<ProfileFormInitial> {
   const [user, affinityRows] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: current.id },
-      select: { gender: true, birthDate: true, cityId: true, bio: true },
+      select: { gender: true, birthDate: true, cityId: true, bio: true, city: { select: { name: true } } },
     }),
     prisma.userCategoryAffinity.findMany({
       where: { userId: current.id },
@@ -58,6 +58,7 @@ export async function loadProfileFormInitial(): Promise<ProfileFormInitial> {
     birthDate: user.birthDate ? user.birthDate.toISOString().slice(0, 10) : '',
     gender: user.gender ?? '',
     cityId: user.cityId,
+    cityName: user.city.name,
     bio: user.bio ?? '',
     affinities,
   };

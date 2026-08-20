@@ -5,6 +5,7 @@ import type { IActivityRepository, NeighborhoodFacet } from '../domain/IActivity
 import { ListNeighborhoodsUseCase } from './ListNeighborhoodsUseCase';
 
 class FakeActivityRepository implements IActivityRepository {
+  readonly facetCalls: string[] = [];
   constructor(private readonly facets: NeighborhoodFacet[]) {}
 
   async create(_input: ActivityCreateInput): Promise<Activity> {
@@ -28,10 +29,11 @@ class FakeActivityRepository implements IActivityRepository {
   async slugExists(_slug: string): Promise<boolean> {
     return false;
   }
-  async listNeighborhoodFacets(): Promise<NeighborhoodFacet[]> {
+  async listNeighborhoodFacets(cityId: string): Promise<NeighborhoodFacet[]> {
+    this.facetCalls.push(cityId);
     return this.facets;
   }
-  async listFeatured(_limit: number): Promise<Activity[]> {
+  async listFeatured(_limit: number, _cityId: string): Promise<Activity[]> {
     return [];
   }
   async listForUpdate(): Promise<Activity[]> {
@@ -49,16 +51,17 @@ describe('ListNeighborhoodsUseCase', () => {
     const repo = new FakeActivityRepository(facets);
 
     const useCase = new ListNeighborhoodsUseCase(repo);
-    const result = await useCase.execute();
+    const result = await useCase.execute('city_mtl');
 
     expect(result).toEqual(facets);
+    expect(repo.facetCalls).toEqual(['city_mtl']);
   });
 
   it('returns an empty list when the catalog has no neighborhoods', async () => {
     const repo = new FakeActivityRepository([]);
 
     const useCase = new ListNeighborhoodsUseCase(repo);
-    const result = await useCase.execute();
+    const result = await useCase.execute('city_mtl');
 
     expect(result).toEqual([]);
   });

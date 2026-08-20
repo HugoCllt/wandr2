@@ -80,6 +80,9 @@ class FakeCityRepository implements ICityRepository {
   async findBySlug(slug: string): Promise<City | null> {
     return this.cities.find((c) => c.slug === slug) ?? null;
   }
+  async list(): Promise<City[]> {
+    return [...this.cities];
+  }
 }
 
 class FakeCandidateRepository implements ICandidateRepository {

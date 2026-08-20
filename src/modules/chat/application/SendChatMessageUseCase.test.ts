@@ -10,7 +10,8 @@ import { MonthlyTokenLimitError } from '../domain/MonthlyTokenLimitError';
 import type { TokenUsage } from '../domain/TokenUsage';
 import type { UserRecommendationContext } from '../domain/UserRecommendationContext';
 import type { WebSearchResult } from '../domain/WebSearchResult';
-import { CHAT_SYSTEM_PROMPT } from './chatSystemPrompt';
+import type { City } from '../../activities/domain/City';
+import { chatSystemPrompt } from './chatSystemPrompt';
 import {
   buildChatMessages,
   SendChatMessageUseCase,
@@ -110,6 +111,20 @@ function answerText(events: ChatStreamEvent[]): string {
     .join('');
 }
 
+const city: City = {
+  id: 'c1',
+  slug: 'montreal',
+  name: 'Montréal',
+  country: 'CA',
+  timezone: 'America/Toronto',
+  centerLat: 45.5019,
+  centerLng: -73.5674,
+  bboxMinLat: 45.4,
+  bboxMinLng: -73.98,
+  bboxMaxLat: 45.71,
+  bboxMaxLng: -73.47,
+};
+
 describe('buildChatMessages', () => {
   it('heads the conversation with the system prompt, then history, then the new turn', () => {
     const messages = buildChatMessages(
@@ -118,16 +133,22 @@ describe('buildChatMessages', () => {
         { role: 'assistant', content: 'Bonjour ! Que cherches-tu ?' },
       ],
       'Idée romantique ce soir',
+      'Montréal',
     );
 
     expect(messages[0]).toBeInstanceOf(SystemMessage);
-    expect(String(messages[0].content)).toBe(CHAT_SYSTEM_PROMPT);
+    expect(String(messages[0].content)).toBe(chatSystemPrompt('Montréal'));
     expect(messages).toHaveLength(4);
     expect(String(messages[messages.length - 1].content)).toBe('Idée romantique ce soir');
   });
 
   it('folds input-toggle context into the new turn when provided', () => {
-    const messages = buildChatMessages([], 'Un bar sympa', 'Contexte : je cherche quelque chose pour ce soir.');
+    const messages = buildChatMessages(
+      [],
+      'Un bar sympa',
+      'Montréal',
+      'Contexte : je cherche quelque chose pour ce soir.',
+    );
 
     expect(String(messages[messages.length - 1].content)).toBe(
       'Un bar sympa\n\nContexte : je cherche quelque chose pour ce soir.',
@@ -146,7 +167,7 @@ describe('SendChatMessageUseCase.executeStream', () => {
     const events = await collect(
       useCase.executeStream({
         userId: 'u1',
-        cityId: 'c1',
+        city,
         month: '2026-06',
         text: 'Je m’ennuie',
         history: [],
@@ -176,7 +197,7 @@ describe('SendChatMessageUseCase.executeStream', () => {
     const events = await collect(
       useCase.executeStream({
         userId: 'u1',
-        cityId: 'c1',
+        city,
         month: '2026-06',
         text: 'Un truc culturel ce weekend',
         history: [],
@@ -203,7 +224,7 @@ describe('SendChatMessageUseCase.executeStream', () => {
     const useCase = new SendChatMessageUseCase(deps(model, usage));
 
     const iterator = useCase
-      .executeStream({ userId: 'u1', cityId: 'c1', month: '2026-06', text: 'Salut', history: [] })
+      .executeStream({ userId: 'u1', city, month: '2026-06', text: 'Salut', history: [] })
       [Symbol.asyncIterator]();
 
     await expect(iterator.next()).rejects.toBeInstanceOf(MonthlyTokenLimitError);

@@ -1,3 +1,4 @@
+import { getActiveCity } from '../../activities/web/activeCity';
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
@@ -31,8 +32,8 @@ export async function loadCalendarMonth(
   monthParam: string | null | undefined,
   now: Date = new Date(),
 ): Promise<CalendarMonthData> {
-  const range = parseMonthParam(monthParam ?? null, now);
-  const user = await getCurrentUser();
+  const [city, user] = await Promise.all([getActiveCity(), getCurrentUser()]);
+  const range = parseMonthParam(monthParam ?? null, now, city.timezone);
 
   const calendarUseCase = new ListCalendarEntriesUseCase(new PrismaCalendarRepository(prisma));
   const entries = await calendarUseCase.execute({
@@ -55,7 +56,7 @@ export async function loadCalendarMonth(
         scheduledAt: entry.scheduledAt.toISOString(),
         notes: entry.notes,
         outcome: entry.outcome,
-        dayKey: dayKeyInTZ(entry.scheduledAt),
+        dayKey: dayKeyInTZ(entry.scheduledAt, city.timezone),
         activity: toActivityDTO(activity),
       },
     ];

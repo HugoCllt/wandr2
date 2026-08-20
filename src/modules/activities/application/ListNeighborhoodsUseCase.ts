@@ -3,7 +3,7 @@ import type { IActivityRepository, NeighborhoodFacet } from '../domain/IActivity
 export class ListNeighborhoodsUseCase {
   constructor(private readonly activities: IActivityRepository) {}
 
-  async execute(): Promise<NeighborhoodFacet[]> {
-    return this.activities.listNeighborhoodFacets();
+  async execute(cityId: string): Promise<NeighborhoodFacet[]> {
+    return this.activities.listNeighborhoodFacets(cityId);
   }
 }

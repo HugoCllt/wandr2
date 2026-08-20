@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isWithinCityBbox, type City } from './City';
+import { isWithinCityBbox, validateCity, type City, type CityCreateInput } from './City';
 
 const montreal: City = {
   id: 'city_mtl',
@@ -32,5 +32,33 @@ describe('isWithinCityBbox', () => {
   it('accepts the boundary edges (inclusive)', () => {
     expect(isWithinCityBbox(montreal, 45.4, -73.98)).toBe(true);
     expect(isWithinCityBbox(montreal, 45.71, -73.47)).toBe(true);
+  });
+});
+
+describe('validateCity', () => {
+  const { id: _id, ...base } = montreal;
+  const input = (overrides: Partial<CityCreateInput> = {}): CityCreateInput => ({
+    ...base,
+    ...overrides,
+  });
+
+  it('accepts a well-formed city', () => {
+    expect(() => validateCity(input())).not.toThrow();
+  });
+
+  it('rejects a slug that is not kebab-case', () => {
+    expect(() => validateCity(input({ slug: 'New York' }))).toThrow(/slug/);
+  });
+
+  it('rejects a bbox minimum above its maximum', () => {
+    expect(() => validateCity(input({ bboxMinLng: -73.0 }))).toThrow(/minimum/);
+  });
+
+  it('rejects a center outside its own bbox', () => {
+    expect(() => validateCity(input({ centerLat: 48 }))).toThrow(/center/);
+  });
+
+  it('rejects non-finite coordinates', () => {
+    expect(() => validateCity(input({ centerLat: Number.NaN }))).toThrow(/finite/);
   });
 });

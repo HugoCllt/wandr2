@@ -5,6 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../../shared/ui/icons/Icon';
 import { categoryIconFor, categoryLabelFor } from './categoryMeta';
+import { useActiveCity } from '../ActiveCityProvider';
 import { formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
@@ -26,6 +27,7 @@ export function ImagelessActivityCard({
   showPrice = true,
 }: Props): ReactElement {
   const open = useOpenActivity();
+  const city = useActiveCity();
   const primary = activity.categories.primary;
   const price = showPrice ? formatActivityPrice(activity) : null;
 
@@ -42,7 +44,7 @@ export function ImagelessActivityCard({
       <div className="nophoto-meta">
         <span>{formatActivityWhen(activity)}</span>
         <span className="dot" />
-        <span>{formatActivityWhere(activity)}</span>
+        <span>{formatActivityWhere(activity, city.name)}</span>
       </div>
       <div className="nophoto-foot">
         {price ? <span className="nophoto-price">{price}</span> : <span />}

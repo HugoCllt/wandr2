@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../../shared/ui/icons/Icon';
+import { useActiveCity } from '../ActiveCityProvider';
 import {
   coverImageUrl,
   formatActivityPrice,
@@ -18,6 +19,7 @@ type Props = {
 
 export function SpotlightActivityCard({ activity }: Props): ReactElement {
   const open = useOpenActivity();
+  const city = useActiveCity();
   const price = formatActivityPrice(activity);
 
   return (
@@ -38,7 +40,7 @@ export function SpotlightActivityCard({ activity }: Props): ReactElement {
         <div className="spotlight-meta">
           <span>{formatActivityWhen(activity)}</span>
           <span className="dot" />
-          <span>{formatActivityWhere(activity)}</span>
+          <span>{formatActivityWhere(activity, city.name)}</span>
           {price ? (
             <>
               <span className="dot" />

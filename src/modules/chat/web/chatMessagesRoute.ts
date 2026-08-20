@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { getActiveCity } from '../../activities/web/activeCity';
 import { parseBody } from '../../../shared/api/parse';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import { env } from '../../../shared/config/env';
@@ -60,7 +61,7 @@ export async function chatMessagesPostHandler(request: Request): Promise<Respons
   const turns: ChatTurn[] = history.map((m) => ({ role: m.role, content: m.text }));
   const events = getUseCase().executeStream({
     userId: user.id,
-    cityId: user.cityId,
+    city: await getActiveCity(),
     month: currentMonth(),
     text,
     context,

@@ -6,6 +6,7 @@ import { createDeps } from './deps';
 import { logger } from './logger';
 import { registerArchiveActivity } from './tools/archiveActivity';
 import { registerConfirmActivity } from './tools/confirmActivity';
+import { registerEnsureCity } from './tools/ensureCity';
 import { registerIngestActivity } from './tools/ingestActivity';
 import { registerListActivities } from './tools/listActivities';
 import { registerListActivitiesDueForRecheck } from './tools/listActivitiesDueForRecheck';
@@ -28,6 +29,7 @@ async function main(): Promise<void> {
   const deps = createDeps(prisma);
   const server = new McpServer({ name: 'wandr-ingestion', version: '0.1.0' });
 
+  registerEnsureCity(server, deps.ensureCity, logger);
   registerIngestActivity(server, deps.ingest, logger);
   registerListActivitiesDueForRecheck(server, deps.list, logger);
   registerConfirmActivity(server, deps.confirm, logger);

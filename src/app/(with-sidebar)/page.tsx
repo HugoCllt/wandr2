@@ -1,3 +1,5 @@
+import { getActiveCity } from '../../modules/activities/web/activeCity';
+import { withCity } from '../../shared/ui/format/eyebrow';
 import { SpotlightActivityCard } from '../../modules/activities/web/cards/SpotlightActivityCard';
 import { FeaturedHero } from '../../modules/activities/web/FeaturedHero';
 import { listFeaturedActivities } from '../../modules/activities/web/listFeaturedActivities';
@@ -17,9 +19,10 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const poolParams = new URLSearchParams(params);
   poolParams.set('limit', String(POOL_LIMIT));
 
+  const city = await getActiveCity();
   const [pool, featured] = await Promise.all([
     loadFeedDTO(poolParams),
-    listFeaturedActivities(6),
+    listFeaturedActivities(6, city.id),
   ]);
 
   const filterQueryString = serializeFilters(filters).toString();
@@ -42,9 +45,10 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
   return (
     <>
-      <FeaturedHero activities={heroItems} eyebrow="THIS WEEK IN MONTREAL" />
+      <FeaturedHero activities={heroItems} eyebrow={withCity('THIS WEEK IN {city}', city.name)} />
       <MapSection nearbyActivities={pool.items} />
       <SectionedFeed
+        key={city.slug}
         items={pool.items}
         nextCursor={pool.nextCursor}
         filterQueryString={filterQueryString}

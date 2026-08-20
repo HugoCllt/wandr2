@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
+import { ActiveCityProvider } from '../modules/activities/web/ActiveCityProvider';
+import { getActiveCity, listCities, toCityDTO } from '../modules/activities/web/activeCity';
 import { ActivityProvider } from '../modules/activities/web/ActivityModal';
+import { CitySearch } from '../modules/activities/web/CitySearch';
 import { ChatFAB } from '../modules/chat/web/ChatFAB';
 import { Nav } from '../shared/ui/Nav';
 
@@ -8,10 +11,13 @@ import './globals.css';
 
 export const metadata = {
   title: 'Wandr',
-  description: 'Discover Montréal — events, places, and your own little calendar.',
+  description: 'Discover your city — events, places, and your own little calendar.',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const [activeCity, cities] = await Promise.all([getActiveCity(), listCities()]);
+  const city = toCityDTO(activeCity);
+
   return (
     <html lang="en">
       <head>
@@ -23,13 +29,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <ActivityProvider>
-          <div className="page">
-            <Nav />
-            {children}
-          </div>
-          <ChatFAB />
-        </ActivityProvider>
+        <ActiveCityProvider city={city}>
+          <ActivityProvider>
+            <div className="page">
+              <Nav citySearch={<CitySearch cities={cities} active={city} />} />
+              {children}
+            </div>
+            <ChatFAB />
+          </ActivityProvider>
+        </ActiveCityProvider>
       </body>
     </html>
   );

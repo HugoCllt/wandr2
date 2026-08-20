@@ -1,9 +1,10 @@
 import type { City as PrismaCityModel, PrismaClient } from '@prisma/client';
 
-import type { City } from '../domain/City';
+import type { City, CityCreateInput } from '../domain/City';
 import type { ICityRepository } from '../domain/ICityRepository';
+import type { ICityWriteRepository } from '../domain/ICityWriteRepository';
 
-export class PrismaCityRepository implements ICityRepository {
+export class PrismaCityRepository implements ICityRepository, ICityWriteRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findById(id: string): Promise<City | null> {
@@ -14,6 +15,16 @@ export class PrismaCityRepository implements ICityRepository {
   async findBySlug(slug: string): Promise<City | null> {
     const city = await this.prisma.city.findUnique({ where: { slug } });
     return city ? toCity(city) : null;
+  }
+
+  async list(): Promise<City[]> {
+    const cities = await this.prisma.city.findMany({ orderBy: { name: 'asc' } });
+    return cities.map(toCity);
+  }
+
+  async create(input: CityCreateInput): Promise<City> {
+    const city = await this.prisma.city.create({ data: input });
+    return toCity(city);
   }
 }
 

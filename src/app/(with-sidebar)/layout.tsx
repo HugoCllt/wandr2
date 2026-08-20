@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { getActiveCity } from '../../modules/activities/web/activeCity';
 import { listNeighborhoods } from '../../modules/activities/web/listNeighborhoods';
 import { TopFilters } from '../../modules/filters/web/TopFilters';
 import { OnboardingGate } from '../../modules/profile/web/OnboardingGate';
@@ -11,17 +12,24 @@ import { SmoothScroll } from '../../shared/ui/SmoothScroll';
 export default async function WithSidebarLayout({ children }: { children: ReactNode }) {
   // Login is not mandatory here — anonymous visitors browse the feed. The
   // onboarding popup only surfaces for a signed-in user's first connection.
-  const [user, neighborhoods] = await Promise.all([getOptionalUser(), listNeighborhoods()]);
+  const [user, city] = await Promise.all([getOptionalUser(), getActiveCity()]);
+  const neighborhoods = await listNeighborhoods(city.id);
 
   return (
     <SmoothScroll>
       <TopFilters neighborhoods={neighborhoods} />
       <div className="shell">
         <main className="main">{children}</main>
-        <Premium />
+        <Premium cityName={city.name} />
       </div>
-      <SiteFooter />
-      {user && <OnboardingGate onboardedAt={user.onboardedAt} cityId={user.cityId} />}
+      <SiteFooter cityName={city.name} />
+      {user && (
+        <OnboardingGate
+          onboardedAt={user.onboardedAt}
+          cityId={user.cityId}
+          cityName={user.cityName}
+        />
+      )}
     </SmoothScroll>
   );
 }

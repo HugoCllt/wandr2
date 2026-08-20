@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { useActiveCity } from '../../activities/web/ActiveCityProvider';
 import { Icon } from '../../../shared/ui/icons/Icon';
 import { PremiumModal } from '../../../shared/ui/Premium';
 import { ChatPage } from './ChatPage';
@@ -13,6 +14,7 @@ import { ChatPage } from './ChatPage';
  * so the page never actually unlocks from here).
  */
 export function ChatGate({ locked }: { locked: boolean }) {
+  const city = useActiveCity();
   const [showModal, setShowModal] = useState(true);
 
   if (!locked) return <ChatPage />;
@@ -31,7 +33,7 @@ export function ChatGate({ locked }: { locked: boolean }) {
         <ChatPage />
       </div>
       {showModal ? (
-        <PremiumModal onClose={() => setShowModal(false)} />
+        <PremiumModal onClose={() => setShowModal(false)} cityName={city.name} />
       ) : (
         <button
           type="button"

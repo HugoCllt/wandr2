@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 
 import { ActivityNotFoundError } from '../../../modules/activities/domain/ActivityNotFoundError';
+import { CityNotFoundError } from '../../../modules/activities/domain/CityNotFoundError';
 import { CalendarEntryNotFoundError } from '../../../modules/calendar/domain/CalendarEntryNotFoundError';
 import { DuplicateCalendarEntryError } from '../../../modules/calendar/domain/DuplicateCalendarEntryError';
 import { MonthlyTokenLimitError } from '../../../modules/chat/domain/MonthlyTokenLimitError';
@@ -27,7 +28,11 @@ export function handleApiError(error: unknown): NextResponse {
   if (error instanceof NotAuthenticatedError) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
-  if (error instanceof ActivityNotFoundError || error instanceof CalendarEntryNotFoundError) {
+  if (
+    error instanceof ActivityNotFoundError ||
+    error instanceof CalendarEntryNotFoundError ||
+    error instanceof CityNotFoundError
+  ) {
     return NextResponse.json({ error: error.message }, { status: 404 });
   }
   if (error instanceof DuplicateCalendarEntryError) {

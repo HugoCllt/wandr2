@@ -18,7 +18,7 @@ export default async function LoginPage() {
     <div className="auth-card">
       <div className="auth-brand">Wandr</div>
       <h1 className="auth-title">Welcome back</h1>
-      <p className="auth-sub">Discover Montréal — events, places, and your own little calendar.</p>
+      <p className="auth-sub">Discover your city — events, places, and your own little calendar.</p>
 
       <SignInForm />
 

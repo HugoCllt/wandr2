@@ -28,7 +28,11 @@ const CATEGORY_LABELS: Record<ProfileAffinityCategory, string> = {
 const BIO_MAX = 280;
 
 /** Form-state seed — like the DTO but gender may be unset (fresh onboarding). */
-export type ProfileFormInitial = Omit<ProfileFormDTO, 'gender'> & { gender: ProfileGender | '' };
+export type ProfileFormInitial = Omit<ProfileFormDTO, 'gender'> & {
+  gender: ProfileGender | '';
+  /** Display name of the profile city — the `cityId` select is read-only. */
+  cityName: string;
+};
 
 type Props = {
   initial: ProfileFormInitial;
@@ -78,7 +82,7 @@ export function ProfileFormModal({ initial, dismissable, onSubmit, onClose }: Pr
             {dismissable ? 'Edit your profile' : 'Welcome — tell us about you'}
           </h1>
           <p className="profile-form-sub">
-            We use this to personalize your Montréal feed.
+            We use this to personalize your {initial.cityName} feed.
           </p>
 
           <div className="pf-row">
@@ -95,7 +99,7 @@ export function ProfileFormModal({ initial, dismissable, onSubmit, onClose }: Pr
             <label className="pf-field">
               <span>City</span>
               <select value={initial.cityId} disabled>
-                <option value={initial.cityId}>Montréal</option>
+                <option value={initial.cityId}>{initial.cityName}</option>
               </select>
             </label>
           </div>

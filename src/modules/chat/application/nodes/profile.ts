@@ -9,7 +9,7 @@ import type { ChatStateType } from '../chatState';
  */
 export function makeProfileNode(contextRepo: IRecommendationContextRepository) {
   return async (state: ChatStateType): Promise<Partial<ChatStateType>> => {
-    const userContext = await contextRepo.load(state.userId, state.cityId);
+    const userContext = await contextRepo.load(state.userId, state.city.id);
     return { userContext };
   };
 }

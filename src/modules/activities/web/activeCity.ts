@@ -1,0 +1,55 @@
+import { cookies } from 'next/headers';
+import { cache } from 'react';
+
+import { getOptionalUser } from '../../../shared/auth/current-user';
+import type { CityDTO } from '../../../shared/contracts/CityDTO';
+import { prisma } from '../../../shared/db/prisma';
+import type { City } from '../domain/City';
+import { PrismaCityRepository } from '../infra/PrismaCityRepository';
+
+/**
+ * Session cookie (no Max-Age): a city picked in the Nav survives every
+ * navigation and reload, and is gone when the browser session ends — the next
+ * visit falls back to the profile city. See `tbd.md`.
+ */
+export const ACTIVE_CITY_COOKIE = 'wandr_city';
+
+const FALLBACK_CITY_SLUG = 'montreal';
+
+/** `cache` keeps this to one DB round trip per request — layouts, pages and
+ * feed loaders all resolve the same city. */
+export const getActiveCity = cache(async (): Promise<City> => {
+  const cities = new PrismaCityRepository(prisma);
+
+  const slug = cookies().get(ACTIVE_CITY_COOKIE)?.value;
+  if (slug) {
+    const picked = await cities.findBySlug(slug);
+    if (picked) return picked;
+  }
+
+  const user = await getOptionalUser();
+  if (user) {
+    const home = await cities.findById(user.cityId);
+    if (home) return home;
+  }
+
+  const fallback = await cities.findBySlug(FALLBACK_CITY_SLUG);
+  if (!fallback) throw new Error(`No city available: seed "${FALLBACK_CITY_SLUG}" is missing.`);
+  return fallback;
+});
+
+export async function listCities(): Promise<CityDTO[]> {
+  const cities = await new PrismaCityRepository(prisma).list();
+  return cities.map(toCityDTO);
+}
+
+export function toCityDTO(city: City): CityDTO {
+  return {
+    slug: city.slug,
+    name: city.name,
+    country: city.country,
+    timezone: city.timezone,
+    centerLat: city.centerLat,
+    centerLng: city.centerLng,
+  };
+}

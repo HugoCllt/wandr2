@@ -33,7 +33,7 @@ const AdminActivitySchema = z.object({
   isFeatured: z.boolean().optional(),
   status: z.enum(ActivityStatuses).optional(),
   slug: z.string().min(1).optional(),
-  citySlug: z.string().min(1).optional(),
+  citySlug: z.string().min(1),
 });
 
 export async function postAdminActivity(request: Request): Promise<NextResponse> {
@@ -43,10 +43,9 @@ export async function postAdminActivity(request: Request): Promise<NextResponse>
 
   const body = await parseBody(AdminActivitySchema, request);
 
-  const citySlug = body.citySlug ?? 'montreal';
-  const city = await new PrismaCityRepository(prisma).findBySlug(citySlug);
+  const city = await new PrismaCityRepository(prisma).findBySlug(body.citySlug);
   if (!city) {
-    return NextResponse.json({ error: `Unknown city: ${citySlug}` }, { status: 400 });
+    return NextResponse.json({ error: `Unknown city: ${body.citySlug}` }, { status: 400 });
   }
 
   const useCase = new CreateActivityUseCase(new PrismaActivityRepository(prisma));

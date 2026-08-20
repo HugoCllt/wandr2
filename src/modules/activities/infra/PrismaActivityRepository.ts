@@ -141,9 +141,9 @@ export class PrismaActivityRepository
     return activity !== null;
   }
 
-  async listNeighborhoodFacets(): Promise<NeighborhoodFacet[]> {
+  async listNeighborhoodFacets(cityId: string): Promise<NeighborhoodFacet[]> {
     const rows = await this.prisma.activity.findMany({
-      where: { status: 'PUBLISHED', neighborhood: { not: null } },
+      where: { cityId, status: 'PUBLISHED', neighborhood: { not: null } },
       select: { neighborhood: true, categories: true },
     });
 
@@ -162,9 +162,9 @@ export class PrismaActivityRepository
       .map(([name, set]) => ({ name, categories: [...set] }));
   }
 
-  async listFeatured(limit: number): Promise<Activity[]> {
+  async listFeatured(limit: number, cityId: string): Promise<Activity[]> {
     const activities = await this.prisma.activity.findMany({
-      where: { isFeatured: true, status: 'PUBLISHED' },
+      where: { cityId, isFeatured: true, status: 'PUBLISHED' },
       orderBy: [
         { dateStart: { sort: 'asc', nulls: 'last' } },
         { createdAt: 'desc' },

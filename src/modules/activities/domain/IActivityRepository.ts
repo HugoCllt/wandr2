@@ -21,7 +21,7 @@ export interface IActivityRepository {
   findCandidates(criteria: ActivityCandidateCriteria): Promise<Activity[]>;
   getOrCreateSourceIdByName(name: string): Promise<string>;
   slugExists(slug: string): Promise<boolean>;
-  listNeighborhoodFacets(): Promise<NeighborhoodFacet[]>;
-  listFeatured(limit: number): Promise<Activity[]>;
+  listNeighborhoodFacets(cityId: string): Promise<NeighborhoodFacet[]>;
+  listFeatured(limit: number, cityId: string): Promise<Activity[]>;
   listForUpdate(cityId: string, filter: ActivityListFilter): Promise<Activity[]>;
 }

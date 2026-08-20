@@ -177,7 +177,7 @@ export function FeedGrid({
           {loading ? <p className="feed-status">Chargement…</p> : null}
           {error ? <p className="feed-error">{error}</p> : null}
           {cursor === null && items.length > 0 ? (
-            <p className="feed-status">Vous avez tout vu.</p>
+            <p className="feed-status">No more activities to display</p>
           ) : null}
         </>
       )}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { getActiveCity } from '../../activities/web/activeCity';
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { GetUserAffinityMapUseCase } from '../../affinity/application/GetUserAffinityMapUseCase';
 import { PrismaAffinityRepository } from '../../affinity/infra/PrismaAffinityRepository';
@@ -38,8 +39,8 @@ export async function loadFeedDTO(
   const limit = parseLimit(searchParams.get('limit'));
 
   // Anonymous browsing is allowed on the feed pages: without a session the feed
-  // is generic (no affinity ranking, no favourites/bookmarks), scoped to the
-  // default city.
+  // is generic (no affinity ranking, no favourites/bookmarks). The city comes
+  // from the Nav picker (session cookie), falling back to the profile city.
   const user = await getOptionalUser();
   const affinityMap = user
     ? await new GetUserAffinityMapUseCase(new PrismaAffinityRepository(prisma)).execute(user.id)
@@ -50,7 +51,7 @@ export async function loadFeedDTO(
   const bookmarkedIds = user
     ? new Set(await new PrismaCalendarRepository(prisma).listActivityIdsForUser(user.id))
     : new Set<string>();
-  const cityId = user?.cityId ?? (await defaultCityId());
+  const cityId = (await getActiveCity()).id;
 
   const useCase = new GetFeedUseCase(new PrismaActivityRepository(prisma));
   const result = await useCase.execute({
@@ -79,12 +80,6 @@ export async function loadFeedDTO(
 export async function feedRouteHandler(request: Request): Promise<NextResponse> {
   const dto = await loadFeedDTO(new URL(request.url).searchParams);
   return NextResponse.json(dto);
-}
-
-/** The only seeded city — backs the generic feed for anonymous visitors. */
-async function defaultCityId(): Promise<string> {
-  const city = await prisma.city.findUniqueOrThrow({ where: { slug: 'montreal' } });
-  return city.id;
 }
 
 function parseLimit(raw: string | null): number {

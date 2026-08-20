@@ -10,7 +10,8 @@ const CATEGORIES = ActivityCategories.join(' | ');
  * category *plus* a rough moment is enough to go straight to recommendations;
  * the user's profile fills in the rest. Otherwise ask one clarifying question.
  */
-export const ROUTER_PROMPT = `Tu orientes une conversation où une personne cherche une activité à Montréal.
+export function routerPrompt(cityName: string): string {
+  return `Tu orientes une conversation où une personne cherche une activité à ${cityName}.
 Décide entre deux actions :
 - "recommend" : la personne a donné une envie OU une catégorie ET un moment (ce soir, ce weekend, demain…). Le reste (quartier, budget, compagnie) sera comblé par son profil.
 - "clarify" : il manque l'envie/catégorie OU le moment. Dans ce cas une seule question de clarification suivra.
@@ -18,14 +19,15 @@ Décide entre deux actions :
 Seuil bas : au moindre signal d'envie + moment, choisis "recommend".
 
 Réponds UNIQUEMENT par du JSON de la forme : {"action": "recommend"} ou {"action": "clarify"}.`;
+}
 
 /**
  * Strategy: turn the conversation + profile into three *distinct* research
  * angles. The profile orients the angles (tastes, history) but the latest
  * request leads. Each axis must use a different category when possible.
  */
-export function strategyPrompt(ctx: UserRecommendationContext): string {
-  return `Tu prépares la recherche d'activités à Montréal pour cette personne.
+export function strategyPrompt(ctx: UserRecommendationContext, cityName: string): string {
+  return `Tu prépares la recherche d'activités à ${cityName} pour cette personne.
 
 Profil :
 ${formatContext(ctx)}
@@ -33,7 +35,7 @@ ${formatContext(ctx)}
 À partir de la conversation et du profil, propose EXACTEMENT 3 axes de recherche DISTINCTS (3 angles différents, idéalement 3 catégories différentes). Chaque axe :
 - "label" : titre court de l'angle (français)
 - "rationale" : pourquoi cet angle colle à la personne (1 phrase, tutoiement)
-- "query" : la requête de recherche web (en incluant "Montréal", concrète, orientée lieux/événements réels)
+- "query" : la requête de recherche web (en incluant "${cityName}", concrète, orientée lieux/événements réels)
 - "category" : une parmi ${CATEGORIES}
 
 Réponds UNIQUEMENT par du JSON : {"axes": [{"label": "...", "rationale": "...", "query": "...", "category": "..."}, ...]} avec 3 entrées.`;
@@ -47,12 +49,13 @@ Réponds UNIQUEMENT par du JSON : {"axes": [{"label": "...", "rationale": "...",
 export function synthesisPrompt(
   axes: SearchAxis[],
   resultsByAxis: WebSearchResult[][],
+  cityName: string,
 ): { system: string; user: string } {
-  const system = `Tu composes des cartes d'activités à Montréal à partir de résultats de recherche web réels.
+  const system = `Tu composes des cartes d'activités à ${cityName} à partir de résultats de recherche web réels.
 Pour chaque axe, choisis le meilleur résultat et compose une carte :
 - "axisIndex" : l'indice de l'axe (0, 1 ou 2)
 - "title" : nom concret de l'activité ou du lieu
-- "description" : 1 phrase factuelle (ce que c'est, où), ancrée à Montréal
+- "description" : 1 phrase factuelle (ce que c'est, où), ancrée à ${cityName}
 - "reason" : "pourquoi ça pourrait te plaire", tutoiement, 2 phrases personnelles qui parlent de la personne (son envie, son moment, ses goûts) — SANS redire ce que dit "description"
 - "sourceUrl" : l'URL du résultat choisi (copie-la telle quelle)
 
@@ -77,7 +80,7 @@ Réponds UNIQUEMENT par du JSON : {"cards": [{"axisIndex": 0, "title": "...", "d
  * stays high-level (the cards speak for themselves); with none it's honest and
  * invites a reformulation. Never enumerate the cards in prose.
  */
-export function presentPrompt(count: number): string {
+export function presentPrompt(count: number, cityName: string): string {
   if (count === 0) {
     return `Tu n'as trouvé aucune activité fiable pour cette demande. Écris un court message honnête en français (tutoiement) : dis que tu n'as rien trouvé de concluant et invite la personne à reformuler ou préciser son envie. Pas de carte inventée.`;
   }
@@ -85,7 +88,7 @@ export function presentPrompt(count: number): string {
     count < 3
       ? ` Tu n'as trouvé que ${count} idée(s) solide(s) — mentionne-le honnêtement.`
       : '';
-  return `Tu présentes ${count} idée(s) d'activité à Montréal qui s'affichent sous ton message sous forme de cartes détaillées. Écris UNE seule phrase d'intro chaleureuse en français (tutoiement). Interdit : énumérer, nommer ou décrire les cartes — chacune a déjà son propre texte personnalisé en dessous.${note}`;
+  return `Tu présentes ${count} idée(s) d'activité à ${cityName} qui s'affichent sous ton message sous forme de cartes détaillées. Écris UNE seule phrase d'intro chaleureuse en français (tutoiement). Interdit : énumérer, nommer ou décrire les cartes — chacune a déjà son propre texte personnalisé en dessous.${note}`;
 }
 
 function formatContext(ctx: UserRecommendationContext): string {

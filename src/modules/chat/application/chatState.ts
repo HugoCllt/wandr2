@@ -1,5 +1,6 @@
 import { Annotation, MessagesAnnotation } from '@langchain/langgraph';
 
+import type { City } from '../../activities/domain/City';
 import type { ChatRecommendationDTO } from '../../../shared/contracts/ChatRecommendationDTO';
 import type { ChatStreamPhase } from '../../../shared/contracts/ChatStreamEvent';
 import type { SearchAxis } from '../domain/SearchAxis';
@@ -26,7 +27,8 @@ export type ChatCustomEvent =
 export const ChatState = Annotation.Root({
   ...MessagesAnnotation.spec,
   userId: Annotation<string>,
-  cityId: Annotation<string>,
+  /** The browsed city — anchors every prompt and the synthetic card coordinates. */
+  city: Annotation<City>,
   route: Annotation<'clarify' | 'recommend'>,
   userContext: Annotation<UserRecommendationContext | null>,
   axes: Annotation<SearchAxis[]>,

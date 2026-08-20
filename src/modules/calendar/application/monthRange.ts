@@ -1,19 +1,26 @@
-const MONTREAL_TZ = 'America/Toronto';
+const offsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
-const offsetFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: MONTREAL_TZ,
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hourCycle: 'h23',
-});
+function offsetFormatter(timeZone: string): Intl.DateTimeFormat {
+  let cached = offsetFormatterCache.get(timeZone);
+  if (!cached) {
+    cached = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    });
+    offsetFormatterCache.set(timeZone, cached);
+  }
+  return cached;
+}
 
-function tzOffsetMs(date: Date): number {
+function tzOffsetMs(date: Date, timeZone: string): number {
   const parts = Object.fromEntries(
-    offsetFormatter.formatToParts(date).map((p) => [p.type, p.value]),
+    offsetFormatter(timeZone).formatToParts(date).map((p) => [p.type, p.value]),
   );
   const asUtc = Date.UTC(
     Number(parts.year),
@@ -26,7 +33,8 @@ function tzOffsetMs(date: Date): number {
   return asUtc - date.getTime();
 }
 
-export function montrealLocalToUtc(
+export function zonedLocalToUtc(
+  timeZone: string,
   year: number,
   monthIndex: number,
   day: number,
@@ -36,7 +44,7 @@ export function montrealLocalToUtc(
   ms = 0,
 ): Date {
   const utcGuess = Date.UTC(year, monthIndex, day, hour, minute, second, ms);
-  const offset = tzOffsetMs(new Date(utcGuess));
+  const offset = tzOffsetMs(new Date(utcGuess), timeZone);
   return new Date(utcGuess - offset);
 }
 
@@ -49,7 +57,11 @@ export type MonthRange = {
   next: { year: number; monthIndex: number };
 };
 
-export function parseMonthParam(param: string | null | undefined, now: Date): MonthRange {
+export function parseMonthParam(
+  param: string | null | undefined,
+  now: Date,
+  timeZone: string,
+): MonthRange {
   let year: number;
   let monthIndex: number;
   if (param && /^\d{4}-\d{2}$/.test(param)) {
@@ -58,14 +70,14 @@ export function parseMonthParam(param: string | null | undefined, now: Date): Mo
       year = y;
       monthIndex = m - 1;
     } else {
-      ({ year, monthIndex } = currentMonth(now));
+      ({ year, monthIndex } = currentMonth(now, timeZone));
     }
   } else {
-    ({ year, monthIndex } = currentMonth(now));
+    ({ year, monthIndex } = currentMonth(now, timeZone));
   }
 
-  const fromUtc = montrealLocalToUtc(year, monthIndex, 1, 0, 0, 0, 0);
-  const nextStart = montrealLocalToUtc(year, monthIndex + 1, 1, 0, 0, 0, 0);
+  const fromUtc = zonedLocalToUtc(timeZone, year, monthIndex, 1, 0, 0, 0, 0);
+  const nextStart = zonedLocalToUtc(timeZone, year, monthIndex + 1, 1, 0, 0, 0, 0);
   const toUtc = new Date(nextStart.getTime() - 1);
   const prev =
     monthIndex === 0 ? { year: year - 1, monthIndex: 11 } : { year, monthIndex: monthIndex - 1 };
@@ -74,9 +86,9 @@ export function parseMonthParam(param: string | null | undefined, now: Date): Mo
   return { year, monthIndex, fromUtc, toUtc, prev, next };
 }
 
-function currentMonth(now: Date): { year: number; monthIndex: number } {
+function currentMonth(now: Date, timeZone: string): { year: number; monthIndex: number } {
   const parts = Object.fromEntries(
-    offsetFormatter.formatToParts(now).map((p) => [p.type, p.value]),
+    offsetFormatter(timeZone).formatToParts(now).map((p) => [p.type, p.value]),
   );
   return { year: Number(parts.year), monthIndex: Number(parts.month) - 1 };
 }

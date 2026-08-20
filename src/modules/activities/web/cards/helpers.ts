@@ -31,8 +31,8 @@ export function formatActivityWhen(activity: ActivityDTO): string {
   });
 }
 
-export function formatActivityWhere(activity: ActivityDTO): string {
-  return activity.neighborhood ?? 'Montréal';
+export function formatActivityWhere(activity: ActivityDTO, cityName: string): string {
+  return activity.neighborhood ?? cityName;
 }
 
 export function useOpenActivity() {

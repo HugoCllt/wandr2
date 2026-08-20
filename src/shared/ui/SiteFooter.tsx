@@ -21,15 +21,15 @@ const ABOUT = [
  * Multi-column site footer. DTO-free chrome → shared/ui. Internal links use
  * next/link; the social links are inert placeholders for the POC.
  */
-export function SiteFooter() {
+export function SiteFooter({ cityName }: { cityName: string }) {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
         <div className="footer-brand">
           <span className="footer-word">wandr</span>
           <p>
-            Le meilleur de Montréal, choisi à la main — activités, sorties et découvertes au fil de
-            vos envies.
+            Le meilleur de {cityName}, choisi à la main — activités, sorties et découvertes au fil
+            de vos envies.
           </p>
         </div>
         <div className="footer-col">
@@ -64,7 +64,9 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="footer-bar">
-        <span>© {new Date().getFullYear()} Wandr · Montréal</span>
+        <span>
+          © {new Date().getFullYear()} Wandr · {cityName}
+        </span>
         <div className="links">
           <a href="#">Confidentialité</a>
           <a href="#">Conditions</a>

@@ -13,7 +13,7 @@ const PREMIUM_FEATURES = [
   {
     icon: 'chat' as const,
     title: 'Compagnon de voyage IA',
-    desc: "Discutez avec l'assistant pour bâtir un week-end ou un itinéraire complet à Montréal — étape par étape, à votre rythme.",
+    desc: "Discutez avec l'assistant pour bâtir un week-end ou un itinéraire complet — étape par étape, à votre rythme.",
   },
   {
     icon: 'compass' as const,
@@ -28,7 +28,7 @@ const PREMIUM_FEATURES = [
   },
 ];
 
-export function PremiumModal({ onClose }: { onClose: () => void }) {
+export function PremiumModal({ onClose, cityName }: { onClose: () => void; cityName: string }) {
   // The page scroll is driven by a global Lenis instance, so toggling
   // `body.overflow` alone doesn't stop the wheel from scrolling the page behind
   // the overlay (which let the fixed modal drift under the footer/text). Pause
@@ -65,7 +65,7 @@ export function PremiumModal({ onClose }: { onClose: () => void }) {
             <span className="prem-badge">
               <Icon name="gem" size={14} /> Wandr Premium
             </span>
-            <h2 className="prem-title">Le meilleur de Montréal, planifié pour vous.</h2>
+            <h2 className="prem-title">Le meilleur de {cityName}, planifié pour vous.</h2>
             <p className="prem-sub">
               Un assistant qui apprend ce que vous aimez — pour planifier, découvrir et suivre vos
               sorties sans effort.
@@ -111,7 +111,7 @@ export function PremiumModal({ onClose }: { onClose: () => void }) {
  * DTO-free chrome → shared/ui. The modal is opened by the band CTA via local
  * state (no window globals).
  */
-export function Premium() {
+export function Premium({ cityName }: { cityName: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -194,7 +194,7 @@ export function Premium() {
           </div>
         </div>
       </div>
-      {open && <PremiumModal onClose={() => setOpen(false)} />}
+      {open && <PremiumModal onClose={() => setOpen(false)} cityName={cityName} />}
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../shared/ui/icons/Icon';
+import { useActiveCity } from './ActiveCityProvider';
 import {
   coverImageUrl,
   formatActivityPrice,
@@ -16,7 +17,7 @@ import {
 type FeaturedHeroProps = {
   /** Featured pool; only entries with a real image are shown, capped at 3. */
   activities: ActivityDTO[];
-  /** Page eyebrow above the activity title (e.g. "SPORT IN MONTREAL"). */
+  /** Page eyebrow above the activity title (e.g. "SPORT IN MONTRÉAL"), already city-resolved. */
   eyebrow: string;
 };
 
@@ -30,6 +31,7 @@ export function FeaturedHero({ activities, eyebrow }: FeaturedHeroProps) {
   const slides = activities.filter((a) => Boolean(a.imageUrl)).slice(0, 3);
   const [idx, setIdx] = useState(0);
   const open = useOpenActivity();
+  const city = useActiveCity();
 
   // Subtle parallax: the image layers drift up slower than the page, so the
   // hero feels deep and the filter rail reads as emerging from under it. Driven
@@ -75,7 +77,7 @@ export function FeaturedHero({ activities, eyebrow }: FeaturedHeroProps) {
           ))}
         </h1>
         <div className="featured-hero-meta">
-          <span>{formatActivityWhere(active)}</span>
+          <span>{formatActivityWhere(active, city.name)}</span>
           <span className="dot" />
           <span>{formatActivityWhen(active)}</span>
           <span className="dot" />

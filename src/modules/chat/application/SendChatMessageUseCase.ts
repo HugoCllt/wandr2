@@ -1,6 +1,7 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, type BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
+import type { City } from '../../activities/domain/City';
 import type { ChatStreamEvent } from '../../../shared/contracts/ChatStreamEvent';
 import type { IChatUsageRepository } from '../domain/IChatUsageRepository';
 import type { IRecommendationContextRepository } from '../domain/IRecommendationContextRepository';
@@ -9,7 +10,7 @@ import { MonthlyTokenLimitError } from '../domain/MonthlyTokenLimitError';
 import type { TokenUsage } from '../domain/TokenUsage';
 import { buildChatGraph } from './chatGraph';
 import type { ChatCustomEvent, ChatStateType } from './chatState';
-import { CHAT_SYSTEM_PROMPT } from './chatSystemPrompt';
+import { chatSystemPrompt } from './chatSystemPrompt';
 import { ZERO_USAGE } from './tokenUsage';
 
 /** One past exchange replayed to the model (conversation memory lives client-side). */
@@ -17,7 +18,8 @@ export type ChatTurn = { role: 'user' | 'assistant'; content: string };
 
 export type SendChatMessageInput = {
   userId: string;
-  cityId: string;
+  /** The browsed city — anchors the prompts and the synthetic card coordinates. */
+  city: City;
   month: string;
   text: string;
   /** Input-toggle context (near me / tonight / solo) folded into the turn. */
@@ -48,10 +50,11 @@ export type SendChatMessageDeps = {
 export function buildChatMessages(
   history: ChatTurn[],
   text: string,
+  cityName: string,
   context?: string,
 ): BaseMessage[] {
   return [
-    new SystemMessage(CHAT_SYSTEM_PROMPT),
+    new SystemMessage(chatSystemPrompt(cityName)),
     ...history
       .slice(-MAX_HISTORY_MESSAGES)
       .map((turn) =>
@@ -95,9 +98,9 @@ export class SendChatMessageUseCase {
     yield { type: 'status', phase: 'thinking' };
 
     const initial = {
-      messages: buildChatMessages(input.history, input.text, input.context),
+      messages: buildChatMessages(input.history, input.text, input.city.name, input.context),
       userId: input.userId,
-      cityId: input.cityId,
+      city: input.city,
     };
 
     let writing = false;

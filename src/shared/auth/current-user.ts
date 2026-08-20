@@ -16,6 +16,8 @@ export type CurrentUser = {
   email: string;
   name: string;
   cityId: string;
+  /** Display name of the profile city (`cityId`), for read-only labels. */
+  cityName: string;
   isPremium: boolean;
   onboardedAt: Date | null;
 };
@@ -36,11 +38,12 @@ export async function getOptionalUser(): Promise<CurrentUser | null> {
       email: true,
       name: true,
       cityId: true,
+      city: { select: { name: true } },
       isPremium: true,
       onboardedAt: true,
     },
   });
-  return user ?? null;
+  return user ? { ...user, cityName: user.city.name } : null;
 }
 
 /**

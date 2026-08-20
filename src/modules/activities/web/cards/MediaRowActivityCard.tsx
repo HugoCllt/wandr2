@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../../shared/ui/icons/Icon';
+import { useActiveCity } from '../ActiveCityProvider';
 import { coverImageUrl, formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Props = {
@@ -26,6 +27,7 @@ export function MediaRowActivityCard({
   eyebrow = 'À la une',
 }: Props): ReactElement {
   const open = useOpenActivity();
+  const city = useActiveCity();
   const hasImage = Boolean(activity.imageUrl);
   const price = formatActivityPrice(activity);
 
@@ -47,7 +49,7 @@ export function MediaRowActivityCard({
         <div className="feature-meta">
           <span>{formatActivityWhen(activity)}</span>
           <span className="dot" />
-          <span>{formatActivityWhere(activity)}</span>
+          <span>{formatActivityWhere(activity, city.name)}</span>
         </div>
         <div className="feature-foot">
           <span className="feature-price">{price ? <b>{price}</b> : null}</span>

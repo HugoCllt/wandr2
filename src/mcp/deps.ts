@@ -7,12 +7,14 @@ import { PrismaCandidateRepository } from '../modules/activities/infra/PrismaCan
 import { PrismaCityRepository } from '../modules/activities/infra/PrismaCityRepository';
 import type { ArchiveActivityDeps } from './tools/archiveActivity';
 import type { ConfirmActivityDeps } from './tools/confirmActivity';
+import type { EnsureCityDeps } from './tools/ensureCity';
 import type { IngestActivityDeps } from './tools/ingestActivity';
 import type { ListActivitiesDeps } from './tools/listActivities';
 import type { ListActivitiesDueForRecheckDeps } from './tools/listActivitiesDueForRecheck';
 import type { UpdateActivityImageDeps } from './tools/updateActivityImage';
 
 export type ToolDeps = {
+  ensureCity: EnsureCityDeps;
   ingest: IngestActivityDeps;
   list: ListActivitiesDueForRecheckDeps;
   confirm: ConfirmActivityDeps;
@@ -34,6 +36,7 @@ export function createDeps(prisma: PrismaClient, now: () => Date = () => new Dat
   const confirm = new ConfirmActivityUseCase(activities, activities);
 
   return {
+    ensureCity: { cities, cityWrites: cities },
     ingest: { cities, candidates, promote, now },
     list: { cities, ingestion: activities, now },
     confirm: { confirm, now },

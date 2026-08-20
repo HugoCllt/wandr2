@@ -20,7 +20,7 @@ export function makePresentNode(model: BaseChatModel) {
     config.writer?.({ kind: 'recommendations', items } satisfies ChatCustomEvent);
 
     const messages = [
-      new SystemMessage(presentPrompt(items.length)),
+      new SystemMessage(presentPrompt(items.length, state.city.name)),
       new HumanMessage(lastUserText(state.messages)),
     ];
     const { message, usage } = await streamReply(model, messages, config);

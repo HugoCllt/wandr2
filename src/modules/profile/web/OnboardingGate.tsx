@@ -26,9 +26,11 @@ function defaultAffinities(): Record<ProfileAffinityCategory, number> {
 export function OnboardingGate({
   onboardedAt,
   cityId,
+  cityName,
 }: {
   onboardedAt: Date | null;
   cityId: string;
+  cityName: string;
 }) {
   const router = useRouter();
   if (onboardedAt !== null) return null;
@@ -37,6 +39,7 @@ export function OnboardingGate({
     birthDate: '',
     gender: '',
     cityId,
+    cityName,
     bio: '',
     affinities: defaultAffinities(),
   };

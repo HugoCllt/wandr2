@@ -6,11 +6,10 @@ import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import type { FeedItemDTO, FeedResultDTO } from '../../../shared/contracts/FeedResultDTO';
 import { Icon } from '../../../shared/ui/icons/Icon';
 import { ActivityCategories } from '../../activities/domain/ActivityCategorySet';
+import { useActiveCity } from '../../activities/web/ActiveCityProvider';
 import { ActivityModal } from '../../activities/web/ActivityModal/ActivityModal';
 import { MapView, type MapMarkerData } from '../../activities/web/Map/MapView';
 import { categoryIconFor, categoryLabelFor } from '../../activities/web/cards/categoryMeta';
-
-const MONTREAL_CENTER = { lng: -73.5674, lat: 45.5019 };
 
 type FavoritesPopupProps = {
   open: boolean;
@@ -18,10 +17,17 @@ type FavoritesPopupProps = {
 };
 
 export function FavoritesPopup({ open, onClose }: FavoritesPopupProps): ReactElement | null {
+  const city = useActiveCity();
   const [items, setItems] = useState<FeedItemDTO[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<ActivityDTO | null>(null);
+
+  // The favourites feed is city-scoped: drop the cached items when the browsed
+  // city changes so the next open refetches instead of showing the old city.
+  useEffect(() => {
+    setItems(null);
+  }, [city.slug]);
 
   useEffect(() => {
     if (!open || items !== null) return;
@@ -81,13 +87,13 @@ export function FavoritesPopup({ open, onClose }: FavoritesPopupProps): ReactEle
   }, [items]);
 
   const center = useMemo(() => {
-    if (markers.length === 0) return MONTREAL_CENTER;
+    if (markers.length === 0) return { lng: city.centerLng, lat: city.centerLat };
     const sum = markers.reduce((acc, m) => ({ lng: acc.lng + m.lng, lat: acc.lat + m.lat }), {
       lng: 0,
       lat: 0,
     });
     return { lng: sum.lng / markers.length, lat: sum.lat / markers.length };
-  }, [markers]);
+  }, [markers, city.centerLat, city.centerLng]);
 
   if (!open) return null;
 

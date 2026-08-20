@@ -27,7 +27,7 @@ const PHASE_LABELS: Record<ChatStreamPhase, string[]> = {
   ],
   searching: [
     'Wandr fouine dans les ruelles…',
-    'Wandr arpente Montréal…',
+    'Wandr arpente la ville…',
     'Wandr déniche des pépites…',
     'Wandr écume le web…',
     'Wandr lève chaque pierre…',

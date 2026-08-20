@@ -50,23 +50,26 @@ export function makeStrategyNode(model: BaseChatModel) {
     config.writer?.({ kind: 'phase', phase: 'reflecting' } satisfies ChatCustomEvent);
 
     const ctx = state.userContext ?? emptyContext();
-    const messages = [new SystemMessage(strategyPrompt(ctx)), ...conversationOnly(state.messages)];
+    const messages = [
+      new SystemMessage(strategyPrompt(ctx, state.city.name)),
+      ...conversationOnly(state.messages),
+    ];
     try {
       const { value, usage } = await structuredCall(model, messages, StrategySchema);
       return { axes: value.axes.slice(0, 3), usage };
     } catch {
-      return { axes: fallbackAxes(ctx) };
+      return { axes: fallbackAxes(ctx, state.city.name) };
     }
   };
 }
 
-function fallbackAxes(ctx: UserRecommendationContext): SearchAxis[] {
+function fallbackAxes(ctx: UserRecommendationContext, cityName: string): SearchAxis[] {
   const cats = ctx.topCategories.filter(isCategory).slice(0, 3);
   const chosen: ActivityCategory[] = cats.length > 0 ? cats : ['CULTURE'];
   return chosen.map((category) => ({
     label: CATEGORY_QUERY[category],
     rationale: 'Basé sur tes catégories préférées.',
-    query: `${CATEGORY_QUERY[category]} à Montréal`,
+    query: `${CATEGORY_QUERY[category]} à ${cityName}`,
     category,
   }));
 }

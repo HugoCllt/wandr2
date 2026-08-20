@@ -30,7 +30,7 @@ const CHAT_TOOLS: ChatTool[] = [
 
 /** Prompt ideas rotating in the idle input — nudges without the old static chips. */
 const IDEAS = [
-  'Une sortie romantique ce soir dans le Vieux-Montréal…',
+  'Une sortie romantique ce soir dans la vieille ville…',
   'Un plan sportif pas cher près du centre-ville…',
   'Une perle cachée à découvrir ce weekend…',
   'Un plan pour un groupe de six ce samedi…',

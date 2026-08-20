@@ -3,6 +3,7 @@
 import type { ReactElement, ReactNode } from 'react';
 
 import type { ActivityDTO } from '../../../../shared/contracts/ActivityDTO';
+import { useActiveCity } from '../ActiveCityProvider';
 import { coverImageUrl, formatActivityPrice, formatActivityWhen, formatActivityWhere, useOpenActivity } from './helpers';
 
 type Badge = { label: string; kind: 'trending' | 'popular' | 'hot' | 'new' };
@@ -34,6 +35,7 @@ export function CoverActivityCard({
   actionsSlot,
 }: Props): ReactElement {
   const open = useOpenActivity();
+  const city = useActiveCity();
   const activeBadge = live ? null : badge ?? deriveBadge(activity);
   const price = formatActivityPrice(activity);
 
@@ -53,7 +55,7 @@ export function CoverActivityCard({
         <div className="tuile-meta">
           <span>{formatActivityWhen(activity)}</span>
           <span className="dot" />
-          <span>{formatActivityWhere(activity)}</span>
+          <span>{formatActivityWhere(activity, city.name)}</span>
         </div>
         <div className="tuile-foot">
           {showPrice && price ? <span className="tuile-price">{price}</span> : null}

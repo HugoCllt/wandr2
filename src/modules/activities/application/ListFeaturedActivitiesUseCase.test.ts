@@ -5,6 +5,7 @@ import type { IActivityRepository } from '../domain/IActivityRepository';
 import { ListFeaturedActivitiesUseCase } from './ListFeaturedActivitiesUseCase';
 
 class FakeActivityRepository implements IActivityRepository {
+  readonly featuredCalls: Array<{ limit: number; cityId: string }> = [];
   constructor(private readonly featured: Activity[]) {}
 
   async create(_input: ActivityCreateInput): Promise<Activity> {
@@ -31,8 +32,9 @@ class FakeActivityRepository implements IActivityRepository {
   async listNeighborhoodFacets() {
     return [];
   }
-  async listFeatured(limit: number): Promise<Activity[]> {
-    return this.featured.slice(0, limit);
+  async listFeatured(limit: number, cityId: string): Promise<Activity[]> {
+    this.featuredCalls.push({ limit, cityId });
+    return this.featured.filter((a) => a.cityId === cityId).slice(0, limit);
   }
   async listForUpdate(): Promise<Activity[]> {
     return [];
@@ -85,15 +87,16 @@ describe('ListFeaturedActivitiesUseCase', () => {
     ];
     const repo = new FakeActivityRepository(items);
 
-    const result = await new ListFeaturedActivitiesUseCase(repo).execute(3);
+    const result = await new ListFeaturedActivitiesUseCase(repo).execute(3, 'city_mtl');
 
     expect(result.map((a) => a.slug)).toEqual(['one', 'two', 'three']);
+    expect(repo.featuredCalls).toEqual([{ limit: 3, cityId: 'city_mtl' }]);
   });
 
   it('returns an empty list when no featured activities exist', async () => {
     const repo = new FakeActivityRepository([]);
 
-    const result = await new ListFeaturedActivitiesUseCase(repo).execute(3);
+    const result = await new ListFeaturedActivitiesUseCase(repo).execute(3, 'city_mtl');
 
     expect(result).toEqual([]);
   });

@@ -10,6 +10,7 @@ describe('createDeps', () => {
     expect(Object.keys(deps).sort()).toEqual([
       'archive',
       'confirm',
+      'ensureCity',
       'ingest',
       'list',
       'listActivities',

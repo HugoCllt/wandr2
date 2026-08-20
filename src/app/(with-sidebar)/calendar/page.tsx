@@ -10,6 +10,7 @@ import { CalendarUpcomingList } from '../../../modules/calendar/web/CalendarUpco
 import { loadCalendarMonth } from '../../../modules/calendar/web/loadCalendarMonth';
 import { loadPendingReviews } from '../../../modules/calendar/web/loadPendingReviews';
 import { PendingReviews } from '../../../modules/calendar/web/PendingReviews';
+import { getActiveCity } from '../../../modules/activities/web/activeCity';
 import { dayKeyInTZ } from '../../../shared/ui/format/formatInTZ';
 import { Icon } from '../../../shared/ui/icons/Icon';
 
@@ -38,9 +39,12 @@ function pickFirst(v: string | string[] | undefined): string | null {
   return v;
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+function formatTime(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function monthKey(year: number, monthIndex: number): string {
@@ -54,9 +58,10 @@ export default async function CalendarPage({
 }): Promise<ReactElement> {
   const monthParam = pickFirst(searchParams.month);
   const now = new Date();
+  const city = await getActiveCity();
   const data = await loadCalendarMonth(monthParam, now);
   const pendingReviews = await loadPendingReviews(now);
-  const todayKey = dayKeyInTZ(now);
+  const todayKey = dayKeyInTZ(now, city.timezone);
 
   const cells = buildMonthGrid(data.year, data.monthIndex);
 
@@ -66,8 +71,8 @@ export default async function CalendarPage({
       id: e.id,
       scheduledAt: e.scheduledAt,
       title: e.activity.title,
-      venue: e.activity.neighborhood ?? 'Montréal',
-      time: formatTime(e.scheduledAt),
+      venue: e.activity.neighborhood ?? city.name,
+      time: formatTime(e.scheduledAt, city.timezone),
       isPast: new Date(e.scheduledAt) < now,
       outcome: e.outcome,
       activity: e.activity,
@@ -83,8 +88,8 @@ export default async function CalendarPage({
       id: e.id,
       scheduledAt: e.scheduledAt,
       title: e.activity.title,
-      venue: e.activity.neighborhood ?? 'Montréal',
-      time: formatTime(e.scheduledAt),
+      venue: e.activity.neighborhood ?? city.name,
+      time: formatTime(e.scheduledAt, city.timezone),
       activity: e.activity,
     }));
 

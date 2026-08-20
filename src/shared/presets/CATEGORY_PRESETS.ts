@@ -13,6 +13,7 @@ export type CategoryPresetConfig = {
   key: CategoryKey;
   label: string;
   icon: IconName;
+  /** Hero eyebrow template. `{city}` is substituted with the browsed city name. */
   eyebrow: string;
   heroTitle: string;
   heroSub: string;
@@ -37,7 +38,7 @@ export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
     key: 'sport',
     label: 'Sport',
     icon: 'ball',
-    eyebrow: 'SPORT IN MONTREAL',
+    eyebrow: 'SPORT IN {city}',
     heroTitle: 'Watch the city\nplay.',
     heroSub:
       'From front-row hockey nights to padel courts, climbing walls and sunrise yoga on the mountain — your sport, curated.',
@@ -51,7 +52,7 @@ export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
     key: 'dining',
     label: 'Dining',
     icon: 'fork',
-    eyebrow: 'EAT IN MONTREAL',
+    eyebrow: 'EAT IN {city}',
     heroTitle: 'Tables worth\nshowing up for.',
     heroSub: 'Plates from chefs the city is talking about — bistros, terrasses, late-night counters.',
     heroImage:
@@ -64,7 +65,7 @@ export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
     key: 'culture',
     label: 'Culture',
     icon: 'culture',
-    eyebrow: 'CULTURE IN MONTREAL',
+    eyebrow: 'CULTURE IN {city}',
     heroTitle: 'Galleries, stages,\nlate-night sets.',
     heroSub: 'Music, museums, mural festivals — the parts of the city that hold a story.',
     heroImage:
@@ -77,7 +78,7 @@ export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
     key: 'outdoor',
     label: 'Outdoor',
     icon: 'leaf',
-    eyebrow: 'OUTDOOR IN MONTREAL',
+    eyebrow: 'OUTDOOR IN {city}',
     heroTitle: 'Open sky, all\nseason long.',
     heroSub: 'Trails, parks, waterfront runs and rooftop sails when the city steps outside.',
     heroImage:
@@ -90,7 +91,7 @@ export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
     key: 'nightlife',
     label: 'Nightlife',
     icon: 'moon',
-    eyebrow: 'NIGHTLIFE IN MONTREAL',
+    eyebrow: 'NIGHTLIFE IN {city}',
     heroTitle: "When the city\nturns the lights down.",
     heroSub: 'Rooftop DJ sets, basement jazz, late-night counters and the steady glow of the Plateau.',
     heroImage:
@@ -103,9 +104,9 @@ export const CATEGORY_PRESETS: Record<CategoryKey, CategoryPresetConfig> = {
     key: 'romantic',
     label: 'Romantic',
     icon: 'heart',
-    eyebrow: 'ROMANTIC IN MONTREAL',
+    eyebrow: 'ROMANTIC IN {city}',
     heroTitle: 'Plans for two,\nbeautifully made.',
-    heroSub: 'Hidden courtyards, candle-lit tables, sunset sails — slow Montréal at its most cinematic.',
+    heroSub: 'Hidden courtyards, candle-lit tables, sunset sails — the city at its most cinematic.',
     heroImage:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
     baseFilters: { category: ['ROMANTIC'] },

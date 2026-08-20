@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { getActiveCity } from '../../activities/web/activeCity';
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { GetUserAffinityMapUseCase } from '../../affinity/application/GetUserAffinityMapUseCase';
 import { PrismaAffinityRepository } from '../../affinity/infra/PrismaAffinityRepository';
@@ -43,7 +44,7 @@ export async function loadFavoritesFeedDTO(searchParams: URLSearchParams): Promi
     limit,
     affinityMap,
     now: new Date(),
-    cityId: user.cityId,
+    cityId: (await getActiveCity()).id,
     baseFilters: FAVORITES_PRESET.baseFilters,
   });
 

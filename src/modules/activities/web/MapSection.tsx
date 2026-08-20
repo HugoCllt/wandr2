@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ActivityDTO } from '../../../shared/contracts/ActivityDTO';
 import { Icon } from '../../../shared/ui/icons/Icon';
+import { useActiveCity } from './ActiveCityProvider';
 import { CoverActivityCard } from './cards/CoverActivityCard';
 import { MapView, type MapMarkerData, type MapViewHandle } from './Map/MapView';
 
@@ -11,10 +12,10 @@ type MapSectionProps = {
   nearbyActivities: ActivityDTO[];
 };
 
-const MONTREAL_CENTER = { lng: -73.5674, lat: 45.5019 };
 const MARKER_CAP = 24;
 
 export function MapSection({ nearbyActivities }: MapSectionProps) {
+  const city = useActiveCity();
   const mapRef = useRef<MapViewHandle | null>(null);
   const blockRef = useRef<HTMLElement | null>(null);
   // Panel is open by default (first activity on the side). `engaged` is a
@@ -82,7 +83,10 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
         <div>
           <div className="feed-eyebrow">Sur la carte</div>
           <h2>Explorez autour de vous</h2>
-          <p>Des activités triées sur le volet à Montréal — cliquez sur la carte pour l&apos;explorer.</p>
+          <p>
+            Des activités triées sur le volet à {city.name} — cliquez sur la carte pour
+            l&apos;explorer.
+          </p>
         </div>
       </div>
 
@@ -93,8 +97,9 @@ export function MapSection({ nearbyActivities }: MapSectionProps) {
           onClick={() => setEngaged(true)}
         >
           <MapView
+            key={city.slug}
             ref={mapRef}
-            center={MONTREAL_CENTER}
+            center={{ lng: city.centerLng, lat: city.centerLat }}
             zoom={12}
             markers={markers}
             scrollZoom={engaged}

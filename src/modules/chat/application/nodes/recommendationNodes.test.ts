@@ -7,9 +7,24 @@ import type { SearchAxis } from '../../domain/SearchAxis';
 import type { UserRecommendationContext } from '../../domain/UserRecommendationContext';
 import type { WebSearchResult } from '../../domain/WebSearchResult';
 import type { ChatStateType } from '../chatState';
+import type { City } from '../../../activities/domain/City';
 import { makeRouterNode } from './router';
 import { makeStrategyNode } from './strategy';
 import { makeSynthesizeNode } from './synthesize';
+
+const city: City = {
+  id: 'c1',
+  slug: 'montreal',
+  name: 'Montréal',
+  country: 'CA',
+  timezone: 'America/Toronto',
+  centerLat: 45.5019,
+  centerLng: -73.5674,
+  bboxMinLat: 45.4,
+  bboxMinLng: -73.98,
+  bboxMaxLat: 45.71,
+  bboxMaxLng: -73.47,
+};
 
 /** Minimal config — the nodes only ever touch the optional `writer`. */
 const config = {} as LangGraphRunnableConfig;
@@ -18,7 +33,7 @@ function stateOf(partial: Partial<ChatStateType>): ChatStateType {
   return {
     messages: [new SystemMessage('sys'), new HumanMessage('un truc culturel ce weekend')],
     userId: 'u1',
-    cityId: 'c1',
+    city,
     route: 'clarify',
     userContext: null,
     axes: [],
