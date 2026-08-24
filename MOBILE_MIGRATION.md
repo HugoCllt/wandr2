@@ -1,6 +1,6 @@
 # MOBILE_MIGRATION.md — Migration iOS / Android
 
-> **Statut : exploratoire.** Aucune décision prise, aucune ligne de `src/` ne cible le mobile aujourd'hui.
+> **Statut : décidé — plan d'exécution dans [`docs/superpowers/plans/2026-08-23-mobile-migration-phase1.md`](./docs/superpowers/plans/2026-08-23-mobile-migration-phase1.md)** (décisions Q2–Q18 actées le 2026-08-23 ; ce document reste l'analyse de faisabilité d'origine).
 > Ce document est l'analyse de faisabilité d'un passage de Wandr (web Next.js) vers les stores mobiles.
 > Base analysée : Next 14 App Router, Prisma/Postgres, better-auth, LangGraph + OpenRouter/Ollama, MapLibre.
 
