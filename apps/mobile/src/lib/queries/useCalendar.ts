@@ -27,10 +27,16 @@ function useBookmarkCachePatch() {
   const queryClient = useQueryClient();
 
   return {
-    snapshot: () => [
-      ...queryClient.getQueriesData<FeedPages>({ queryKey: ['feed'] }),
-      ...queryClient.getQueriesData<FeedPages>({ queryKey: ['favorites'] }),
-    ],
+    snapshot: async () => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['feed'] }),
+        queryClient.cancelQueries({ queryKey: ['favorites'] }),
+      ]);
+      return [
+        ...queryClient.getQueriesData<FeedPages>({ queryKey: ['feed'] }),
+        ...queryClient.getQueriesData<FeedPages>({ queryKey: ['favorites'] }),
+      ];
+    },
     apply: (activityId: string, value: boolean) => {
       const flip = (data: FeedPages | undefined): FeedPages | undefined =>
         data ? { ...data, pages: data.pages.map((page) => flipBookmarked(page, activityId, value)) } : data;
@@ -72,7 +78,7 @@ export function useAddToCalendar() {
       }
     },
     onMutate: async ({ activityId }: AddToCalendarVars) => {
-      const previous = patch.snapshot();
+      const previous = await patch.snapshot();
       patch.apply(activityId, true);
       return { previous };
     },
@@ -92,7 +98,7 @@ export function useRemoveBookmark() {
         method: 'DELETE',
       }),
     onMutate: async (activityId: string) => {
-      const previous = patch.snapshot();
+      const previous = await patch.snapshot();
       patch.apply(activityId, false);
       return { previous };
     },
