@@ -18,6 +18,7 @@ export interface ICalendarRepository {
   listInRange(query: CalendarRangeQuery): Promise<CalendarEntry[]>;
   /** Activity ids the user has bookmarked (for `isBookmarked` flags). */
   listActivityIdsForUser(userId: string): Promise<string[]>;
+  isBookmarked(userId: string, activityId: string): Promise<boolean>;
   /** Past bookmarks still awaiting a verdict, soonest-elapsed first. */
   listPendingReviews(userId: string, before: Date, limit: number): Promise<CalendarEntry[]>;
   /** Persist a review verdict; returns the updated entry or null if not found. */

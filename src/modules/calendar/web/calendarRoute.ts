@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import type { Activity } from '../../activities/domain/Activity';
 import { PrismaActivityRepository } from '../../activities/infra/PrismaActivityRepository';
 import { parseBody, parseQuery } from '../../../shared/api/parse';
 import { getCurrentUser } from '../../../shared/auth/current-user';
 import {
   toCalendarEntryDTO,
+  type CalendarEntryActivitySummaryDTO,
   type CalendarEntryDTO,
 } from '../../../shared/contracts/CalendarEntryDTO';
 import { prisma } from '../../../shared/db/prisma';
@@ -80,6 +82,18 @@ export async function listCalendarEntriesRouteHandler(request: Request): Promise
     from: new Date(data.from),
     to: new Date(data.to),
   });
-  const body: CalendarEntryDTO[] = entries.map(toCalendarEntryDTO);
+
+  const activityIds = Array.from(new Set(entries.map((e) => e.activityId)));
+  const activities = await new PrismaActivityRepository(prisma).findByIds(activityIds);
+  const activityById = new Map(activities.map((a) => [a.id, a]));
+
+  const body: CalendarEntryDTO[] = entries.map((entry) =>
+    toCalendarEntryDTO(entry, toActivitySummary(activityById.get(entry.activityId))),
+  );
   return NextResponse.json(body);
+}
+
+function toActivitySummary(activity: Activity | undefined): CalendarEntryActivitySummaryDTO | null {
+  if (!activity) return null;
+  return { slug: activity.slug, title: activity.title, imageUrl: activity.imageUrl, kind: activity.kind };
 }

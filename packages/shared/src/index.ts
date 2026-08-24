@@ -4,6 +4,7 @@ export * from './core/CalendarEntry';
 export * from './core/FilterValue';
 export * from './core/IconName';
 
+export * from './contracts/ActivityDetailDTO';
 export * from './contracts/ActivityDTO';
 export * from './contracts/CalendarEntryDTO';
 export * from './contracts/ChatMessageDTO';

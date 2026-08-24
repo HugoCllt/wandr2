@@ -9,7 +9,6 @@ import { MonthGrid, type MonthGridEntry } from '../../src/components/MonthGrid';
 import { UpcomingList, type UpcomingItem } from '../../src/components/UpcomingList';
 import { ReviewSheet } from '../../src/components/ReviewSheet';
 import { localDayKey } from '../../src/lib/monthGrid';
-import { getRememberedActivity } from '../../src/lib/activityDirectory';
 import { useCalendarEntries, usePendingReviews } from '../../src/lib/queries/useCalendar';
 
 const MONTHS_FULL = [
@@ -76,22 +75,19 @@ export default function CalendarScreen() {
       .filter((entry) => new Date(entry.scheduledAt).getTime() >= nowMs)
       .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
       .slice(0, UPCOMING_LIMIT)
-      .map((entry) => {
-        const known = getRememberedActivity(entry.activityId);
-        return {
-          id: entry.id,
-          scheduledAt: entry.scheduledAt,
-          title: known?.title ?? 'Activité',
-          venue: known?.neighborhood ?? 'Montréal',
-          slug: known?.slug ?? null,
-        };
-      });
+      .map((entry) => ({
+        id: entry.id,
+        scheduledAt: entry.scheduledAt,
+        title: entry.activity?.title ?? 'Activité',
+        venue: entry.activity ? (entry.activity.kind === 'EVENT' ? 'Événement' : 'Lieu') : 'Montréal',
+        slug: entry.activity?.slug ?? null,
+      }));
   }, [entriesQuery.data, nowMs]);
 
   const pendingItems = (pendingQuery.data ?? []).map((entry) => ({
     id: entry.id,
     scheduledAt: entry.scheduledAt,
-    title: getRememberedActivity(entry.activityId)?.title ?? 'Activité',
+    title: entry.activity?.title ?? 'Activité',
   }));
 
   function goPrevMonth() {

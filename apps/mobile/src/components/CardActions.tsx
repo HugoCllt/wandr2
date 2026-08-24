@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { FeedItemDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { Icon, type IconName } from '../ui/Icon';
-import { rememberActivity } from '../lib/activityDirectory';
 import { useToggleFavorite } from '../lib/queries/useFavorites';
 import { useAddToCalendar, useRemoveBookmark } from '../lib/queries/useCalendar';
 import { AddToCalendarSheet } from './AddToCalendarSheet';
@@ -34,10 +33,6 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
   const toggleFavorite = useToggleFavorite();
   const addToCalendar = useAddToCalendar();
   const removeBookmark = useRemoveBookmark();
-
-  useEffect(() => {
-    rememberActivity(activity);
-  }, [activity]);
 
   function handleFavoritePress(e: GestureResponderEvent) {
     e.stopPropagation();

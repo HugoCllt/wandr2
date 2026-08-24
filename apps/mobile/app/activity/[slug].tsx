@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context';
-import type { ActivityDTO, FeedItemDTO } from '@wandr/shared';
+import type { ActivityDetailDTO, FeedItemDTO } from '@wandr/shared';
 import { theme } from '../../src/theme/tokens';
 import { AppText } from '../../src/ui/AppText';
 import { Icon } from '../../src/ui/Icon';
@@ -105,14 +105,19 @@ function ActivityDetailContent({
   initialFavorited,
   initialBookmarked,
 }: {
-  activity: ActivityDTO;
+  activity: ActivityDetailDTO;
   insets: EdgeInsets;
   closeButton: ReactNode;
   initialFavorited: boolean;
   initialBookmarked: boolean;
 }) {
   const primary = activity.categories.primary;
-  const feedItem: FeedItemDTO = { ...activity, matchScore: 0, isFavorited: initialFavorited, isBookmarked: initialBookmarked };
+  const feedItem: FeedItemDTO = {
+    ...activity,
+    matchScore: 0,
+    isFavorited: activity.isFavorited ?? initialFavorited,
+    isBookmarked: activity.isBookmarked ?? initialBookmarked,
+  };
   const price = formatActivityPrice(activity);
   const address = activity.neighborhood ? `${activity.address}, ${activity.neighborhood}` : activity.address;
 

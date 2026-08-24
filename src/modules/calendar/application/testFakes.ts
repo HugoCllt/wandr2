@@ -65,6 +65,10 @@ export class FakeCalendarRepository implements ICalendarRepository {
     return this.entries.filter((e) => e.userId === userId).map((e) => e.activityId);
   }
 
+  async isBookmarked(userId: string, activityId: string): Promise<boolean> {
+    return this.entries.some((e) => e.userId === userId && e.activityId === activityId);
+  }
+
   async listPendingReviews(userId: string, before: Date, limit: number): Promise<CalendarEntry[]> {
     return this.entries
       .filter(

@@ -65,6 +65,14 @@ export class PrismaCalendarRepository implements ICalendarRepository {
     return rows.map((r) => r.activityId);
   }
 
+  async isBookmarked(userId: string, activityId: string): Promise<boolean> {
+    const row = await this.prisma.calendarEntry.findUnique({
+      where: { userId_activityId: { userId, activityId } },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   async listPendingReviews(userId: string, before: Date, limit: number): Promise<CalendarEntry[]> {
     const rows = await this.prisma.calendarEntry.findMany({
       where: { userId, outcome: 'PENDING', scheduledAt: { lt: before } },

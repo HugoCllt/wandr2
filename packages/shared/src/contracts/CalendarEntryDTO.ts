@@ -1,4 +1,12 @@
+import type { ActivityKind } from '../core/Activity';
 import type { CalendarEntry, CalendarOutcome } from '../core/CalendarEntry';
+
+export type CalendarEntryActivitySummaryDTO = {
+  slug: string;
+  title: string;
+  imageUrl: string | null;
+  kind: ActivityKind;
+};
 
 export type CalendarEntryDTO = {
   id: string;
@@ -11,9 +19,13 @@ export type CalendarEntryDTO = {
   reviewNote: string | null;
   reviewedAt: string | null;
   createdAt: string;
+  activity?: CalendarEntryActivitySummaryDTO | null;
 };
 
-export function toCalendarEntryDTO(entry: CalendarEntry): CalendarEntryDTO {
+export function toCalendarEntryDTO(
+  entry: CalendarEntry,
+  activity?: CalendarEntryActivitySummaryDTO | null,
+): CalendarEntryDTO {
   return {
     id: entry.id,
     userId: entry.userId,
@@ -25,5 +37,6 @@ export function toCalendarEntryDTO(entry: CalendarEntry): CalendarEntryDTO {
     reviewNote: entry.reviewNote,
     reviewedAt: entry.reviewedAt ? entry.reviewedAt.toISOString() : null,
     createdAt: entry.createdAt.toISOString(),
+    activity: activity ?? null,
   };
 }
