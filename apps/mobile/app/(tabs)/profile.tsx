@@ -1,10 +1,26 @@
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '../../src/ui/Icon';
 import { AppText } from '../../src/ui/AppText';
 import { Screen } from '../../src/ui/Screen';
 import { theme } from '../../src/theme/tokens';
+import { authClient } from '../../src/lib/auth-client';
+import { queryClient } from '../../src/lib/queries/queryClient';
 
 export default function ProfileScreen() {
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await authClient.signOut();
+      queryClient.clear();
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
   return (
     <Screen>
       <View style={styles.center}>
@@ -17,6 +33,18 @@ export default function ProfileScreen() {
         <AppText variant="caption" color={theme.colors.smoke} style={styles.caption}>
           VOS FAVORIS ET PRÉFÉRENCES ARRIVENT BIENTÔT
         </AppText>
+        <Pressable
+          onPress={handleSignOut}
+          disabled={signingOut}
+          style={({ pressed }) => [
+            styles.signOut,
+            pressed && styles.signOutPressed,
+            signingOut && styles.signOutDisabled,
+          ]}
+          accessibilityRole="button"
+        >
+          <AppText color={theme.colors.ink}>{signingOut ? 'Déconnexion…' : 'Se déconnecter'}</AppText>
+        </Pressable>
       </View>
     </Screen>
   );
@@ -43,5 +71,20 @@ const styles = StyleSheet.create({
   },
   caption: {
     textAlign: 'center',
+  },
+  signOut: {
+    marginTop: theme.space.s5,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    borderRadius: theme.radius.btn,
+    paddingHorizontal: theme.space.s5,
+    paddingVertical: theme.space.s3,
+    backgroundColor: theme.colors.surface,
+  },
+  signOutPressed: {
+    backgroundColor: theme.colors.surface2,
+  },
+  signOutDisabled: {
+    opacity: 0.6,
   },
 });
