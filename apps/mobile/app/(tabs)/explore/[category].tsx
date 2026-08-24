@@ -1,13 +1,13 @@
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useLocalSearchParams } from 'expo-router';
-import { CATEGORY_PRESETS, isCategoryKey, type CategoryKey } from '@wandr/shared';
+import { isCategoryKey, type CategoryKey } from '@wandr/shared';
 import { theme } from '../../../src/theme/tokens';
 import { useFeedColumns } from '../../../src/theme/useFeedColumns';
 import { useFeed } from '../../../src/lib/queries/useFeed';
 import { AppText } from '../../../src/ui/AppText';
 import { FeedList } from '../../../src/components/FeedList';
-import { CATEGORY_KEY_LABEL } from '../../../src/components/categoryCopy';
+import { CATEGORY_KEY_EYEBROW, CATEGORY_KEY_LABEL } from '../../../src/components/categoryCopy';
 
 const CITY_NAME = 'Montréal';
 
@@ -23,9 +23,8 @@ export default function CategoryRouteScreen() {
 
 function CategoryScreen({ categoryKey }: { categoryKey: CategoryKey }) {
   const { columns } = useFeedColumns();
-  const preset = CATEGORY_PRESETS[categoryKey];
   const query = useFeed({ preset: categoryKey, filters: {} });
-  const eyebrow = preset.eyebrow.replace('{city}', CITY_NAME.toUpperCase());
+  const eyebrow = CATEGORY_KEY_EYEBROW[categoryKey].replace('{city}', CITY_NAME.toUpperCase());
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
