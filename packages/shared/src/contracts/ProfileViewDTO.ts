@@ -1,3 +1,5 @@
+import type { ProfileAffinityCategory, ProfileGender } from './ProfileFormDTO';
+
 export type ProfileTagDTO = { label: string; kind?: 'warm' | 'cool' | '' };
 
 export type ProfileStatDTO = {
@@ -23,6 +25,16 @@ export type ProfileHistoryEntryDTO = {
   imageUrl: string;
 };
 
+/** Raw form values for pre-filling the edit modal (not part of the display view itself). */
+export type ProfileFormInitialDTO = {
+  birthDate: string;
+  gender: ProfileGender | '';
+  cityId: string;
+  cityName: string;
+  bio: string;
+  affinities: Record<ProfileAffinityCategory, number>;
+};
+
 export type ProfileViewDTO = {
   profile: {
     id: string;
@@ -35,4 +47,5 @@ export type ProfileViewDTO = {
   breakdown: ProfileBreakdownItemDTO[];
   history: ProfileHistoryEntryDTO[];
   counts: { favorites: number; history: number };
+  formInitial: ProfileFormInitialDTO;
 };

@@ -1,47 +1,39 @@
-import { StyleSheet, View } from 'react-native';
-import { Icon } from '../src/ui/Icon';
-import { AppText } from '../src/ui/AppText';
-import { Screen } from '../src/ui/Screen';
-import { theme } from '../src/theme/tokens';
+import {
+  PROFILE_AFFINITY_CATEGORIES,
+  type ProfileAffinityCategory,
+  type ProfileFormDTO,
+} from '@wandr/shared';
+import { ProfileForm, type ProfileFormInitial } from '../src/components/ProfileForm';
+import { useSession, type SessionUser } from '../src/lib/auth-client';
+import { useUpdateProfile } from '../src/lib/queries/useProfile';
 
-export default function OnboardingScreen() {
-  return (
-    <Screen>
-      <View style={styles.center}>
-        <View style={styles.badge}>
-          <Icon name="check" size={26} color={theme.colors.brass} strokeWidth={1.4} />
-        </View>
-        <AppText variant="display" style={styles.title}>
-          Bienvenue sur Wandr
-        </AppText>
-        <AppText variant="caption" color={theme.colors.smoke} style={styles.caption}>
-          CONFIGURATION DU PROFIL À VENIR
-        </AppText>
-      </View>
-    </Screen>
-  );
+const DEFAULT_AFFINITY = 5;
+const DEFAULT_CITY_NAME = 'Montréal';
+
+function defaultAffinities(): Record<ProfileAffinityCategory, number> {
+  return Object.fromEntries(
+    PROFILE_AFFINITY_CATEGORIES.map((category) => [category, DEFAULT_AFFINITY]),
+  ) as Record<ProfileAffinityCategory, number>;
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.space.s3,
-  },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.brassTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.space.s2,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  caption: {
-    textAlign: 'center',
-  },
-});
+export default function OnboardingScreen() {
+  const { data: session, refetch } = useSession();
+  const updateProfile = useUpdateProfile();
+  const user = session?.user as (SessionUser & { cityId?: string }) | undefined;
+
+  const initial: ProfileFormInitial = {
+    birthDate: '',
+    gender: '',
+    cityId: user?.cityId ?? '',
+    cityName: DEFAULT_CITY_NAME,
+    bio: '',
+    affinities: defaultAffinities(),
+  };
+
+  async function handleSubmit(form: ProfileFormDTO) {
+    await updateProfile.mutateAsync(form);
+    await refetch();
+  }
+
+  return <ProfileForm initial={initial} dismissable={false} onSubmit={handleSubmit} />;
+}

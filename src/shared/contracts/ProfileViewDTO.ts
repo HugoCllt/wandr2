@@ -3,5 +3,6 @@ export type {
   ProfileStatDTO,
   ProfileBreakdownItemDTO,
   ProfileHistoryEntryDTO,
+  ProfileFormInitialDTO,
   ProfileViewDTO,
 } from '@wandr/shared';

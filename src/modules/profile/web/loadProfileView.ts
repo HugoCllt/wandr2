@@ -14,9 +14,10 @@ const DEFAULT_AFFINITY = 5;
 
 export async function loadProfileView(): Promise<ProfileViewDTO> {
   const user = await getCurrentUser();
-  const view = await new GetProfileViewUseCase(
-    new PrismaProfileRepository(prisma),
-  ).execute(user.id);
+  const [view, formInitial] = await Promise.all([
+    new GetProfileViewUseCase(new PrismaProfileRepository(prisma)).execute(user.id),
+    loadProfileFormInitial(),
+  ]);
   return {
     profile: {
       id: view.profile.id,
@@ -30,6 +31,7 @@ export async function loadProfileView(): Promise<ProfileViewDTO> {
     breakdown: view.breakdown,
     history: view.history,
     counts: view.counts,
+    formInitial,
   };
 }
 
