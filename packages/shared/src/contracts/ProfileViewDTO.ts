@@ -25,7 +25,6 @@ export type ProfileHistoryEntryDTO = {
   imageUrl: string;
 };
 
-/** Raw form values for pre-filling the edit modal (not part of the display view itself). */
 export type ProfileFormInitialDTO = {
   birthDate: string;
   gender: ProfileGender | '';
