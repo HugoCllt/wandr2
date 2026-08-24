@@ -4,18 +4,23 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context';
-import type { ActivityDTO } from '@wandr/shared';
+import type { ActivityDTO, FeedItemDTO } from '@wandr/shared';
 import { theme } from '../../src/theme/tokens';
 import { AppText } from '../../src/ui/AppText';
 import { Icon } from '../../src/ui/Icon';
 import { formatActivityPrice, PriceLabel } from '../../src/ui/PriceLabel';
+import { CardActions } from '../../src/components/CardActions';
 import { DetailRow } from '../../src/components/DetailRow';
 import { categoryIconFor, categoryLabelFor, formatActivityWhen } from '../../src/components/cardMeta';
 import { useActivity } from '../../src/lib/queries/useActivity';
 import { ApiError } from '../../src/lib/api';
 
 export default function ActivityDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, favorited, bookmarked } = useLocalSearchParams<{
+    slug: string;
+    favorited?: string;
+    bookmarked?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: activity, isLoading, isError, error, refetch } = useActivity(slug);
@@ -82,19 +87,32 @@ export default function ActivityDetailScreen() {
     );
   }
 
-  return <ActivityDetailContent activity={activity} insets={insets} closeButton={closeButton} />;
+  return (
+    <ActivityDetailContent
+      activity={activity}
+      insets={insets}
+      closeButton={closeButton}
+      initialFavorited={favorited === '1'}
+      initialBookmarked={bookmarked === '1'}
+    />
+  );
 }
 
 function ActivityDetailContent({
   activity,
   insets,
   closeButton,
+  initialFavorited,
+  initialBookmarked,
 }: {
   activity: ActivityDTO;
   insets: EdgeInsets;
   closeButton: ReactNode;
+  initialFavorited: boolean;
+  initialBookmarked: boolean;
 }) {
   const primary = activity.categories.primary;
+  const feedItem: FeedItemDTO = { ...activity, matchScore: 0, isFavorited: initialFavorited, isBookmarked: initialBookmarked };
   const price = formatActivityPrice(activity);
   const address = activity.neighborhood ? `${activity.address}, ${activity.neighborhood}` : activity.address;
 
@@ -186,7 +204,9 @@ function ActivityDetailContent({
       {closeButton}
 
       <View style={[styles.actionBar, { paddingBottom: insets.bottom + theme.space.s3 }]}>
-        <View style={styles.actionsSlot} />
+        <View style={styles.actionsSlot}>
+          <CardActions activity={feedItem} variant="detail" />
+        </View>
         <Pressable onPress={handleOpenMaps} accessibilityRole="button" style={styles.primaryButton}>
           <Icon name="pin" size={16} color={theme.colors.white} strokeWidth={1.8} />
           <AppText variant="subtitle" color={theme.colors.white}>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Icon } from '../../src/ui/Icon';
 import { AppText } from '../../src/ui/AppText';
 import { Screen } from '../../src/ui/Screen';
@@ -8,6 +9,7 @@ import { authClient } from '../../src/lib/auth-client';
 import { queryClient } from '../../src/lib/queries/queryClient';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut() {
@@ -33,6 +35,20 @@ export default function ProfileScreen() {
         <AppText variant="caption" color={theme.colors.smoke} style={styles.caption}>
           VOS FAVORIS ET PRÉFÉRENCES ARRIVENT BIENTÔT
         </AppText>
+        <Pressable
+          onPress={() => router.push('/favorites')}
+          style={({ pressed }) => [styles.favoritesRow, pressed && styles.signOutPressed]}
+          accessibilityRole="button"
+        >
+          <View style={styles.favoritesIconMark}>
+            <Icon name="heart" size={18} color={theme.colors.brass} strokeWidth={1.6} />
+          </View>
+          <AppText variant="subtitle" color={theme.colors.ink} style={styles.favoritesLabel}>
+            Favoris
+          </AppText>
+          <Icon name="arrow" size={16} color={theme.colors.smoke} strokeWidth={1.6} />
+        </Pressable>
+
         <Pressable
           onPress={handleSignOut}
           disabled={signingOut}
@@ -72,8 +88,33 @@ const styles = StyleSheet.create({
   caption: {
     textAlign: 'center',
   },
-  signOut: {
+  favoritesRow: {
     marginTop: theme.space.s5,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.s3,
+    minHeight: 44,
+    paddingHorizontal: theme.space.s4,
+    paddingVertical: theme.space.s3,
+    borderRadius: theme.radius.btn,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    backgroundColor: theme.colors.surface,
+  },
+  favoritesIconMark: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.brassTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoritesLabel: {
+    flex: 1,
+  },
+  signOut: {
+    marginTop: theme.space.s3,
     borderWidth: 1,
     borderColor: theme.colors.line,
     borderRadius: theme.radius.btn,

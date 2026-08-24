@@ -5,6 +5,7 @@ import type { FeedItemDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
 import type { UseFeedResult } from '../lib/queries/useFeed';
+import { CardActions } from './CardActions';
 import { CoverCard } from './CoverCard';
 import { ImagelessCard } from './ImagelessCard';
 
@@ -28,11 +29,20 @@ export function FeedList({
 
   const renderItem = useCallback(
     ({ item }: { item: FeedItemDTO }) => {
-      const onPress = () => router.push(`/activity/${item.slug}`);
+      const onPress = () =>
+        router.push({
+          pathname: '/activity/[slug]',
+          params: {
+            slug: item.slug,
+            favorited: item.isFavorited ? '1' : '0',
+            bookmarked: item.isBookmarked ? '1' : '0',
+          },
+        });
+      const actionsSlot = <CardActions activity={item} />;
       return item.imageUrl ? (
-        <CoverCard activity={item} onPress={onPress} />
+        <CoverCard activity={item} onPress={onPress} actionsSlot={actionsSlot} />
       ) : (
-        <ImagelessCard activity={item} onPress={onPress} />
+        <ImagelessCard activity={item} onPress={onPress} actionsSlot={actionsSlot} />
       );
     },
     [router],
