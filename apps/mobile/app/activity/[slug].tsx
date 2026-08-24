@@ -20,9 +20,17 @@ export default function ActivityDetailScreen() {
   const insets = useSafeAreaInsets();
   const { data: activity, isLoading, isError, error, refetch } = useActivity(slug);
 
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const closeButton = (
     <Pressable
-      onPress={() => router.back()}
+      onPress={goBack}
       accessibilityRole="button"
       accessibilityLabel="Fermer"
       hitSlop={8}
@@ -61,7 +69,7 @@ export default function ActivityDetailScreen() {
             {notFound ? "Cette activité n'existe plus." : 'Impossible de charger cette activité.'}
           </AppText>
           <Pressable
-            onPress={() => (notFound ? router.back() : refetch())}
+            onPress={() => (notFound ? goBack() : refetch())}
             accessibilityRole="button"
             style={styles.errorButton}
           >
