@@ -1,3 +1,1 @@
-import type { FilterValue } from '../../modules/filters/domain/FilterValue';
-
-export type FilterValueDTO = FilterValue;
+export type { FilterValueDTO } from '@wandr/shared';

@@ -1,17 +1,6 @@
-export const ActivityCategories = [
-  'SPORT',
-  'ROMANTIC',
-  'FOOD',
-  'CULTURE',
-  'OUTDOOR',
-  'NIGHTLIFE',
-] as const;
-export type ActivityCategory = (typeof ActivityCategories)[number];
+import { ActivityCategories, type ActivityCategory, type ActivityCategorySet } from '@wandr/shared';
 
-export type ActivityCategorySet = {
-  primary: ActivityCategory;
-  secondary: ActivityCategory[];
-};
+export { ActivityCategories, type ActivityCategory, type ActivityCategorySet } from '@wandr/shared';
 
 export function validateCategorySet(set: ActivityCategorySet): void {
   if (!ActivityCategories.includes(set.primary)) {

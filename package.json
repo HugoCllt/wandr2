@@ -28,6 +28,7 @@
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-popover": "^1.1.15",
+    "@wandr/shared": "workspace:*",
     "better-auth": "1.6.11",
     "lenis": "^1.3.23",
     "maplibre-gl": "^5.24.0",

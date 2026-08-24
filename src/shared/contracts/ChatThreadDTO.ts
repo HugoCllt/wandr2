@@ -1,6 +1,1 @@
-import type { ChatMessageDTO } from './ChatMessageDTO';
-
-export type ChatThreadDTO = {
-  id: string;
-  messages: ChatMessageDTO[];
-};
+export type { ChatThreadDTO } from '@wandr/shared';
