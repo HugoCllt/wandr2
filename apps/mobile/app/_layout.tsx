@@ -62,6 +62,7 @@ export default function RootLayout() {
               <Stack.Screen name="activity/[slug]" options={{ presentation: 'modal' }} />
               <Stack.Screen name="favorites" />
               <Stack.Screen name="profile-edit" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="premium-required" />
             </Stack.Protected>
           </Stack>
         </BottomSheetModalProvider>
