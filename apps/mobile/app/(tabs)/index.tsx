@@ -1,47 +1,49 @@
 import { StyleSheet, View } from 'react-native';
-import { Icon } from '../../src/ui/Icon';
-import { AppText } from '../../src/ui/AppText';
-import { Screen } from '../../src/ui/Screen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../src/theme/tokens';
+import { useFeedColumns } from '../../src/theme/useFeedColumns';
+import { useFeed } from '../../src/lib/queries/useFeed';
+import { AppText } from '../../src/ui/AppText';
+import { HeroCarousel } from '../../src/components/HeroCarousel';
+import { SectionHeader } from '../../src/components/SectionHeader';
+import { FeedList } from '../../src/components/FeedList';
 
 export default function AccueilScreen() {
+  const { columns } = useFeedColumns();
+  const query = useFeed({ filters: {} });
+
   return (
-    <Screen>
-      <View style={styles.center}>
-        <View style={styles.badge}>
-          <Icon name="home" size={26} color={theme.colors.brass} strokeWidth={1.4} />
-        </View>
-        <AppText variant="display" style={styles.title}>
-          Accueil
-        </AppText>
-        <AppText variant="caption" color={theme.colors.smoke} style={styles.caption}>
-          LE FIL D&apos;ACTIVITÉS ARRIVE BIENTÔT
-        </AppText>
-      </View>
-    </Screen>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <FeedList
+        query={query}
+        columns={columns}
+        emptyLabel="Rien ici pour l'instant"
+        ListHeaderComponent={
+          <View>
+            <AppText variant="caption" color={theme.colors.smoke} style={styles.eyebrow}>
+              CE WEEK-END À MONTRÉAL
+            </AppText>
+            <View style={styles.hero}>
+              <HeroCarousel />
+            </View>
+            <SectionHeader title="Pour toi" />
+          </View>
+        }
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  center: {
+  safeArea: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.space.s3,
+    backgroundColor: theme.colors.offwhite,
   },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.brassTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.space.s2,
+  eyebrow: {
+    letterSpacing: 1.2,
   },
-  title: {
-    textAlign: 'center',
-  },
-  caption: {
-    textAlign: 'center',
+  hero: {
+    marginHorizontal: -theme.space.s4,
+    marginTop: theme.space.s3,
   },
 });

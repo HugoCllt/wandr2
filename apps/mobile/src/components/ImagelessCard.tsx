@@ -1,0 +1,114 @@
+import type { ReactNode } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { ActivityDTO } from '@wandr/shared';
+import { theme } from '../theme/tokens';
+import { usePressFeedback } from '../theme/usePressFeedback';
+import { AppText } from '../ui/AppText';
+import { Icon } from '../ui/Icon';
+import { PriceLabel } from '../ui/PriceLabel';
+import { categoryIconFor, categoryLabelFor, formatActivityWhen, formatActivityWhere } from './cardMeta';
+
+type ImagelessCardProps = {
+  activity: ActivityDTO;
+  onPress?: () => void;
+  actionsSlot?: ReactNode;
+};
+
+export function ImagelessCard({ activity, onPress, actionsSlot }: ImagelessCardProps) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressFeedback();
+  const primary = activity.categories.primary;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={activity.title}
+      style={styles.wrapper}
+    >
+      <Animated.View style={animatedStyle}>
+        <LinearGradient
+          colors={[theme.colors.surface2, theme.colors.surface3]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.card}
+        >
+          <View style={styles.topRow}>
+            <AppText variant="caption" color={theme.colors.smoke}>
+              {categoryLabelFor(primary)}
+            </AppText>
+            <View style={styles.topRowRight}>
+              {actionsSlot}
+              <View style={styles.iconMark}>
+                <Icon name={categoryIconFor(primary)} size={18} color={theme.colors.brass} strokeWidth={1.6} />
+              </View>
+            </View>
+          </View>
+          <AppText variant="title" color={theme.colors.ink} numberOfLines={3} style={styles.title}>
+            {activity.title}
+          </AppText>
+          <View style={styles.metaRow}>
+            <AppText variant="caption" color={theme.colors.smoke}>
+              {formatActivityWhen(activity)}
+            </AppText>
+            <View style={styles.dot} />
+            <AppText variant="caption" color={theme.colors.smoke}>
+              {formatActivityWhere(activity)}
+            </AppText>
+          </View>
+          <PriceLabel activity={activity} color={theme.colors.brass700} style={styles.price} />
+        </LinearGradient>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
+  card: {
+    aspectRatio: 4 / 3,
+    borderRadius: theme.radius.card,
+    padding: theme.space.s4,
+    justifyContent: 'space-between',
+    ...theme.shadow.card,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  topRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.s2,
+  },
+  iconMark: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.brassTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    marginTop: theme.space.s2,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.space.s2,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.smoke,
+  },
+  price: {
+    marginTop: theme.space.s1,
+  },
+});
