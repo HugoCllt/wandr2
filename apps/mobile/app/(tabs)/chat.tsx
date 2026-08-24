@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View, type ListRenderItemInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,7 +39,6 @@ type ThreadErrorItem = {
   afterMessageId?: string;
 };
 type ThreadItem = ThreadMessageItem | ThreadErrorItem;
-type ListItem = ThreadItem | { kind: 'streaming' };
 
 type Streaming = { phase: ChatStreamPhase; text: string; recommendations: ChatRecommendationDTO[] };
 
@@ -79,7 +78,8 @@ export default function ChatScreen() {
     };
   }, []);
 
-  const started = thread.length > 0 || streaming !== null;
+  const isStreaming = streaming !== null;
+  const started = thread.length > 0 || isStreaming;
 
   const runTurn = useCallback(async (text: string, history: ChatTurn[]) => {
     const userMessage = chatMessage('user', text);
@@ -163,7 +163,7 @@ export default function ChatScreen() {
 
   function handleSend() {
     const t = draft.trim();
-    if (t.length === 0 || streaming !== null) return;
+    if (t.length === 0 || isStreaming) return;
     setDraft('');
     const history = thread
       .filter((item): item is ThreadMessageItem => item.kind === 'message')
@@ -174,7 +174,7 @@ export default function ChatScreen() {
 
   const handleRetry = useCallback(
     (item: ThreadErrorItem) => {
-      if (!item.retryable || !item.retryText) return;
+      if (!item.retryable || !item.retryText || isStreaming) return;
       setThread((prev) =>
         prev.filter((i) => {
           if (i.kind === 'error' && i.id === item.id) return false;
@@ -186,7 +186,7 @@ export default function ChatScreen() {
       );
       void runTurn(item.retryText, item.historyBefore ?? []);
     },
-    [runTurn],
+    [runTurn, isStreaming],
   );
 
   function toggleContext(id: ChatContextId) {
@@ -197,30 +197,15 @@ export default function ChatScreen() {
     setDraft(prompt);
   }
 
-  const listData: ListItem[] = streaming ? [...thread, { kind: 'streaming' }] : thread;
-  const invertedListData = [...listData].reverse();
+  const invertedListData = useMemo(() => [...thread].reverse(), [thread]);
 
-  const keyExtractor = useCallback((item: ListItem) => {
+  const keyExtractor = useCallback((item: ThreadItem) => {
     if (item.kind === 'message') return item.message.id;
-    if (item.kind === 'error') return item.id;
-    return 'streaming';
+    return item.id;
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<ListItem>) => {
-      if (item.kind === 'streaming') {
-        if (!streaming) return null;
-        if (streaming.text.length === 0) {
-          return <ChatBubble role="assistant" text="" pendingPhase={streaming.phase} />;
-        }
-        return (
-          <ChatBubble
-            role="assistant"
-            text={streaming.text}
-            recommendations={streaming.recommendations}
-          />
-        );
-      }
+    ({ item }: ListRenderItemInfo<ThreadItem>) => {
       if (item.kind === 'message') {
         return (
           <ChatBubble
@@ -230,10 +215,25 @@ export default function ChatScreen() {
           />
         );
       }
-      return <ErrorBubble item={item} onRetry={handleRetry} />;
+      return <ErrorBubble item={item} onRetry={handleRetry} disabled={isStreaming} />;
     },
-    [streaming, handleRetry],
+    [handleRetry, isStreaming],
   );
+
+  const liveBubble = useMemo(() => {
+    if (!streaming) return null;
+    const bubble =
+      streaming.text.length === 0 ? (
+        <ChatBubble role="assistant" text="" pendingPhase={streaming.phase} />
+      ) : (
+        <ChatBubble
+          role="assistant"
+          text={streaming.text}
+          recommendations={streaming.recommendations}
+        />
+      );
+    return <View style={styles.liveBubbleWrap}>{bubble}</View>;
+  }, [streaming]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
@@ -244,6 +244,7 @@ export default function ChatScreen() {
           data={invertedListData}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
+          ListHeaderComponent={liveBubble}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           keyboardShouldPersistTaps="handled"
@@ -255,7 +256,7 @@ export default function ChatScreen() {
         value={draft}
         onChangeText={setDraft}
         onSend={handleSend}
-        disabled={streaming !== null}
+        disabled={isStreaming}
         activeContextIds={activeContextIds}
         onToggleContext={toggleContext}
       />
@@ -293,9 +294,11 @@ function EmptyState({ onPickPrompt }: { onPickPrompt: (prompt: string) => void }
 function ErrorBubble({
   item,
   onRetry,
+  disabled,
 }: {
   item: ThreadErrorItem;
   onRetry: (item: ThreadErrorItem) => void;
+  disabled: boolean;
 }) {
   return (
     <View style={styles.errorRow}>
@@ -306,8 +309,10 @@ function ErrorBubble({
         {item.retryable && (
           <Pressable
             onPress={() => onRetry(item)}
+            disabled={disabled}
             accessibilityRole="button"
-            style={styles.retryButton}
+            accessibilityState={{ disabled }}
+            style={[styles.retryButton, disabled && styles.retryButtonDisabled]}
           >
             <AppText variant="subtitle" color={theme.colors.live}>
               Réessayer
@@ -333,6 +338,9 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: theme.space.s4,
+  },
+  liveBubbleWrap: {
+    marginBottom: theme.space.s4,
   },
   empty: {
     flex: 1,
@@ -382,5 +390,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     minHeight: 44,
     justifyContent: 'center',
+  },
+  retryButtonDisabled: {
+    opacity: 0.4,
   },
 });
