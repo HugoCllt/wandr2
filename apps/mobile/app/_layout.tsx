@@ -13,9 +13,9 @@ import { theme } from '../src/theme/tokens';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [libreBodoniLoaded] = useLibreBodoniFonts({ LibreBodoni_600SemiBold });
-  const [publicSansLoaded] = usePublicSansFonts({ PublicSans_400Regular, PublicSans_500Medium });
-  const fontsLoaded = libreBodoniLoaded && publicSansLoaded;
+  const [libreBodoniLoaded, libreBodoniError] = useLibreBodoniFonts({ LibreBodoni_600SemiBold });
+  const [publicSansLoaded, publicSansError] = usePublicSansFonts({ PublicSans_400Regular, PublicSans_500Medium });
+  const fontsLoaded = (libreBodoniLoaded || !!libreBodoniError) && (publicSansLoaded || !!publicSansError);
 
   const hideSplash = useCallback(async () => {
     if (fontsLoaded) {
