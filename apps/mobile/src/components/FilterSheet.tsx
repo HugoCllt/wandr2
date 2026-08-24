@@ -42,6 +42,31 @@ function isoToDisplay(iso: string): string {
   return `${day}/${month}/${year}`;
 }
 
+type DateRangeValidation = {
+  message: string | null;
+  fromInvalid: boolean;
+  toInvalid: boolean;
+};
+
+function validateDateRange(fromDisplay: string, toDisplay: string): DateRangeValidation {
+  const fromComplete = fromDisplay.length === 10;
+  const toComplete = toDisplay.length === 10;
+  if (!fromComplete && !toComplete) {
+    return { message: null, fromInvalid: false, toInvalid: false };
+  }
+  const isoFrom = fromComplete ? displayToIso(fromDisplay) : null;
+  const isoTo = toComplete ? displayToIso(toDisplay) : null;
+  const fromInvalid = fromComplete && isoFrom === null;
+  const toInvalid = toComplete && isoTo === null;
+  if (fromInvalid || toInvalid) {
+    return { message: 'Date invalide (JJ/MM/AAAA).', fromInvalid, toInvalid };
+  }
+  if (isoFrom && isoTo && isoTo < isoFrom) {
+    return { message: 'La date de fin doit suivre la date de début.', fromInvalid: false, toInvalid: true };
+  }
+  return { message: null, fromInvalid: false, toInvalid: false };
+}
+
 type FilterSheetProps = {
   visible: boolean;
   value: FilterValueDTO;
@@ -118,10 +143,12 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
     }
   }
 
-  function applyCustomRange(fromDisplay: string, toDisplay: string) {
+  function commitCustomRangeIfValid(fromDisplay: string, toDisplay: string) {
+    const { message } = validateDateRange(fromDisplay, toDisplay);
+    if (message) return;
     const isoFrom = displayToIso(fromDisplay);
     const isoTo = displayToIso(toDisplay);
-    if (isoFrom && isoTo && isoTo >= isoFrom) {
+    if (isoFrom && isoTo) {
       setDraft((prev) => ({ ...prev, date: { from: isoFrom, to: isoTo } }));
     }
   }
@@ -129,13 +156,13 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
   function handleFromChange(raw: string) {
     const formatted = formatDateInput(raw);
     setFromText(formatted);
-    applyCustomRange(formatted, toText);
+    commitCustomRangeIfValid(formatted, toText);
   }
 
   function handleToChange(raw: string) {
     const formatted = formatDateInput(raw);
     setToText(formatted);
-    applyCustomRange(fromText, formatted);
+    commitCustomRangeIfValid(fromText, formatted);
   }
 
   function toggleNeighborhood(name: string) {
@@ -176,6 +203,10 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
   const renderBackdrop = (props: BottomSheetBackdropProps) => (
     <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
   );
+
+  const dateValidation = customDate
+    ? validateDateRange(fromText, toText)
+    : { message: null, fromInvalid: false, toInvalid: false };
 
   return (
     <BottomSheetModal
@@ -229,7 +260,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
                   placeholderTextColor={theme.colors.smoke}
                   keyboardType="number-pad"
                   maxLength={10}
-                  style={styles.dateInput}
+                  style={[styles.dateInput, dateValidation.fromInvalid && styles.dateInputError]}
                 />
               </View>
               <View style={styles.dateField}>
@@ -243,10 +274,15 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
                   placeholderTextColor={theme.colors.smoke}
                   keyboardType="number-pad"
                   maxLength={10}
-                  style={styles.dateInput}
+                  style={[styles.dateInput, dateValidation.toInvalid && styles.dateInputError]}
                 />
               </View>
             </View>
+          )}
+          {customDate && dateValidation.message && (
+            <AppText variant="caption" color={theme.colors.live} style={styles.dateErrorText}>
+              {dateValidation.message}
+            </AppText>
           )}
         </Section>
 
@@ -416,6 +452,12 @@ const styles = StyleSheet.create({
     fontFamily: theme.type.body.fontFamily,
     fontSize: theme.type.body.fontSize,
     color: theme.colors.ink,
+  },
+  dateInputError: {
+    borderColor: theme.colors.live,
+  },
+  dateErrorText: {
+    marginTop: theme.space.s2,
   },
   priceInput: {
     height: 44,
