@@ -1,3 +1,4 @@
+import { expo } from '@better-auth/expo';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 
@@ -24,6 +25,7 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
+  trustedOrigins: ['wandr://'],
   emailAndPassword: { enabled: true, minPasswordLength: 8 },
   socialProviders: googleConfigured
     ? {
@@ -54,4 +56,5 @@ export const auth = betterAuth({
       },
     },
   },
+  plugins: [expo()],
 });

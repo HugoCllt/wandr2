@@ -7,6 +7,7 @@ import { PROFILE_AFFINITY_CATEGORIES } from '../../../shared/contracts/ProfileFo
 import { prisma } from '../../../shared/db/prisma';
 import { UpdateProfileUseCase } from '../application/UpdateProfileUseCase';
 import { PrismaProfileRepository } from '../infra/PrismaProfileRepository';
+import { loadProfileView } from './loadProfileView';
 
 const ProfileFormSchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'birthDate must be yyyy-mm-dd'),
@@ -18,6 +19,11 @@ const ProfileFormSchema = z.object({
     z.number().int().min(0).max(10),
   ),
 });
+
+export async function getProfileRouteHandler(): Promise<NextResponse> {
+  const view = await loadProfileView();
+  return NextResponse.json(view);
+}
 
 export async function updateProfileRouteHandler(request: Request): Promise<NextResponse> {
   const form = await parseBody(ProfileFormSchema, request);

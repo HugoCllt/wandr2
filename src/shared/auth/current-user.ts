@@ -18,6 +18,8 @@ export type CurrentUser = {
   cityId: string;
   /** Display name of the profile city (`cityId`), for read-only labels. */
   cityName: string;
+  /** Slug of the profile city (`cityId`), for city-resolution fallback. */
+  citySlug: string;
   isPremium: boolean;
   onboardedAt: Date | null;
 };
@@ -38,12 +40,12 @@ export async function getOptionalUser(): Promise<CurrentUser | null> {
       email: true,
       name: true,
       cityId: true,
-      city: { select: { name: true } },
+      city: { select: { name: true, slug: true } },
       isPremium: true,
       onboardedAt: true,
     },
   });
-  return user ? { ...user, cityName: user.city.name } : null;
+  return user ? { ...user, cityName: user.city.name, citySlug: user.city.slug } : null;
 }
 
 /**

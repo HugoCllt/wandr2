@@ -93,6 +93,13 @@ module.exports = {
       to: { path: '^src/shared/contracts' },
     },
     {
+      name: 'mobile-no-src',
+      severity: 'error',
+      comment: 'apps/mobile is a standalone Expo client; it must never import the web monolith under src.',
+      from: { path: '^apps/mobile' },
+      to: { path: '^src' },
+    },
+    {
       name: 'no-orphans',
       severity: 'warn',
       from: {

@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { cache } from 'react';
 
 import { getOptionalUser } from '../../../shared/auth/current-user';
@@ -6,6 +6,7 @@ import type { CityDTO } from '../../../shared/contracts/CityDTO';
 import { prisma } from '../../../shared/db/prisma';
 import type { City } from '../domain/City';
 import { PrismaCityRepository } from '../infra/PrismaCityRepository';
+import { resolveCitySlug } from './resolveCitySlug';
 
 /**
  * Session cookie (no Max-Age): a city picked in the Nav survives every
@@ -21,17 +22,17 @@ const FALLBACK_CITY_SLUG = 'montreal';
 export const getActiveCity = cache(async (): Promise<City> => {
   const cities = new PrismaCityRepository(prisma);
 
-  const slug = cookies().get(ACTIVE_CITY_COOKIE)?.value;
-  if (slug) {
-    const picked = await cities.findBySlug(slug);
-    if (picked) return picked;
-  }
-
+  const headerSlug = headers().get('x-wandr-city');
+  const cookieSlug = cookies().get(ACTIVE_CITY_COOKIE)?.value ?? null;
   const user = await getOptionalUser();
-  if (user) {
-    const home = await cities.findById(user.cityId);
-    if (home) return home;
-  }
+
+  const slug = resolveCitySlug({
+    headerSlug,
+    cookieSlug,
+    profileSlug: user?.citySlug ?? null,
+  });
+  const picked = await cities.findBySlug(slug);
+  if (picked) return picked;
 
   const fallback = await cities.findBySlug(FALLBACK_CITY_SLUG);
   if (!fallback) throw new Error(`No city available: seed "${FALLBACK_CITY_SLUG}" is missing.`);
