@@ -14,6 +14,7 @@ type FeedListProps = {
   columns: 1 | 2;
   ListHeaderComponent?: ReactElement | null;
   emptyLabel?: string;
+  bottomInset?: number;
 };
 
 export function FeedList({
@@ -21,6 +22,7 @@ export function FeedList({
   columns,
   ListHeaderComponent,
   emptyLabel = "Rien ici pour l'instant",
+  bottomInset = 0,
 }: FeedListProps) {
   const router = useRouter();
   const { data, isLoading, isError, isFetchingNextPage, isRefetching, hasNextPage, fetchNextPage, refetch } = query;
@@ -108,7 +110,7 @@ export function FeedList({
           colors={[theme.colors.brass]}
         />
       }
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, bottomInset > 0 && { paddingBottom: theme.space.s4 + bottomInset }]}
       showsVerticalScrollIndicator={false}
     />
   );
@@ -116,7 +118,9 @@ export function FeedList({
 
 const styles = StyleSheet.create({
   content: {
-    padding: theme.space.s4,
+    paddingHorizontal: theme.space.s4,
+    paddingTop: theme.space.s4,
+    paddingBottom: theme.space.s4,
     gap: theme.space.s4,
     flexGrow: 1,
   },
