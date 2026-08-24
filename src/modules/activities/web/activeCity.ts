@@ -6,7 +6,7 @@ import type { CityDTO } from '../../../shared/contracts/CityDTO';
 import { prisma } from '../../../shared/db/prisma';
 import type { City } from '../domain/City';
 import { PrismaCityRepository } from '../infra/PrismaCityRepository';
-import { resolveCitySlug } from './resolveCitySlug';
+import { FALLBACK_CITY_SLUG, resolveCityCandidates } from './resolveCityCandidates';
 
 /**
  * Session cookie (no Max-Age): a city picked in the Nav survives every
@@ -14,8 +14,6 @@ import { resolveCitySlug } from './resolveCitySlug';
  * visit falls back to the profile city. See `tbd.md`.
  */
 export const ACTIVE_CITY_COOKIE = 'wandr_city';
-
-const FALLBACK_CITY_SLUG = 'montreal';
 
 /** `cache` keeps this to one DB round trip per request — layouts, pages and
  * feed loaders all resolve the same city. */
@@ -26,17 +24,18 @@ export const getActiveCity = cache(async (): Promise<City> => {
   const cookieSlug = cookies().get(ACTIVE_CITY_COOKIE)?.value ?? null;
   const user = await getOptionalUser();
 
-  const slug = resolveCitySlug({
+  const candidates = resolveCityCandidates({
     headerSlug,
     cookieSlug,
     profileSlug: user?.citySlug ?? null,
   });
-  const picked = await cities.findBySlug(slug);
-  if (picked) return picked;
 
-  const fallback = await cities.findBySlug(FALLBACK_CITY_SLUG);
-  if (!fallback) throw new Error(`No city available: seed "${FALLBACK_CITY_SLUG}" is missing.`);
-  return fallback;
+  for (const slug of candidates) {
+    const picked = await cities.findBySlug(slug);
+    if (picked) return picked;
+  }
+
+  throw new Error(`No city available: seed "${FALLBACK_CITY_SLUG}" is missing.`);
 });
 
 export async function listCities(): Promise<CityDTO[]> {
