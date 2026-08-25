@@ -19,7 +19,7 @@ export function Badge({ variant, label, style }: BadgeProps) {
   const { backgroundColor, color } = VARIANT_STYLE[variant];
   return (
     <View style={[styles.badge, { backgroundColor }, style]}>
-      <AppText variant="caption" color={color} style={styles.label}>
+      <AppText variant="caption" color={color}>
         {label}
       </AppText>
     </View>
@@ -32,8 +32,5 @@ const styles = StyleSheet.create({
     paddingVertical: theme.space.s1,
     borderRadius: theme.radius.pill,
     alignSelf: 'flex-start',
-  },
-  label: {
-    letterSpacing: 0.4,
   },
 });

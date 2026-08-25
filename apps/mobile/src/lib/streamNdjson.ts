@@ -47,24 +47,35 @@ export async function streamNdjson(
   const decoder = new TextDecoder();
   let buffer = '';
 
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) {
-      buffer += decoder.decode();
-      break;
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) {
+        buffer += decoder.decode();
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+        emitLine(line, onEvent);
+      }
     }
-    buffer += decoder.decode(value, { stream: true });
-    let newlineIndex: number;
-    while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
-      const line = buffer.slice(0, newlineIndex).trim();
-      buffer = buffer.slice(newlineIndex + 1);
-      if (line.length === 0) continue;
-      onEvent(JSON.parse(line) as ChatStreamEvent);
-    }
-  }
 
-  const lastLine = buffer.trim();
-  if (lastLine.length > 0) {
-    onEvent(JSON.parse(lastLine) as ChatStreamEvent);
+    emitLine(buffer.trim(), onEvent);
+  } finally {
+    void reader.cancel().catch(() => undefined);
   }
+}
+
+function emitLine(line: string, onEvent: (event: ChatStreamEvent) => void): void {
+  if (line.length === 0) return;
+  let event: ChatStreamEvent;
+  try {
+    event = JSON.parse(line) as ChatStreamEvent;
+  } catch {
+    return;
+  }
+  onEvent(event);
 }

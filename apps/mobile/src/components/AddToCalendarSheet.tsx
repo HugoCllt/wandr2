@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -116,7 +116,7 @@ export function AddToCalendarSheet({
       if (err instanceof ApiError && err.status === 404) {
         setError('Activité introuvable.');
       } else {
-        setError("Échec de l'ajout au calendrier.");
+        setError('Échec de l’ajout au calendrier.');
       }
     } finally {
       setPending(false);
@@ -150,7 +150,12 @@ export function AddToCalendarSheet({
         <AppText variant="caption" color={theme.colors.smoke}>
           JOUR
         </AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll} contentContainerStyle={styles.dayScrollContent}>
+        <BottomSheetScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.dayScroll}
+          contentContainerStyle={styles.dayScrollContent}
+        >
           {days.map((day) => {
             const active = day.key === selectedDay.key;
             return (
@@ -170,7 +175,7 @@ export function AddToCalendarSheet({
               </Pressable>
             );
           })}
-        </ScrollView>
+        </BottomSheetScrollView>
 
         <AppText variant="caption" color={theme.colors.smoke} style={styles.sectionLabel}>
           HEURE
@@ -193,17 +198,16 @@ export function AddToCalendarSheet({
             );
           })}
         </View>
+      </BottomSheetScrollView>
 
+      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         {error && (
           <View style={styles.errorBox}>
-            <AppText variant="caption" color={theme.colors.live}>
+            <AppText variant="caption" color={theme.colors.live} accessibilityRole="alert">
               {error}
             </AppText>
           </View>
         )}
-      </BottomSheetScrollView>
-
-      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         <Pressable
           onPress={handleSubmit}
           disabled={!selectedTime || pending}
@@ -280,10 +284,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.brass,
   },
   errorBox: {
-    marginTop: theme.space.s3,
+    marginBottom: theme.space.s3,
     padding: theme.space.s3,
     borderRadius: theme.radius.sm,
-    backgroundColor: 'rgba(216,69,63,0.12)',
+    backgroundColor: theme.colors.liveTint,
   },
   ctaBar: {
     paddingHorizontal: theme.space.s5,

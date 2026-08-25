@@ -9,6 +9,9 @@ import { CardActions } from './CardActions';
 import { CoverCard } from './CoverCard';
 import { ImagelessCard } from './ImagelessCard';
 
+const SKELETON_KEYS = ['a', 'b', 'c'];
+const EMPTY_ITEMS: FeedItemDTO[] = [];
+
 type FeedListProps = {
   query: UseFeedResult;
   columns: 1 | 2;
@@ -21,7 +24,7 @@ export function FeedList({
   query,
   columns,
   ListHeaderComponent,
-  emptyLabel = "Rien ici pour l'instant",
+  emptyLabel = 'Rien ici pour l’instant',
   bottomInset = 0,
 }: FeedListProps) {
   const router = useRouter();
@@ -56,45 +59,41 @@ export function FeedList({
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={theme.colors.brass} size="large" />
-      </View>
-    );
-  }
-
-  if (isError) {
-    return (
-      <View style={styles.center}>
-        <AppText variant="body" color={theme.colors.smoke} style={styles.centerText}>
-          Une erreur est survenue.
+  const placeholder = isLoading ? (
+    <View style={styles.skeletonList}>
+      {SKELETON_KEYS.map((key) => (
+        <View key={key} style={styles.skeletonCard} />
+      ))}
+    </View>
+  ) : isError ? (
+    <View style={styles.center}>
+      <AppText variant="body" color={theme.colors.smoke} style={styles.centerText}>
+        Une erreur est survenue.
+      </AppText>
+      <Pressable onPress={() => refetch()} style={styles.retryButton} accessibilityRole="button">
+        <AppText variant="subtitle" color={theme.colors.brass}>
+          Réessayer
         </AppText>
-        <Pressable onPress={() => refetch()} style={styles.retryButton} accessibilityRole="button">
-          <AppText variant="subtitle" color={theme.colors.brass}>
-            Réessayer
-          </AppText>
-        </Pressable>
-      </View>
-    );
-  }
+      </Pressable>
+    </View>
+  ) : (
+    <View style={styles.center}>
+      <AppText variant="body" color={theme.colors.smoke}>
+        {emptyLabel}
+      </AppText>
+    </View>
+  );
 
   return (
     <FlatList
       key={columns}
-      data={items}
+      data={isLoading || isError ? EMPTY_ITEMS : items}
       numColumns={columns}
       columnWrapperStyle={columns > 1 ? styles.row : undefined}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       ListHeaderComponent={ListHeaderComponent}
-      ListEmptyComponent={
-        <View style={styles.center}>
-          <AppText variant="body" color={theme.colors.smoke}>
-            {emptyLabel}
-          </AppText>
-        </View>
-      }
+      ListEmptyComponent={placeholder}
       ListFooterComponent={
         isFetchingNextPage ? (
           <ActivityIndicator color={theme.colors.brass} style={styles.footer} />
@@ -133,6 +132,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: theme.space.s8,
     gap: theme.space.s3,
+  },
+  skeletonList: {
+    gap: theme.space.s4,
+  },
+  skeletonCard: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.surface3,
   },
   centerText: {
     textAlign: 'center',

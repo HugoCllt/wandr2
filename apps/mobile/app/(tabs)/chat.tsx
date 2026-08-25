@@ -189,6 +189,10 @@ export default function ChatScreen() {
     [runTurn, isStreaming],
   );
 
+  const handleStop = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
+
   function toggleContext(id: ChatContextId) {
     setActiveContextIds((cur) => (cur.includes(id) ? cur.filter((c) => c !== id) : [...cur, id]));
   }
@@ -236,7 +240,7 @@ export default function ChatScreen() {
   }, [streaming]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       {started ? (
         <FlatList
           style={styles.list}
@@ -256,7 +260,8 @@ export default function ChatScreen() {
         value={draft}
         onChangeText={setDraft}
         onSend={handleSend}
-        disabled={isStreaming}
+        onStop={handleStop}
+        isStreaming={isStreaming}
         activeContextIds={activeContextIds}
         onToggleContext={toggleContext}
       />
@@ -380,7 +385,7 @@ const styles = StyleSheet.create({
   },
   errorBubble: {
     maxWidth: '82%',
-    backgroundColor: 'rgba(216,69,63,0.12)',
+    backgroundColor: theme.colors.liveTint,
     borderRadius: theme.radius.card,
     paddingHorizontal: theme.space.s4,
     paddingVertical: theme.space.s3,

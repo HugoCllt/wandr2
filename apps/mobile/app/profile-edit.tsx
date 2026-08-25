@@ -61,6 +61,7 @@ export default function ProfileEditScreen() {
         cityName: profile.formInitial.cityName || DEFAULT_CITY_NAME,
       }}
       dismissable
+      edges={['bottom', 'left', 'right']}
       onSubmit={handleSubmit}
       onClose={goBack}
     />

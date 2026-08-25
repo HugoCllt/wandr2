@@ -15,6 +15,29 @@ import { authClient } from '../../src/lib/auth-client';
 
 type Mode = 'signin' | 'signup';
 
+const GENERIC_ERROR = 'Une erreur est survenue. Réessayez.';
+const GOOGLE_ERROR = 'La connexion Google n’est pas disponible pour le moment.';
+
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  INVALID_EMAIL_OR_PASSWORD: 'Courriel ou mot de passe incorrect.',
+  INVALID_EMAIL: 'Adresse courriel invalide.',
+  INVALID_PASSWORD: 'Mot de passe incorrect.',
+  USER_NOT_FOUND: 'Aucun compte ne correspond à ce courriel.',
+  USER_ALREADY_EXISTS: 'Un compte existe déjà avec ce courriel.',
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'Un compte existe déjà avec ce courriel.',
+  PASSWORD_TOO_SHORT: 'Le mot de passe doit contenir au moins 8 caractères.',
+  PASSWORD_TOO_LONG: 'Le mot de passe est trop long.',
+  EMAIL_NOT_VERIFIED: 'Vérifiez votre adresse courriel avant de vous connecter.',
+  FAILED_TO_CREATE_USER: 'Impossible de créer le compte. Réessayez.',
+  ACCOUNT_NOT_FOUND: 'Aucun compte ne correspond à ce courriel.',
+  SOCIAL_ACCOUNT_ALREADY_LINKED: 'Ce compte est déjà associé à une autre connexion.',
+};
+
+function authErrorMessage(code: string | undefined, fallback: string): string {
+  if (code && AUTH_ERROR_MESSAGES[code]) return AUTH_ERROR_MESSAGES[code];
+  return fallback;
+}
+
 export default function LoginScreen() {
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');
@@ -38,10 +61,10 @@ export default function LoginScreen() {
           ? await authClient.signIn.email({ email, password })
           : await authClient.signUp.email({ email, password, name });
       if (result.error) {
-        setError(result.error.message ?? 'Une erreur est survenue. Réessayez.');
+        setError(authErrorMessage(result.error.code, GENERIC_ERROR));
       }
     } catch {
-      setError('Une erreur est survenue. Réessayez.');
+      setError(GENERIC_ERROR);
     } finally {
       setBusy(false);
     }
@@ -54,10 +77,10 @@ export default function LoginScreen() {
     try {
       const result = await authClient.signIn.social({ provider: 'google', callbackURL: '/' });
       if (result?.error) {
-        setError(result.error.message ?? "La connexion Google n'est pas disponible pour le moment.");
+        setError(authErrorMessage(result.error.code, GOOGLE_ERROR));
       }
     } catch {
-      setError("La connexion Google n'est pas disponible pour le moment.");
+      setError(GOOGLE_ERROR);
     } finally {
       setGoogleBusy(false);
     }
@@ -73,8 +96,8 @@ export default function LoginScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <AppText style={styles.logo}>Wandr</AppText>
-          <AppText variant="caption" color={theme.colors.smoke} style={styles.tagline}>
+          <AppText variant="wordmark">Wandr</AppText>
+          <AppText variant="eyebrow" color={theme.colors.smoke} style={styles.tagline}>
             VOTRE VILLE, VOS SORTIES
           </AppText>
         </View>
@@ -205,15 +228,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.space.s7,
   },
-  logo: {
-    fontFamily: theme.type.display.fontFamily,
-    fontSize: 34,
-    lineHeight: 38,
-    color: theme.colors.ink,
-  },
   tagline: {
     marginTop: theme.space.s2,
-    letterSpacing: 1.2,
   },
   form: {
     gap: theme.space.s4,

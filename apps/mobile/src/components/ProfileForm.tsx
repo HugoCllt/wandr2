@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import {
   PROFILE_AFFINITY_CATEGORIES,
   type ProfileAffinityCategory,
@@ -42,7 +42,11 @@ type Props = {
   dismissable: boolean;
   onSubmit: (form: ProfileFormDTO) => Promise<void>;
   onClose?: () => void;
+  onSignOut?: () => void;
+  edges?: readonly Edge[];
 };
+
+const DEFAULT_EDGES: readonly Edge[] = ['top', 'bottom', 'left', 'right'];
 
 function splitBirthDate(birthDate: string): { day: string; month: string; year: string } {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate);
@@ -63,7 +67,14 @@ function parseBirthDate(day: string, month: string, year: string): string | null
   return `${y}-${pad(m)}-${pad(d)}`;
 }
 
-export function ProfileForm({ initial, dismissable, onSubmit, onClose }: Props) {
+export function ProfileForm({
+  initial,
+  dismissable,
+  onSubmit,
+  onClose,
+  onSignOut,
+  edges = DEFAULT_EDGES,
+}: Props) {
   const initialDate = splitBirthDate(initial.birthDate);
   const [day, setDay] = useState(initialDate.day);
   const [month, setMonth] = useState(initialDate.month);
@@ -86,6 +97,10 @@ export function ProfileForm({ initial, dismissable, onSubmit, onClose }: Props) 
   async function handleSubmit() {
     if (busy) return;
     setError(null);
+    if (!initial.cityId) {
+      setError('Votre ville n’a pas pu être déterminée. Déconnectez-vous, puis reconnectez-vous.');
+      return;
+    }
     const birthDate = parseBirthDate(day, month, year);
     if (!birthDate) {
       setError('Veuillez entrer une date de naissance valide.');
@@ -99,14 +114,14 @@ export function ProfileForm({ initial, dismissable, onSubmit, onClose }: Props) 
     try {
       await onSubmit({ birthDate, gender, cityId: initial.cityId, bio, affinities });
     } catch {
-      setError("Impossible d'enregistrer votre profil. Réessayez.");
+      setError('Impossible d’enregistrer votre profil. Réessayez.');
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={edges}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
@@ -235,7 +250,7 @@ export function ProfileForm({ initial, dismissable, onSubmit, onClose }: Props) 
                       onPress={() => adjustAffinity(category, -1)}
                       disabled={value <= 0}
                       accessibilityRole="button"
-                      accessibilityLabel={`Diminuer l'affinité ${label}`}
+                      accessibilityLabel={`Diminuer l’affinité ${label}`}
                       style={[styles.stepperButton, value <= 0 && styles.stepperButtonDisabled]}
                     >
                       <AppText variant="subtitle" color={theme.colors.ink}>
@@ -249,7 +264,7 @@ export function ProfileForm({ initial, dismissable, onSubmit, onClose }: Props) 
                       onPress={() => adjustAffinity(category, 1)}
                       disabled={value >= 10}
                       accessibilityRole="button"
-                      accessibilityLabel={`Augmenter l'affinité ${label}`}
+                      accessibilityLabel={`Augmenter l’affinité ${label}`}
                       style={[styles.stepperButton, value >= 10 && styles.stepperButtonDisabled]}
                     >
                       <AppText variant="subtitle" color={theme.colors.ink}>
@@ -278,6 +293,14 @@ export function ProfileForm({ initial, dismissable, onSubmit, onClose }: Props) 
               {busy ? 'Enregistrement…' : 'Enregistrer'}
             </AppText>
           </Pressable>
+
+          {!dismissable && onSignOut && (
+            <Pressable onPress={onSignOut} accessibilityRole="button" style={styles.signOut}>
+              <AppText variant="body" color={theme.colors.smoke}>
+                Se déconnecter
+              </AppText>
+            </Pressable>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -426,5 +449,10 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.6,
+  },
+  signOut: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

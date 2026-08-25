@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -206,6 +206,8 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
     <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
   );
 
+  const neighborhoodOptions = facets.data?.items ?? [];
+
   const dateValidation = customDate
     ? validateDateRange(fromText, toText)
     : { message: null, fromInvalid: false, toInvalid: false };
@@ -238,7 +240,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
         <Section title="DATE">
           <View style={styles.chipRow}>
             <Chip
-              label="Aujourd'hui"
+              label="Aujourd’hui"
               active={draft.date === 'today'}
               onPress={() => selectDatePreset('today')}
             />
@@ -289,16 +291,39 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
         </Section>
 
         <Section title="QUARTIERS">
-          <View style={styles.chipRow}>
-            {(facets.data?.items ?? []).map((option) => (
-              <Chip
-                key={option.name}
-                label={option.name}
-                active={(draft.neighborhood ?? []).includes(option.name)}
-                onPress={() => toggleNeighborhood(option.name)}
-              />
-            ))}
-          </View>
+          {facets.isLoading ? (
+            <ActivityIndicator color={theme.colors.brass} style={styles.facetsLoading} />
+          ) : facets.isError ? (
+            <View style={styles.facetsError}>
+              <AppText variant="body" color={theme.colors.smoke}>
+                Impossible de charger les quartiers.
+              </AppText>
+              <Pressable
+                onPress={() => facets.refetch()}
+                accessibilityRole="button"
+                style={styles.facetsRetry}
+              >
+                <AppText variant="subtitle" color={theme.colors.brass}>
+                  Réessayer
+                </AppText>
+              </Pressable>
+            </View>
+          ) : neighborhoodOptions.length === 0 ? (
+            <AppText variant="body" color={theme.colors.smoke}>
+              Aucun quartier disponible.
+            </AppText>
+          ) : (
+            <View style={styles.chipRow}>
+              {neighborhoodOptions.map((option) => (
+                <Chip
+                  key={option.name}
+                  label={option.name}
+                  active={(draft.neighborhood ?? []).includes(option.name)}
+                  onPress={() => toggleNeighborhood(option.name)}
+                />
+              ))}
+            </View>
+          )}
         </Section>
 
         <Section title="PRIX">
@@ -423,6 +448,18 @@ const styles = StyleSheet.create({
   },
   chipRowSpaced: {
     marginTop: theme.space.s2,
+  },
+  facetsLoading: {
+    alignSelf: 'flex-start',
+    paddingVertical: theme.space.s3,
+  },
+  facetsError: {
+    gap: theme.space.s2,
+  },
+  facetsRetry: {
+    minHeight: 44,
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
   },
   chip: {
     minHeight: 44,

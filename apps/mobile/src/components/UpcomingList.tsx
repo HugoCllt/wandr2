@@ -49,7 +49,7 @@ export function UpcomingList({ items, emptyLabel = 'Rien de prévu pour le momen
               <AppText variant="caption" color={theme.colors.brass700}>
                 {MONTHS[dt.getMonth()].toUpperCase()}
               </AppText>
-              <AppText variant="title" color={theme.colors.ink} style={styles.dateNumber}>
+              <AppText variant="numeral" color={theme.colors.ink}>
                 {dt.getDate()}
               </AppText>
             </View>
@@ -89,10 +89,6 @@ const styles = StyleSheet.create({
   dateBlock: {
     width: 48,
     alignItems: 'center',
-  },
-  dateNumber: {
-    fontSize: 20,
-    lineHeight: 24,
   },
   info: {
     flex: 1,

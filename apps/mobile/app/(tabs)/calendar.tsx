@@ -5,26 +5,15 @@ import { theme } from '../../src/theme/tokens';
 import { AppText } from '../../src/ui/AppText';
 import { Icon } from '../../src/ui/Icon';
 import { SectionHeader } from '../../src/components/SectionHeader';
-import { MonthGrid, type MonthGridEntry } from '../../src/components/MonthGrid';
+import { MonthGrid, MONTHS_FULL, type MonthGridEntry } from '../../src/components/MonthGrid';
 import { UpcomingList, type UpcomingItem } from '../../src/components/UpcomingList';
 import { ReviewSheet } from '../../src/components/ReviewSheet';
 import { localDayKey } from '../../src/lib/monthGrid';
-import { useCalendarEntries, usePendingReviews } from '../../src/lib/queries/useCalendar';
-
-const MONTHS_FULL = [
-  'Janvier',
-  'Février',
-  'Mars',
-  'Avril',
-  'Mai',
-  'Juin',
-  'Juillet',
-  'Août',
-  'Septembre',
-  'Octobre',
-  'Novembre',
-  'Décembre',
-];
+import {
+  useCalendarEntries,
+  usePendingReviews,
+  useUpcomingEntries,
+} from '../../src/lib/queries/useCalendar';
 
 const UPCOMING_LIMIT = 6;
 
@@ -55,6 +44,7 @@ export default function CalendarScreen() {
   const { from, to } = useMemo(() => monthRangeIso(viewed.year, viewed.monthIndex), [viewed]);
   const entriesQuery = useCalendarEntries(from, to);
   const pendingQuery = usePendingReviews();
+  const upcomingQuery = useUpcomingEntries();
 
   const todayKey = localDayKey(now.toISOString());
   const nowMs = now.getTime();
@@ -71,7 +61,7 @@ export default function CalendarScreen() {
   }, [entriesQuery.data, nowMs]);
 
   const upcomingItems: UpcomingItem[] = useMemo(() => {
-    return (entriesQuery.data ?? [])
+    return (upcomingQuery.data ?? [])
       .filter((entry) => new Date(entry.scheduledAt).getTime() >= nowMs)
       .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
       .slice(0, UPCOMING_LIMIT)
@@ -82,7 +72,7 @@ export default function CalendarScreen() {
         venue: entry.activity ? (entry.activity.kind === 'EVENT' ? 'Événement' : 'Lieu') : 'Montréal',
         slug: entry.activity?.slug ?? null,
       }));
-  }, [entriesQuery.data, nowMs]);
+  }, [upcomingQuery.data, nowMs]);
 
   const pendingItems = (pendingQuery.data ?? []).map((entry) => ({
     id: entry.id,
@@ -202,7 +192,26 @@ export default function CalendarScreen() {
 
         <View style={styles.section}>
           <SectionHeader title="Prochaines sorties" />
-          <UpcomingList items={upcomingItems} />
+          {upcomingQuery.isLoading ? (
+            <ActivityIndicator color={theme.colors.brass} style={styles.gridLoading} />
+          ) : upcomingQuery.isError ? (
+            <View style={styles.gridError}>
+              <AppText variant="body" color={theme.colors.smoke} style={styles.gridErrorText}>
+                Impossible de charger vos prochaines sorties.
+              </AppText>
+              <Pressable
+                onPress={() => upcomingQuery.refetch()}
+                accessibilityRole="button"
+                style={styles.gridErrorButton}
+              >
+                <AppText variant="subtitle" color={theme.colors.brass}>
+                  Réessayer
+                </AppText>
+              </Pressable>
+            </View>
+          ) : (
+            <UpcomingList items={upcomingItems} />
+          )}
         </View>
       </ScrollView>
 

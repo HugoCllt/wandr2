@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
+import { Alert, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { FeedItemDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
@@ -12,6 +12,10 @@ type CardActionsProps = {
   activity: FeedItemDTO;
   variant?: 'card' | 'detail';
 };
+
+function notifyActionFailed(message: string) {
+  Alert.alert('Action impossible', `${message} Vérifiez votre connexion et réessayez.`);
+}
 
 export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
   const [favorited, setFavorited] = useState(activity.isFavorited);
@@ -41,7 +45,12 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
     setFavorited(next);
     toggleFavorite.mutate(
       { activityId: activity.id, next },
-      { onError: () => setFavorited(!next) },
+      {
+        onError: () => {
+          setFavorited(!next);
+          notifyActionFailed(next ? 'Impossible d’ajouter aux favoris.' : 'Impossible de retirer des favoris.');
+        },
+      },
     );
   }
 
@@ -51,7 +60,12 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
 
     if (bookmarked) {
       setBookmarked(false);
-      removeBookmark.mutate(activity.id, { onError: () => setBookmarked(true) });
+      removeBookmark.mutate(activity.id, {
+        onError: () => {
+          setBookmarked(true);
+          notifyActionFailed('Impossible de retirer du calendrier.');
+        },
+      });
       return;
     }
 
@@ -59,7 +73,12 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
       setBookmarked(true);
       addToCalendar.mutate(
         { activityId: activity.id, scheduledAt: activity.dateStart },
-        { onError: () => setBookmarked(false) },
+        {
+          onError: () => {
+            setBookmarked(false);
+            notifyActionFailed('Impossible d’ajouter au calendrier.');
+          },
+        },
       );
       return;
     }

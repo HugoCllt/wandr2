@@ -40,11 +40,11 @@ function CategoryScreen({ categoryKey }: { categoryKey: CategoryKey }) {
       <FeedList
         query={query}
         columns={columns}
-        emptyLabel="Rien ici pour l'instant"
+        emptyLabel="Rien ici pour l’instant"
         bottomInset={FILTER_TRIGGER_CLEARANCE}
         ListHeaderComponent={
           <View style={styles.header}>
-            <AppText variant="caption" color={theme.colors.smoke} style={styles.eyebrow}>
+            <AppText variant="eyebrow" color={theme.colors.smoke}>
               {eyebrow}
             </AppText>
             <AppText variant="display" color={theme.colors.ink}>
@@ -72,8 +72,5 @@ const styles = StyleSheet.create({
   header: {
     gap: theme.space.s1,
     paddingBottom: theme.space.s2,
-  },
-  eyebrow: {
-    letterSpacing: 1.2,
   },
 });

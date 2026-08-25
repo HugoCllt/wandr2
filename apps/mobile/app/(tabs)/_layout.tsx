@@ -13,10 +13,7 @@ export default function TabsLayout() {
           backgroundColor: theme.colors.ink,
           borderTopWidth: 0,
         },
-        tabBarLabelStyle: {
-          fontFamily: 'PublicSans_500Medium',
-          fontSize: 11,
-        },
+        tabBarLabelStyle: theme.type.tabLabel,
       }}
     >
       <Tabs.Screen

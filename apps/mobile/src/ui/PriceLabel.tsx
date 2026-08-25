@@ -1,6 +1,6 @@
 import type { ActivityDTO } from '@wandr/shared';
 import type { StyleProp, TextStyle } from 'react-native';
-import { AppText } from './AppText';
+import { AppText, type AppTextVariant } from './AppText';
 
 export function formatActivityPrice(activity: Pick<ActivityDTO, 'priceMinCents' | 'priceMaxCents'>): string | null {
   if (activity.priceMinCents === null) return null;
@@ -17,14 +17,15 @@ export function formatActivityPrice(activity: Pick<ActivityDTO, 'priceMinCents' 
 type PriceLabelProps = {
   activity: Pick<ActivityDTO, 'priceMinCents' | 'priceMaxCents'>;
   color?: string;
+  variant?: AppTextVariant;
   style?: StyleProp<TextStyle>;
 };
 
-export function PriceLabel({ activity, color, style }: PriceLabelProps) {
+export function PriceLabel({ activity, color, variant = 'caption', style }: PriceLabelProps) {
   const price = formatActivityPrice(activity);
   if (!price) return null;
   return (
-    <AppText variant="caption" color={color} style={style}>
+    <AppText variant={variant} color={color} style={style}>
       {price}
     </AppText>
   );

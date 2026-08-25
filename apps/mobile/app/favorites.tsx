@@ -40,7 +40,7 @@ export default function FavoritesScreen() {
         </AppText>
         <View style={styles.headerSpacer} />
       </View>
-      <FeedList query={query} columns={columns} emptyLabel="Aucun favori pour l'instant" />
+      <FeedList query={query} columns={columns} emptyLabel="Aucun favori pour l’instant" />
     </SafeAreaView>
   );
 }

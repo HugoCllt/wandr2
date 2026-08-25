@@ -1,4 +1,5 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
@@ -21,7 +22,12 @@ export default function RootLayout() {
   const [publicSansLoaded, publicSansError] = usePublicSansFonts({ PublicSans_400Regular, PublicSans_500Medium });
   const fontsLoaded = (libreBodoniLoaded || !!libreBodoniError) && (publicSansLoaded || !!publicSansError);
   const { data: session, isPending } = useSession();
-  const ready = fontsLoaded && !isPending;
+  const [booted, setBooted] = useState(false);
+  const resolved = fontsLoaded && !isPending;
+  if (resolved && !booted) {
+    setBooted(true);
+  }
+  const ready = booted || resolved;
 
   const hideSplash = useCallback(async () => {
     if (ready) {
@@ -34,7 +40,7 @@ export default function RootLayout() {
   }, [hideSplash]);
 
   if (!ready) {
-    return null;
+    return <View style={{ flex: 1, backgroundColor: theme.colors.offwhite }} />;
   }
 
   const user = session?.user as SessionUser | undefined;

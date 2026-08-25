@@ -29,7 +29,7 @@ export default function PremiumRequiredScreen() {
           Le chat Wandr est réservé aux comptes Premium.
         </AppText>
         <AppText variant="body" color={theme.colors.smoke} style={styles.explanation}>
-          Cette fonctionnalité n&rsquo;est pas incluse dans votre abonnement actuel.
+          Cette fonctionnalité n’est pas incluse dans votre abonnement actuel.
         </AppText>
         <Pressable onPress={goBack} accessibilityRole="button" style={styles.button}>
           <AppText variant="subtitle" color={theme.colors.white}>

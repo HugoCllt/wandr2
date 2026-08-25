@@ -50,11 +50,11 @@ export function ImagelessCard({ activity, onPress, actionsSlot }: ImagelessCardP
             {activity.title}
           </AppText>
           <View style={styles.metaRow}>
-            <AppText variant="caption" color={theme.colors.smoke}>
+            <AppText variant="caption" color={theme.colors.smoke} numberOfLines={1}>
               {formatActivityWhen(activity)}
             </AppText>
             <View style={styles.dot} />
-            <AppText variant="caption" color={theme.colors.smoke}>
+            <AppText variant="caption" color={theme.colors.smoke} numberOfLines={1} style={styles.metaWhere}>
               {formatActivityWhere(activity)}
             </AppText>
           </View>
@@ -101,6 +101,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.space.s2,
+  },
+  metaWhere: {
+    flexShrink: 1,
   },
   dot: {
     width: 3,

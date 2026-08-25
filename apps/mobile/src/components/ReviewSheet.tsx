@@ -81,7 +81,7 @@ export function ReviewSheet({
       });
       sheetRef.current?.dismiss();
     } catch {
-      setError("Échec de l'enregistrement.");
+      setError('Échec de l’enregistrement.');
     }
   }
 
@@ -103,7 +103,7 @@ export function ReviewSheet({
     >
       <BottomSheetView style={styles.header}>
         <AppText variant="title" color={theme.colors.ink}>
-          Comment c&rsquo;était ?
+          Comment c’était ?
         </AppText>
         <AppText variant="body" color={theme.colors.smoke}>
           {activityTitle}
@@ -184,16 +184,16 @@ export function ReviewSheet({
           </AppText>
         </View>
 
+      </BottomSheetScrollView>
+
+      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         {error && (
           <View style={styles.errorBox}>
-            <AppText variant="caption" color={theme.colors.live}>
+            <AppText variant="caption" color={theme.colors.live} accessibilityRole="alert">
               {error}
             </AppText>
           </View>
         )}
-      </BottomSheetScrollView>
-
-      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         <Pressable
           onPress={handleSubmit}
           disabled={!valid || reviewEntry.isPending}
@@ -284,9 +284,10 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   errorBox: {
+    marginBottom: theme.space.s3,
     padding: theme.space.s3,
     borderRadius: theme.radius.sm,
-    backgroundColor: 'rgba(216,69,63,0.12)',
+    backgroundColor: theme.colors.liveTint,
   },
   ctaBar: {
     paddingHorizontal: theme.space.s5,

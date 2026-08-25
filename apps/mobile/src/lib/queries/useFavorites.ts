@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import type { FeedResultDTO } from '@wandr/shared';
+import type { ActivityDetailDTO, FeedResultDTO } from '@wandr/shared';
 import { apiJson } from '../api';
 
 const FAVORITES_LIMIT = 24;
@@ -47,29 +47,38 @@ export function useToggleFavorite() {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: ['feed'] }),
         queryClient.cancelQueries({ queryKey: ['favorites'] }),
+        queryClient.cancelQueries({ queryKey: ['activity'] }),
       ]);
 
       const previous = [
         ...queryClient.getQueriesData<FeedPages>({ queryKey: ['feed'] }),
         ...queryClient.getQueriesData<FeedPages>({ queryKey: ['favorites'] }),
       ];
+      const previousDetails = queryClient.getQueriesData<ActivityDetailDTO>({ queryKey: ['activity'] });
 
       const flip = (data: FeedPages | undefined): FeedPages | undefined =>
         data ? { ...data, pages: data.pages.map((page) => flipFavorited(page, activityId, next)) } : data;
 
       queryClient.setQueriesData<FeedPages>({ queryKey: ['feed'] }, flip);
       queryClient.setQueriesData<FeedPages>({ queryKey: ['favorites'] }, flip);
+      queryClient.setQueriesData<ActivityDetailDTO>({ queryKey: ['activity'] }, (data) =>
+        data && data.id === activityId ? { ...data, isFavorited: next } : data,
+      );
 
-      return { previous };
+      return { previous, previousDetails };
     },
     onError: (_err, _vars, context) => {
       context?.previous.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+      context?.previousDetails.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
     },
   });
 }

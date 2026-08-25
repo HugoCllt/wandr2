@@ -19,6 +19,27 @@ type MonthGridProps = {
 
 const WEEKDAYS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
+export const MONTHS_FULL = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
+function cellLabel(cell: { day: number; monthIndex: number }, count: number, isToday: boolean): string {
+  const outings = count === 0 ? 'aucune sortie' : count === 1 ? '1 sortie' : `${count} sorties`;
+  const today = isToday ? ', aujourd’hui' : '';
+  return `${cell.day} ${MONTHS_FULL[cell.monthIndex].toLowerCase()}${today}, ${outings}`;
+}
+
 function dotColor(entries: MonthGridEntry[]): { color: string; opacity: number } {
   if (entries.some((e) => e.outcome === 'DONE')) return { color: theme.colors.teal, opacity: 1 };
   if (entries.some((e) => e.outcome === 'MISSED')) return { color: theme.colors.smoke, opacity: 1 };
@@ -30,7 +51,7 @@ export function MonthGrid({ year, monthIndex, entriesByDay, todayKey }: MonthGri
   const cells = buildMonthGrid(year, monthIndex);
 
   return (
-    <View>
+    <View accessibilityRole="list" accessibilityLabel={`${MONTHS_FULL[monthIndex]} ${year}`}>
       <View style={styles.weekdayRow}>
         {WEEKDAYS.map((label) => (
           <View key={label} style={styles.weekdayCell}>
@@ -47,12 +68,17 @@ export function MonthGrid({ year, monthIndex, entriesByDay, todayKey }: MonthGri
           const isToday = key === todayKey;
           const dot = entries.length > 0 ? dotColor(entries) : null;
           return (
-            <View key={i} style={styles.cell}>
+            <View
+              key={i}
+              style={styles.cell}
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={cellLabel(cell, entries.length, isToday)}
+            >
               <View style={[styles.dayCircle, isToday && styles.dayCircleToday]}>
                 <AppText
-                  variant="title"
+                  variant="numeralSm"
                   color={cell.outside ? theme.colors.silver : isToday ? theme.colors.white : theme.colors.ink}
-                  style={styles.dayNumber}
                 >
                   {cell.day}
                 </AppText>
@@ -96,10 +122,6 @@ const styles = StyleSheet.create({
   },
   dayCircleToday: {
     backgroundColor: theme.colors.ink,
-  },
-  dayNumber: {
-    fontSize: 15,
-    lineHeight: 18,
   },
   dot: {
     width: 5,

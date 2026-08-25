@@ -43,13 +43,13 @@ const HeroSlide = memo(function HeroSlide({ activity, width, onPress }: HeroSlid
           transition={150}
         />
         <LinearGradient
-          colors={['transparent', 'rgba(30,26,22,0.9)']}
+          colors={['transparent', theme.colors.scrim900]}
           locations={[0.3, 1]}
           style={styles.scrim}
           pointerEvents="none"
         />
         <View style={styles.body}>
-          <AppText variant="caption" color={theme.colors.brass} style={styles.eyebrow}>
+          <AppText variant="eyebrow" color={theme.colors.brass}>
             À LA UNE
           </AppText>
           <AppText variant="display" color={theme.colors.white} numberOfLines={2}>
@@ -148,9 +148,6 @@ const styles = StyleSheet.create({
     right: theme.space.s4,
     bottom: theme.space.s5,
     gap: theme.space.s1,
-  },
-  eyebrow: {
-    letterSpacing: 1.2,
   },
   dots: {
     flexDirection: 'row',

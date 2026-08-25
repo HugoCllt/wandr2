@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   avatarLetter: {
     fontFamily: theme.type.title.fontFamily,
-    fontSize: 15,
+    fontSize: theme.type.body.fontSize,
     color: theme.colors.brass700,
   },
   assistantContent: {

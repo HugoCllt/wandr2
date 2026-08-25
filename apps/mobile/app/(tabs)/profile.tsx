@@ -133,7 +133,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.affinitySection}>
-          <AppText variant="caption" color={theme.colors.smoke} style={styles.sectionTitle}>
+          <AppText variant="eyebrow" color={theme.colors.smoke}>
             MES AFFINITÉS
           </AppText>
           <View style={styles.chipWrap}>
@@ -152,7 +152,12 @@ export default function ProfileScreen() {
 
         <View style={styles.rows}>
           <ProfileRow icon="heart" label="Favoris" onPress={() => router.push('/favorites')} showSeparator />
-          <ProfileRow icon="calendar" label="Calendrier" onPress={() => router.push('/calendar')} showSeparator />
+          <ProfileRow
+            icon="calendar"
+            label="Calendrier"
+            onPress={() => router.navigate('/calendar')}
+            showSeparator
+          />
           <ProfileRow
             icon="profile"
             label="Modifier le profil"
@@ -229,9 +234,6 @@ const styles = StyleSheet.create({
   affinitySection: {
     gap: theme.space.s2,
     marginBottom: theme.space.s5,
-  },
-  sectionTitle: {
-    letterSpacing: 0.8,
   },
   chipWrap: {
     flexDirection: 'row',

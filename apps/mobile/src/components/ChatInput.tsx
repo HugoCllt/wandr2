@@ -27,7 +27,8 @@ type ChatInputProps = {
   value: string;
   onChangeText: (text: string) => void;
   onSend: () => void;
-  disabled: boolean;
+  onStop: () => void;
+  isStreaming: boolean;
   activeContextIds: ChatContextId[];
   onToggleContext: (id: ChatContextId) => void;
 };
@@ -36,21 +37,26 @@ export function ChatInput({
   value,
   onChangeText,
   onSend,
-  disabled,
+  onStop,
+  isStreaming,
   activeContextIds,
   onToggleContext,
 }: ChatInputProps) {
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
-  const canSend = value.trim().length > 0 && !disabled;
+  const canSend = value.trim().length > 0 && !isStreaming;
 
-  function handleSend() {
-    if (!canSend) return;
+  function handlePress() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isStreaming) {
+      onStop();
+      return;
+    }
+    if (!canSend) return;
     onSend();
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.dock}>
         <View style={styles.toolsRow}>
           {CHAT_CONTEXT_TOOLS.map((tool) => {
@@ -93,13 +99,22 @@ export function ChatInput({
             }
           />
           <Pressable
-            onPress={handleSend}
-            disabled={!canSend}
+            onPress={handlePress}
+            disabled={!isStreaming && !canSend}
             accessibilityRole="button"
-            accessibilityLabel="Envoyer"
-            style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
+            accessibilityLabel={isStreaming ? 'Arrêter la réponse' : 'Envoyer'}
+            style={[
+              styles.sendButton,
+              isStreaming && styles.stopButton,
+              !isStreaming && !canSend && styles.sendButtonDisabled,
+            ]}
           >
-            <Icon name="arrow" size={18} color={theme.colors.white} strokeWidth={1.8} />
+            <Icon
+              name={isStreaming ? 'close' : 'arrow'}
+              size={18}
+              color={theme.colors.white}
+              strokeWidth={1.8}
+            />
           </Pressable>
         </View>
       </View>
@@ -163,5 +178,8 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.4,
+  },
+  stopButton: {
+    backgroundColor: theme.colors.ink,
   },
 });

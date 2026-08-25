@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -39,7 +39,7 @@ export default function ActivityDetailScreen() {
       accessibilityRole="button"
       accessibilityLabel="Fermer"
       hitSlop={8}
-      style={[styles.closeButton, { top: insets.top + theme.space.s3 }]}
+      style={styles.closeButton}
     >
       <Icon name="close" size={20} color={theme.colors.white} strokeWidth={2} />
     </Pressable>
@@ -48,7 +48,6 @@ export default function ActivityDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        {closeButton}
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.skeletonHero} />
           <View style={styles.body}>
@@ -60,6 +59,7 @@ export default function ActivityDetailScreen() {
             <View style={[styles.skeletonBlock, styles.skeletonRow]} />
           </View>
         </ScrollView>
+        {closeButton}
       </View>
     );
   }
@@ -68,10 +68,9 @@ export default function ActivityDetailScreen() {
     const notFound = error instanceof ApiError && error.status === 404;
     return (
       <View style={styles.container}>
-        {closeButton}
         <View style={styles.errorCenter}>
           <AppText variant="subtitle" color={theme.colors.ink} style={styles.errorText}>
-            {notFound ? "Cette activité n'existe plus." : 'Impossible de charger cette activité.'}
+            {notFound ? 'Cette activité n’existe plus.' : 'Impossible de charger cette activité.'}
           </AppText>
           <Pressable
             onPress={() => (notFound ? goBack() : refetch())}
@@ -83,6 +82,7 @@ export default function ActivityDetailScreen() {
             </AppText>
           </Pressable>
         </View>
+        {closeButton}
       </View>
     );
   }
@@ -121,16 +121,22 @@ function ActivityDetailContent({
   const price = formatActivityPrice(activity);
   const address = activity.neighborhood ? `${activity.address}, ${activity.neighborhood}` : activity.address;
 
+  const [linkError, setLinkError] = useState<string | null>(null);
+
   const handleOpenMaps = () => {
     const mapsUrl = Platform.select<string>({
       ios: `maps:?q=${activity.latitude},${activity.longitude}`,
       android: `geo:${activity.latitude},${activity.longitude}?q=${encodeURIComponent(activity.title)}`,
     });
-    if (mapsUrl) Linking.openURL(mapsUrl);
+    if (!mapsUrl) return;
+    setLinkError(null);
+    Linking.openURL(mapsUrl).catch(() => setLinkError('Impossible d’ouvrir l’application de cartes.'));
   };
 
   const handleOpenWebsite = () => {
-    if (activity.externalUrl) Linking.openURL(activity.externalUrl);
+    if (!activity.externalUrl) return;
+    setLinkError(null);
+    Linking.openURL(activity.externalUrl).catch(() => setLinkError('Impossible d’ouvrir ce lien.'));
   };
 
   return (
@@ -181,7 +187,7 @@ function ActivityDetailContent({
               <AppText variant="caption" color={theme.colors.smoke}>
                 Prix
               </AppText>
-              <PriceLabel activity={activity} color={theme.colors.brass700} style={styles.priceValue} />
+              <PriceLabel activity={activity} variant="subtitle" color={theme.colors.brass700} />
             </View>
           )}
 
@@ -207,6 +213,14 @@ function ActivityDetailContent({
       </ScrollView>
 
       {closeButton}
+
+      {linkError && (
+        <View style={styles.linkErrorBar}>
+          <AppText variant="caption" color={theme.colors.live} accessibilityRole="alert">
+            {linkError}
+          </AppText>
+        </View>
+      )}
 
       <View style={[styles.actionBar, { paddingBottom: insets.bottom + theme.space.s3 }]}>
         <View style={styles.actionsSlot}>
@@ -255,7 +269,10 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
+    top: theme.space.s4,
     right: theme.space.s3,
+    zIndex: 1,
+    elevation: 1,
     width: 44,
     height: 44,
     borderRadius: theme.radius.pill,
@@ -293,10 +310,6 @@ const styles = StyleSheet.create({
     gap: 2,
     marginTop: -theme.space.s2,
   },
-  priceValue: {
-    fontSize: 17,
-    lineHeight: 22,
-  },
   chips: {
     flexDirection: 'row',
     gap: theme.space.s2,
@@ -307,6 +320,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.space.s2,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.surface3,
+  },
+  linkErrorBar: {
+    paddingHorizontal: theme.space.s4,
+    paddingVertical: theme.space.s2,
+    backgroundColor: theme.colors.liveTint,
   },
   actionBar: {
     flexDirection: 'row',

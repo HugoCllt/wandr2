@@ -1,7 +1,7 @@
 import { Text, type TextProps } from 'react-native';
 import { theme } from '../theme/tokens';
 
-export type AppTextVariant = 'display' | 'title' | 'subtitle' | 'body' | 'caption';
+export type AppTextVariant = keyof typeof theme.type;
 
 type AppTextProps = TextProps & {
   variant?: AppTextVariant;

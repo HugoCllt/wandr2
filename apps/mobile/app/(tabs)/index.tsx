@@ -23,11 +23,11 @@ export default function AccueilScreen() {
       <FeedList
         query={query}
         columns={columns}
-        emptyLabel="Rien ici pour l'instant"
+        emptyLabel="Rien ici pour l’instant"
         bottomInset={FILTER_TRIGGER_CLEARANCE}
         ListHeaderComponent={
           <View>
-            <AppText variant="caption" color={theme.colors.smoke} style={styles.eyebrow}>
+            <AppText variant="eyebrow" color={theme.colors.smoke}>
               CE WEEK-END À MONTRÉAL
             </AppText>
             <View style={styles.hero}>
@@ -52,9 +52,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: theme.colors.offwhite,
-  },
-  eyebrow: {
-    letterSpacing: 1.2,
   },
   hero: {
     marginHorizontal: -theme.space.s4,

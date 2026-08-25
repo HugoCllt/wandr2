@@ -25,16 +25,18 @@ function CategoryTile({ categoryKey }: { categoryKey: CategoryKey }) {
       accessibilityLabel={label}
     >
       <Animated.View style={[styles.tile, animatedStyle]}>
-        <Image source={{ uri: preset.heroImage }} style={styles.image} contentFit="cover" transition={150} />
-        <LinearGradient
-          colors={['transparent', 'rgba(30,26,22,0.75)']}
-          style={styles.scrim}
-          pointerEvents="none"
-        />
-        <View style={styles.labelWrap}>
-          <AppText variant="title" color={theme.colors.white} style={styles.label}>
-            {label}
-          </AppText>
+        <View style={styles.tileClip}>
+          <Image source={{ uri: preset.heroImage }} style={styles.image} contentFit="cover" transition={150} />
+          <LinearGradient
+            colors={['transparent', theme.colors.scrim900]}
+            style={styles.scrim}
+            pointerEvents="none"
+          />
+          <View style={styles.labelWrap}>
+            <AppText variant="title" color={theme.colors.white} style={styles.label}>
+              {label}
+            </AppText>
+          </View>
         </View>
       </Animated.View>
     </Pressable>
@@ -83,9 +85,13 @@ const styles = StyleSheet.create({
   tile: {
     aspectRatio: 1,
     borderRadius: theme.radius.card,
+    ...theme.shadow.card,
+  },
+  tileClip: {
+    flex: 1,
+    borderRadius: theme.radius.card,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface3,
-    ...theme.shadow.card,
   },
   image: {
     position: 'absolute',

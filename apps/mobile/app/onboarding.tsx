@@ -4,7 +4,8 @@ import {
   type ProfileFormDTO,
 } from '@wandr/shared';
 import { ProfileForm, type ProfileFormInitial } from '../src/components/ProfileForm';
-import { useSession, type SessionUser } from '../src/lib/auth-client';
+import { authClient, useSession, type SessionUser } from '../src/lib/auth-client';
+import { queryClient } from '../src/lib/queries/queryClient';
 import { useUpdateProfile } from '../src/lib/queries/useProfile';
 
 const DEFAULT_AFFINITY = 5;
@@ -35,5 +36,20 @@ export default function OnboardingScreen() {
     await refetch();
   }
 
-  return <ProfileForm initial={initial} dismissable={false} onSubmit={handleSubmit} />;
+  async function handleSignOut() {
+    try {
+      await authClient.signOut();
+    } finally {
+      queryClient.clear();
+    }
+  }
+
+  return (
+    <ProfileForm
+      initial={initial}
+      dismissable={false}
+      onSubmit={handleSubmit}
+      onSignOut={() => void handleSignOut()}
+    />
+  );
 }
