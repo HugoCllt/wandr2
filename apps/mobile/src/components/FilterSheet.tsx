@@ -7,6 +7,7 @@ import {
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isDateRange, type FilterValueDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
@@ -76,6 +77,7 @@ type FilterSheetProps = {
 
 export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetProps) {
   const sheetRef = useRef<BottomSheetModal>(null);
+  const insets = useSafeAreaInsets();
   const facets = useFacets();
 
   const [wasVisible, setWasVisible] = useState(visible);
@@ -322,7 +324,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
         </Section>
       </BottomSheetScrollView>
 
-      <View style={styles.ctaBar}>
+      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         <Pressable onPress={handleReset} accessibilityRole="button" style={styles.resetButton}>
           <AppText variant="subtitle" color={theme.colors.ink}>
             Réinitialiser

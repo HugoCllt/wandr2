@@ -1,6 +1,6 @@
 # MOBILE_MIGRATION.md — Migration iOS / Android
 
-> **Statut : décidé — plan d'exécution dans [`docs/superpowers/plans/2026-08-23-mobile-migration-phase1.md`](./docs/superpowers/plans/2026-08-23-mobile-migration-phase1.md)** (décisions Q2–Q18 actées le 2026-08-23 ; ce document reste l'analyse de faisabilité d'origine).
+> **Statut : Phase 1 exécutée (2026-08-23/24)** — plan d'exécution dans [`docs/superpowers/plans/2026-08-23-mobile-migration-phase1.md`](./docs/superpowers/plans/2026-08-23-mobile-migration-phase1.md) (décisions Q2–Q18 actées le 2026-08-23). L'app Expo (`apps/mobile`) couvre login/onboarding, home + hero, explore + 6 catégories, détail activité, favoris, calendrier complet, filtres bottom-sheet, chat en streaming et profil, avec icône/splash `AffinityRose` statiques. Travail restant connu : passe manuelle sur device (iOS/Android réels), carte native (Phase 2, §3.1 ci-dessous), réalignement web (lecture B, Phase 2). Ce document reste par ailleurs l'analyse de faisabilité d'origine.
 > Ce document est l'analyse de faisabilité d'un passage de Wandr (web Next.js) vers les stores mobiles.
 > Base analysée : Next 14 App Router, Prisma/Postgres, better-auth, LangGraph + OpenRouter/Ollama, MapLibre.
 

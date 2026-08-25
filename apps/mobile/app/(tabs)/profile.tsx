@@ -120,7 +120,11 @@ export default function ProfileScreen() {
               {bio}
             </AppText>
           ) : (
-            <Pressable onPress={() => router.push('/profile-edit')} accessibilityRole="button">
+            <Pressable
+              onPress={() => router.push('/profile-edit')}
+              accessibilityRole="button"
+              style={styles.bioGhostButton}
+            >
               <AppText variant="body" color={theme.colors.silver} style={styles.bioGhost}>
                 Ajouter une bio
               </AppText>
@@ -214,6 +218,10 @@ const styles = StyleSheet.create({
   bio: {
     textAlign: 'center',
     paddingHorizontal: theme.space.s5,
+  },
+  bioGhostButton: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   bioGhost: {
     textAlign: 'center',

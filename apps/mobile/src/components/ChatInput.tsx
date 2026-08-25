@@ -81,7 +81,7 @@ export function ChatInput({
           <TextInput
             value={value}
             onChangeText={onChangeText}
-            placeholder="Réponds ou précise ton envie…"
+            placeholder="Répondez ou précisez votre envie…"
             placeholderTextColor={theme.colors.smoke}
             multiline
             style={[

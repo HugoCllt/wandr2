@@ -7,6 +7,7 @@ import {
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
 import { useReviewEntry } from '../lib/queries/useCalendar';
@@ -32,6 +33,7 @@ export function ReviewSheet({
   onClose,
 }: ReviewSheetProps) {
   const sheetRef = useRef<BottomSheetModal>(null);
+  const insets = useSafeAreaInsets();
   const [outcome, setOutcome] = useState<Outcome>('DONE');
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [note, setNote] = useState('');
@@ -191,7 +193,7 @@ export function ReviewSheet({
         )}
       </BottomSheetScrollView>
 
-      <View style={styles.ctaBar}>
+      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         <Pressable
           onPress={handleSubmit}
           disabled={!valid || reviewEntry.isPending}

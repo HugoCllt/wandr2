@@ -137,6 +137,21 @@ export default function CalendarScreen() {
 
         {entriesQuery.isLoading ? (
           <ActivityIndicator color={theme.colors.brass} style={styles.gridLoading} />
+        ) : entriesQuery.isError ? (
+          <View style={styles.gridError}>
+            <AppText variant="body" color={theme.colors.smoke} style={styles.gridErrorText}>
+              Impossible de charger le calendrier.
+            </AppText>
+            <Pressable
+              onPress={() => entriesQuery.refetch()}
+              accessibilityRole="button"
+              style={styles.gridErrorButton}
+            >
+              <AppText variant="subtitle" color={theme.colors.brass}>
+                Réessayer
+              </AppText>
+            </Pressable>
+          </View>
         ) : (
           <MonthGrid year={viewed.year} monthIndex={viewed.monthIndex} entriesByDay={entriesByDay} todayKey={todayKey} />
         )}
@@ -227,6 +242,20 @@ const styles = StyleSheet.create({
   },
   gridLoading: {
     paddingVertical: theme.space.s6,
+  },
+  gridError: {
+    alignItems: 'center',
+    gap: theme.space.s3,
+    paddingVertical: theme.space.s6,
+  },
+  gridErrorText: {
+    textAlign: 'center',
+  },
+  gridErrorButton: {
+    minHeight: 44,
+    paddingHorizontal: theme.space.s5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
     gap: theme.space.s3,

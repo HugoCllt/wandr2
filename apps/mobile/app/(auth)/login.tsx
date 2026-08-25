@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '../../src/ui/AppText';
 import { theme } from '../../src/theme/tokens';
 import { authClient } from '../../src/lib/auth-client';
@@ -68,7 +69,8 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <SafeAreaView style={styles.flex} edges={['top', 'bottom', 'left', 'right']}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <AppText style={styles.logo}>Wandr</AppText>
@@ -183,7 +185,8 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -268,7 +271,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface2,
   },
   toggle: {
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: theme.space.s3,
   },
   toggleLabel: {

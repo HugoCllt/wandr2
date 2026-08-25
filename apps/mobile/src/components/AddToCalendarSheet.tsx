@@ -7,6 +7,7 @@ import {
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
 import { ApiError } from '../lib/api';
@@ -70,6 +71,7 @@ export function AddToCalendarSheet({
   onSaved,
 }: AddToCalendarSheetProps) {
   const sheetRef = useRef<BottomSheetModal>(null);
+  const insets = useSafeAreaInsets();
   const days = useMemo(() => buildUpcomingDays(UPCOMING_DAYS), []);
   const [selectedDay, setSelectedDay] = useState<DayOption>(days[0]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -201,7 +203,7 @@ export function AddToCalendarSheet({
         )}
       </BottomSheetScrollView>
 
-      <View style={styles.ctaBar}>
+      <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         <Pressable
           onPress={handleSubmit}
           disabled={!selectedTime || pending}
