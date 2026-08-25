@@ -6,7 +6,11 @@ import type { CityDTO } from '../../../shared/contracts/CityDTO';
 import { prisma } from '../../../shared/db/prisma';
 import type { City } from '../domain/City';
 import { PrismaCityRepository } from '../infra/PrismaCityRepository';
-import { FALLBACK_CITY_SLUG, resolveCityCandidates } from './resolveCityCandidates';
+import {
+  FALLBACK_CITY_SLUG,
+  resolveCityCandidates,
+  resolveEagerCityCandidates,
+} from './resolveCityCandidates';
 
 /**
  * Session cookie (no Max-Age): a city picked in the Nav survives every
@@ -22,8 +26,14 @@ export const getActiveCity = cache(async (): Promise<City> => {
 
   const headerSlug = headers().get('x-wandr-city');
   const cookieSlug = cookies().get(ACTIVE_CITY_COOKIE)?.value ?? null;
-  const user = await getOptionalUser();
 
+  const eager = resolveEagerCityCandidates({ headerSlug, cookieSlug });
+  for (const slug of eager) {
+    const picked = await cities.findBySlug(slug);
+    if (picked) return picked;
+  }
+
+  const user = await getOptionalUser();
   const candidates = resolveCityCandidates({
     headerSlug,
     cookieSlug,
@@ -31,6 +41,7 @@ export const getActiveCity = cache(async (): Promise<City> => {
   });
 
   for (const slug of candidates) {
+    if (eager.includes(slug)) continue;
     const picked = await cities.findBySlug(slug);
     if (picked) return picked;
   }

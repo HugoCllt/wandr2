@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && tsc --noEmit -p packages/shared",
     "mobile:type-check": "pnpm --filter wandr-mobile exec tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

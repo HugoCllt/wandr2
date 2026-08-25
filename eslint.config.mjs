@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 const config = [
-  { ignores: ['.next/**', 'node_modules/**', 'prisma/migrations/**'] },
+  { ignores: ['.next/**', 'node_modules/**', 'prisma/migrations/**', 'apps/**'] },
   ...compat.extends('next/core-web-vitals'),
 ];
 

@@ -6,15 +6,11 @@ export type ResolveCityCandidatesInput = {
   profileSlug: string | null;
 };
 
-export function resolveCityCandidates({
-  headerSlug,
-  cookieSlug,
-  profileSlug,
-}: ResolveCityCandidatesInput): string[] {
+function dedupeTrimmed(raws: (string | null)[]): string[] {
   const candidates: string[] = [];
   const seen = new Set<string>();
 
-  for (const raw of [headerSlug, cookieSlug, profileSlug, FALLBACK_CITY_SLUG]) {
+  for (const raw of raws) {
     const trimmed = raw?.trim();
     if (trimmed && !seen.has(trimmed)) {
       seen.add(trimmed);
@@ -23,4 +19,19 @@ export function resolveCityCandidates({
   }
 
   return candidates;
+}
+
+export function resolveEagerCityCandidates({
+  headerSlug,
+  cookieSlug,
+}: Omit<ResolveCityCandidatesInput, 'profileSlug'>): string[] {
+  return dedupeTrimmed([headerSlug, cookieSlug]);
+}
+
+export function resolveCityCandidates({
+  headerSlug,
+  cookieSlug,
+  profileSlug,
+}: ResolveCityCandidatesInput): string[] {
+  return dedupeTrimmed([headerSlug, cookieSlug, profileSlug, FALLBACK_CITY_SLUG]);
 }

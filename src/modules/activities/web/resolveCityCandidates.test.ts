@@ -1,6 +1,35 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveCityCandidates } from './resolveCityCandidates';
+import { resolveCityCandidates, resolveEagerCityCandidates } from './resolveCityCandidates';
+
+describe('resolveEagerCityCandidates', () => {
+  it('orders header -> cookie and never appends the fallback', () => {
+    expect(resolveEagerCityCandidates({ headerSlug: 'paris', cookieSlug: 'lyon' })).toEqual([
+      'paris',
+      'lyon',
+    ]);
+  });
+
+  it('keeps a montreal cookie as its own candidate', () => {
+    expect(resolveEagerCityCandidates({ headerSlug: null, cookieSlug: 'montreal' })).toEqual([
+      'montreal',
+    ]);
+  });
+
+  it('is empty when neither header nor cookie carries a slug', () => {
+    expect(resolveEagerCityCandidates({ headerSlug: '  ', cookieSlug: null })).toEqual([]);
+  });
+
+  it('is always a prefix of the full cascade', () => {
+    const eager = resolveEagerCityCandidates({ headerSlug: ' paris ', cookieSlug: 'paris' });
+    const full = resolveCityCandidates({
+      headerSlug: ' paris ',
+      cookieSlug: 'paris',
+      profileSlug: 'nice',
+    });
+    expect(full.slice(0, eager.length)).toEqual(eager);
+  });
+});
 
 describe('resolveCityCandidates', () => {
   it('orders header -> cookie -> profile -> montreal', () => {

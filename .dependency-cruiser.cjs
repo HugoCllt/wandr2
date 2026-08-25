@@ -90,7 +90,15 @@ module.exports = {
       comment:
         'shared/ui holds DTO-free primitives only. A component that consumes a DTO belongs to its capability (modules/<cap>/web). See CLAUDE.md §6.',
       from: { path: '^src/shared/ui' },
-      to: { path: '^src/shared/contracts' },
+      to: { path: ['^src/shared/contracts', '^packages/shared/src/contracts'] },
+    },
+    {
+      name: 'domain-no-presets',
+      severity: 'error',
+      comment:
+        'domain must not reach presentation config. CATEGORY_PRESETS & co. live in packages/shared/src/presets and belong to shared/presets consumers, not to entities.',
+      from: { path: '^src/modules/[^/]+/domain' },
+      to: { path: ['^src/shared/presets', '^packages/shared/src/presets'] },
     },
     {
       name: 'mobile-no-src',
@@ -110,6 +118,7 @@ module.exports = {
           '^src/app/',
           '\\.test\\.(?:ts|tsx)$',
           '^src/mcp/server\\.ts$',
+          '^src/middleware\\.ts$',
         ],
       },
       to: {},

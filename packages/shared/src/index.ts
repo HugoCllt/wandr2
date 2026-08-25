@@ -15,6 +15,7 @@ export * from './contracts/CityDTO';
 export * from './contracts/FeedQueryDTO';
 export * from './contracts/FeedResultDTO';
 export * from './contracts/FilterValueDTO';
+export * from './contracts/NeighborhoodDTO';
 export * from './contracts/ProfileFormDTO';
 export * from './contracts/ProfileViewDTO';
 export * from './contracts/toActivityDTO';

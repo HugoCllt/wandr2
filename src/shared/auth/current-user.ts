@@ -18,7 +18,6 @@ export type CurrentUser = {
   cityId: string;
   /** Display name of the profile city (`cityId`), for read-only labels. */
   cityName: string;
-  /** Slug of the profile city (`cityId`), for city-resolution fallback. */
   citySlug: string;
   isPremium: boolean;
   onboardedAt: Date | null;

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 
+import type {
+  NeighborhoodsResultDTO,
+  NeighborhoodSummaryDTO,
+} from '../../../shared/contracts/NeighborhoodDTO';
 import { getActiveCity } from './activeCity';
 import { listNeighborhoods } from './listNeighborhoods';
-
-export type NeighborhoodSummaryDTO = {
-  name: string;
-  count: number;
-};
 
 export async function getNeighborhoodsRouteHandler(): Promise<NextResponse> {
   const city = await getActiveCity();
@@ -15,5 +14,6 @@ export async function getNeighborhoodsRouteHandler(): Promise<NextResponse> {
     name: facet.name,
     count: facet.categories.length,
   }));
-  return NextResponse.json({ items });
+  const result: NeighborhoodsResultDTO = { items };
+  return NextResponse.json(result);
 }
