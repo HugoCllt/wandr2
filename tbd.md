@@ -135,6 +135,9 @@ Deferrals captured per `CLAUDE.md` §3.1. Nothing speculative ships in code; eve
 - Mutually-exclusive controls declare `accessibilityRole="button"` rather than `"radio"`: kind chips (`apps/mobile/src/components/FilterSheet.tsx:383`), gender chips (`apps/mobile/src/components/ProfileForm.tsx:199`), outcome segment (`apps/mobile/src/components/ReviewSheet.tsx:117,127`) (review C, minor).
 - `apps/mobile/src/components/AddToCalendarSheet.tsx:173` day pills show no month, so "mar 3" is ambiguous when the 14-day window crosses a month boundary (review C, minor).
 
+- `apps/mobile/app/activity/[slug].tsx:275` garde un `elevation: 1` littéral sur le bouton de fermeture : c'est un ordre d'empilement Android apparié au `zIndex: 1`, pas une ombre de design. Ne pas inventer un token à usage unique pour le satisfaire ; introduire `theme.elevation` seulement si un deuxième site en a besoin (re-revue finale, mineur 1).
+- `apps/mobile/src/components/AddToCalendarSheet.tsx:152` imbrique un `BottomSheetScrollView` horizontal dans le scrollable vertical de la feuille ; gorhom n'expose qu'un seul emplacement de scrollable, donc le pan-to-dismiss peut se déclencher à tort en balayant les puces. Vérifiable uniquement sur device réel (re-revue finale, mineur 3).
+
 ## Hardcoded
 
 - **Home hero eyebrow `"THIS WEEK IN <CITY>"`** is built in the home page from the active city name. Category heroes use `CATEGORY_PRESETS[key].eyebrow` and stay city-agnostic; home has no preset, so the template is a literal. Lift to a `HOME_PRESET` field if home copy becomes configurable. — `src/app/(with-sidebar)/page.tsx`, `FeaturedHero`.

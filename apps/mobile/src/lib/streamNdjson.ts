@@ -3,6 +3,7 @@ import type { ChatStreamEvent } from '@wandr/shared';
 import { authClient } from './auth-client';
 import { getCitySlug } from './city';
 import { ApiError } from './api';
+import { handleUnauthorized } from './queries/queryClient';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
 
@@ -40,7 +41,9 @@ export async function streamNdjson(
 
   if (!res.ok || !res.body) {
     const message = await extractStreamErrorMessage(res);
-    throw new ApiError(res.status, message);
+    const error = new ApiError(res.status, message);
+    handleUnauthorized(error);
+    throw error;
   }
 
   const reader = res.body.getReader();

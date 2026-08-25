@@ -4,7 +4,7 @@ import { authClient } from '../auth-client';
 
 let tearingDown = false;
 
-function handleUnauthorized(error: unknown): void {
+export function handleUnauthorized(error: unknown): void {
   if (!(error instanceof ApiError) || error.status !== 401) return;
   if (tearingDown) return;
   tearingDown = true;

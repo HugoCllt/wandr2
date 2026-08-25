@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics';
 import type { FeedItemDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { Icon, type IconName } from '../ui/Icon';
+import { ApiError } from '../lib/api';
 import { useToggleFavorite } from '../lib/queries/useFavorites';
 import { useAddToCalendar, useRemoveBookmark } from '../lib/queries/useCalendar';
 import { AddToCalendarSheet } from './AddToCalendarSheet';
@@ -13,7 +14,8 @@ type CardActionsProps = {
   variant?: 'card' | 'detail';
 };
 
-function notifyActionFailed(message: string) {
+function notifyActionFailed(error: unknown, message: string) {
+  if (error instanceof ApiError && error.status === 401) return;
   Alert.alert('Action impossible', `${message} Vérifiez votre connexion et réessayez.`);
 }
 
@@ -46,9 +48,9 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
     toggleFavorite.mutate(
       { activityId: activity.id, next },
       {
-        onError: () => {
+        onError: (error) => {
           setFavorited(!next);
-          notifyActionFailed(next ? 'Impossible d’ajouter aux favoris.' : 'Impossible de retirer des favoris.');
+          notifyActionFailed(error, next ? 'Impossible d’ajouter aux favoris.' : 'Impossible de retirer des favoris.');
         },
       },
     );
@@ -61,9 +63,9 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
     if (bookmarked) {
       setBookmarked(false);
       removeBookmark.mutate(activity.id, {
-        onError: () => {
+        onError: (error) => {
           setBookmarked(true);
-          notifyActionFailed('Impossible de retirer du calendrier.');
+          notifyActionFailed(error, 'Impossible de retirer du calendrier.');
         },
       });
       return;
@@ -74,9 +76,9 @@ export function CardActions({ activity, variant = 'card' }: CardActionsProps) {
       addToCalendar.mutate(
         { activityId: activity.id, scheduledAt: activity.dateStart },
         {
-          onError: () => {
+          onError: (error) => {
             setBookmarked(false);
-            notifyActionFailed('Impossible d’ajouter au calendrier.');
+            notifyActionFailed(error, 'Impossible d’ajouter au calendrier.');
           },
         },
       );
