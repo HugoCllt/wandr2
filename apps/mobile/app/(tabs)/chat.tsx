@@ -14,6 +14,7 @@ import { Icon } from '../../src/ui/Icon';
 import { ApiError } from '../../src/lib/api';
 import { streamNdjson } from '../../src/lib/streamNdjson';
 import { ChatBubble } from '../../src/components/ChatBubble';
+import { useTabBarClearance } from '../../src/theme/useTabBarClearance';
 import {
   ChatInput,
   buildChatContext,
@@ -63,6 +64,7 @@ function chatMessage(
 
 export default function ChatScreen() {
   const router = useRouter();
+  const clearance = useTabBarClearance();
   const [thread, setThread] = useState<ThreadItem[]>([]);
   const [streaming, setStreaming] = useState<Streaming | null>(null);
   const [draft, setDraft] = useState('');
@@ -256,15 +258,17 @@ export default function ChatScreen() {
       ) : (
         <EmptyState onPickPrompt={pickPrompt} />
       )}
-      <ChatInput
-        value={draft}
-        onChangeText={setDraft}
-        onSend={handleSend}
-        onStop={handleStop}
-        isStreaming={isStreaming}
-        activeContextIds={activeContextIds}
-        onToggleContext={toggleContext}
-      />
+      <View style={{ paddingBottom: clearance }}>
+        <ChatInput
+          value={draft}
+          onChangeText={setDraft}
+          onSend={handleSend}
+          onStop={handleStop}
+          isStreaming={isStreaming}
+          activeContextIds={activeContextIds}
+          onToggleContext={toggleContext}
+        />
+      </View>
     </SafeAreaView>
   );
 }

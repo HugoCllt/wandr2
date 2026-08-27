@@ -1,7 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context';
 import type { ActivityDetailDTO, FeedItemDTO } from '@wandr/shared';
@@ -33,22 +32,14 @@ export default function ActivityDetailScreen() {
     }
   };
 
-  const closeButton = (
-    <Pressable
-      onPress={goBack}
-      accessibilityRole="button"
-      accessibilityLabel="Fermer"
-      hitSlop={8}
-      style={styles.closeButton}
-    >
-      <Icon name="close" size={20} color={theme.colors.white} strokeWidth={2} />
-    </Pressable>
-  );
-
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.skeletonHero} />
           <View style={styles.body}>
             <View style={[styles.skeletonBlock, styles.skeletonEyebrow]} />
@@ -59,7 +50,6 @@ export default function ActivityDetailScreen() {
             <View style={[styles.skeletonBlock, styles.skeletonRow]} />
           </View>
         </ScrollView>
-        {closeButton}
       </View>
     );
   }
@@ -82,7 +72,6 @@ export default function ActivityDetailScreen() {
             </AppText>
           </Pressable>
         </View>
-        {closeButton}
       </View>
     );
   }
@@ -91,7 +80,6 @@ export default function ActivityDetailScreen() {
     <ActivityDetailContent
       activity={activity}
       insets={insets}
-      closeButton={closeButton}
       initialFavorited={favorited === '1'}
       initialBookmarked={bookmarked === '1'}
     />
@@ -101,13 +89,11 @@ export default function ActivityDetailScreen() {
 function ActivityDetailContent({
   activity,
   insets,
-  closeButton,
   initialFavorited,
   initialBookmarked,
 }: {
   activity: ActivityDetailDTO;
   insets: EdgeInsets;
-  closeButton: ReactNode;
   initialFavorited: boolean;
   initialBookmarked: boolean;
 }) {
@@ -141,20 +127,19 @@ function ActivityDetailContent({
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {activity.imageUrl ? (
           <Image source={{ uri: activity.imageUrl }} style={styles.hero} contentFit="cover" transition={150} />
         ) : (
-          <LinearGradient
-            colors={[theme.colors.surface2, theme.colors.surface3]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
+          <View style={[styles.hero, styles.heroFallback]}>
             <View style={styles.heroIconMark}>
               <Icon name={categoryIconFor(primary)} size={32} color={theme.colors.brass} strokeWidth={1.4} />
             </View>
-          </LinearGradient>
+          </View>
         )}
 
         <View style={styles.body}>
@@ -167,7 +152,7 @@ function ActivityDetailContent({
             </AppText>
           </View>
 
-          <AppText variant="display" color={theme.colors.ink} style={styles.title}>
+          <AppText variant="title" color={theme.colors.ink} style={styles.title} numberOfLines={3}>
             {activity.title}
           </AppText>
 
@@ -212,8 +197,6 @@ function ActivityDetailContent({
         </View>
       </ScrollView>
 
-      {closeButton}
-
       {linkError && (
         <View style={styles.linkErrorBar}>
           <AppText variant="caption" color={theme.colors.live} accessibilityRole="alert">
@@ -226,17 +209,27 @@ function ActivityDetailContent({
         <View style={styles.actionsSlot}>
           <CardActions activity={feedItem} variant="detail" />
         </View>
-        <Pressable onPress={handleOpenMaps} accessibilityRole="button" style={styles.primaryButton}>
+        <Pressable
+          onPress={handleOpenMaps}
+          accessibilityRole="button"
+          accessibilityLabel="Ouvrir dans Plans"
+          style={styles.primaryButton}
+        >
           <Icon name="pin" size={16} color={theme.colors.white} strokeWidth={1.8} />
-          <AppText variant="subtitle" color={theme.colors.white}>
-            Ouvrir dans Plans
+          <AppText variant="subtitle" color={theme.colors.white} numberOfLines={1} style={styles.buttonLabel}>
+            Plans
           </AppText>
         </Pressable>
         {activity.externalUrl && (
-          <Pressable onPress={handleOpenWebsite} accessibilityRole="button" style={styles.ghostButton}>
+          <Pressable
+            onPress={handleOpenWebsite}
+            accessibilityRole="button"
+            accessibilityLabel="Ouvrir le site web"
+            style={styles.ghostButton}
+          >
             <Icon name="external" size={16} color={theme.colors.brass} strokeWidth={1.8} />
-            <AppText variant="subtitle" color={theme.colors.brass}>
-              Site web
+            <AppText variant="subtitle" color={theme.colors.brass} numberOfLines={1} style={styles.buttonLabel}>
+              Site
             </AppText>
           </Pressable>
         )}
@@ -250,12 +243,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.offwhite,
   },
+  scroll: {
+    flex: 1,
+  },
   scrollContent: {
     paddingBottom: theme.space.s8,
   },
+  heroFallback: {
+    backgroundColor: theme.colors.surface3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   hero: {
     width: '100%',
-    aspectRatio: 4 / 3,
+    aspectRatio: 16 / 10,
+    borderTopLeftRadius: theme.radius.sheet,
+    borderTopRightRadius: theme.radius.sheet,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -264,19 +267,6 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.brassTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: theme.space.s4,
-    right: theme.space.s3,
-    zIndex: 1,
-    elevation: 1,
-    width: 44,
-    height: 44,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.scrim,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -343,24 +333,30 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    minHeight: 44,
+    minWidth: 0,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.space.s2,
+    paddingHorizontal: theme.space.s3,
     borderRadius: theme.radius.btn,
     backgroundColor: theme.colors.brass,
   },
   ghostButton: {
-    minHeight: 44,
+    flexShrink: 0,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.space.s2,
-    paddingHorizontal: theme.space.s4,
+    paddingHorizontal: theme.space.s3,
     borderRadius: theme.radius.btn,
     borderWidth: 1,
     borderColor: theme.colors.line,
+  },
+  buttonLabel: {
+    flexShrink: 1,
   },
   errorCenter: {
     flex: 1,
@@ -380,7 +376,9 @@ const styles = StyleSheet.create({
   },
   skeletonHero: {
     width: '100%',
-    aspectRatio: 4 / 3,
+    aspectRatio: 16 / 10,
+    borderTopLeftRadius: theme.radius.sheet,
+    borderTopRightRadius: theme.radius.sheet,
     backgroundColor: theme.colors.surface3,
   },
   skeletonBlock: {

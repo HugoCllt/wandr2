@@ -1,56 +1,14 @@
 import { Tabs } from 'expo-router';
-import { Icon } from '../../src/ui/Icon';
-import { theme } from '../../src/theme/tokens';
+import { GlassTabBar } from '../../src/components/GlassTabBar';
 
 export default function TabsLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.brass,
-        tabBarInactiveTintColor: theme.colors.silver,
-        tabBarStyle: {
-          backgroundColor: theme.colors.ink,
-          borderTopWidth: 0,
-        },
-        tabBarLabelStyle: theme.type.tabLabel,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Accueil',
-          tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explorer',
-          tabBarIcon: ({ color, size }) => <Icon name="compass" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: 'Calendrier',
-          tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Chat',
-          tabBarIcon: ({ color, size }) => <Icon name="chat" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => <Icon name="profile" color={color} size={size} />,
-        }}
-      />
+    <Tabs tabBar={(props) => <GlassTabBar {...props} />} screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="explore" options={{ title: 'Explorer' }} />
+      <Tabs.Screen name="calendar" options={{ title: 'Calendrier' }} />
+      <Tabs.Screen name="index" options={{ title: 'Accueil' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
     </Tabs>
   );
 }

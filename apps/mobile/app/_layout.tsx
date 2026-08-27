@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts as useLibreBodoniFonts, LibreBodoni_600SemiBold } from '@expo-google-fonts/libre-bodoni';
@@ -50,28 +49,66 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <BottomSheetModalProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: theme.colors.offwhite },
-            }}
-          >
-            <Stack.Protected guard={!isAuthenticated}>
-              <Stack.Screen name="(auth)" />
-            </Stack.Protected>
-            <Stack.Protected guard={isAuthenticated && !isOnboarded}>
-              <Stack.Screen name="onboarding" />
-            </Stack.Protected>
-            <Stack.Protected guard={isAuthenticated && isOnboarded}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="activity/[slug]" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="favorites" />
-              <Stack.Screen name="profile-edit" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="premium-required" />
-            </Stack.Protected>
-          </Stack>
-        </BottomSheetModalProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: theme.colors.offwhite },
+          }}
+        >
+          <Stack.Protected guard={!isAuthenticated}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+          <Stack.Protected guard={isAuthenticated && !isOnboarded}>
+            <Stack.Screen name="onboarding" />
+          </Stack.Protected>
+          <Stack.Protected guard={isAuthenticated && isOnboarded}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="activity/[slug]"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [0.6, 1],
+                sheetInitialDetentIndex: 0,
+                sheetGrabberVisible: true,
+                sheetCornerRadius: theme.radius.sheet,
+                sheetExpandsWhenScrolledToEdge: true,
+              }}
+            />
+            <Stack.Screen
+              name="filters"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [0.6, 0.95],
+                sheetInitialDetentIndex: 0,
+                sheetGrabberVisible: true,
+                sheetCornerRadius: theme.radius.sheet,
+              }}
+            />
+            <Stack.Screen
+              name="calendar-add"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [0.6, 0.95],
+                sheetInitialDetentIndex: 0,
+                sheetGrabberVisible: true,
+                sheetCornerRadius: theme.radius.sheet,
+              }}
+            />
+            <Stack.Screen
+              name="review"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [0.6, 0.95],
+                sheetInitialDetentIndex: 0,
+                sheetGrabberVisible: true,
+                sheetCornerRadius: theme.radius.sheet,
+              }}
+            />
+            <Stack.Screen name="favorites" />
+            <Stack.Screen name="profile-edit" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="premium-required" />
+          </Stack.Protected>
+        </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

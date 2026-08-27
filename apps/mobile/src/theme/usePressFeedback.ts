@@ -1,24 +1,27 @@
-import { useState } from 'react';
-import { Animated } from 'react-native';
+import { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { motion } from './motion';
 
-const PRESS_SCALE = 0.98;
-const PRESS_OPACITY = 0.92;
-const PRESS_DURATION = 120;
+const PRESS_SCALE = 0.972;
+const PRESS_OPACITY = 0.94;
 
 export function usePressFeedback() {
-  const [scale] = useState(() => new Animated.Value(1));
-  const [opacity] = useState(() => new Animated.Value(1));
+  const pressed = useSharedValue(0);
 
-  function animateTo(toScale: number, toOpacity: number) {
-    Animated.parallel([
-      Animated.timing(scale, { toValue: toScale, duration: PRESS_DURATION, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: toOpacity, duration: PRESS_DURATION, useNativeDriver: true }),
-    ]).start();
-  }
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(1 - pressed.value * (1 - PRESS_SCALE), motion.spring.press) }],
+    opacity: withTiming(1 - pressed.value * (1 - PRESS_OPACITY), {
+      duration: motion.duration.feedback,
+      easing: motion.easing.out,
+    }),
+  }));
 
   return {
-    animatedStyle: { transform: [{ scale }], opacity },
-    onPressIn: () => animateTo(PRESS_SCALE, PRESS_OPACITY),
-    onPressOut: () => animateTo(1, 1),
+    animatedStyle,
+    onPressIn: () => {
+      pressed.set(1);
+    },
+    onPressOut: () => {
+      pressed.set(0);
+    },
   };
 }

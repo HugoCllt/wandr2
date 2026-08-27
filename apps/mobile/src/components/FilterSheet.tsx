@@ -1,21 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
+import { useState, type ReactNode } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isDateRange, type FilterValueDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
-import { Icon } from '../ui/Icon';
 import { useFacets } from '../lib/queries/useFacets';
 import { emptyFilters } from '../lib/filtersState';
-
-export const FILTER_TRIGGER_CLEARANCE = 76;
 
 function formatDateInput(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 8);
@@ -68,52 +58,37 @@ function validateDateRange(fromDisplay: string, toDisplay: string): DateRangeVal
   return { message: null, fromInvalid: false, toInvalid: false };
 }
 
-type FilterSheetProps = {
-  visible: boolean;
+function initialRange(value: FilterValueDTO): { from: string; to: string } | null {
+  return value.date !== undefined && isDateRange(value.date) ? value.date : null;
+}
+
+type FilterSheetBodyProps = {
   value: FilterValueDTO;
   onApply: (next: FilterValueDTO) => void;
   onClose: () => void;
 };
 
-export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetProps) {
-  const sheetRef = useRef<BottomSheetModal>(null);
+export function FilterSheetBody({ value, onApply, onClose }: FilterSheetBodyProps) {
   const insets = useSafeAreaInsets();
   const facets = useFacets();
 
-  const [wasVisible, setWasVisible] = useState(visible);
-  const [draft, setDraft] = useState<FilterValueDTO>(value);
-  const [customDate, setCustomDate] = useState(false);
-  const [fromText, setFromText] = useState('');
-  const [toText, setToText] = useState('');
-  const [priceMaxText, setPriceMaxText] = useState('');
-
-  if (visible !== wasVisible) {
-    setWasVisible(visible);
-    if (visible) {
-      setDraft(value);
-      const range = value.date !== undefined && isDateRange(value.date) ? value.date : null;
-      setCustomDate(range !== null);
-      setFromText(range !== null ? isoToDisplay(range.from) : '');
-      setToText(range !== null ? isoToDisplay(range.to) : '');
-      setPriceMaxText(value.priceMax !== undefined ? String(value.priceMax) : '');
-    }
-  }
-
-  useEffect(() => {
-    if (visible) {
-      sheetRef.current?.present();
-    } else {
-      sheetRef.current?.dismiss();
-    }
-  }, [visible]);
-
-  function handleDismiss() {
-    onClose();
-  }
+  const [draft, setDraft] = useState<FilterValueDTO>(() => value);
+  const [customDate, setCustomDate] = useState(() => initialRange(value) !== null);
+  const [fromText, setFromText] = useState(() => {
+    const range = initialRange(value);
+    return range !== null ? isoToDisplay(range.from) : '';
+  });
+  const [toText, setToText] = useState(() => {
+    const range = initialRange(value);
+    return range !== null ? isoToDisplay(range.to) : '';
+  });
+  const [priceMaxText, setPriceMaxText] = useState(() =>
+    value.priceMax !== undefined ? String(value.priceMax) : '',
+  );
 
   function handleApply() {
     onApply(draft);
-    sheetRef.current?.dismiss();
+    onClose();
   }
 
   function handleReset() {
@@ -202,10 +177,6 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
     setDraft((prev) => ({ ...prev, outdoor: prev.outdoor === true ? undefined : true }));
   }
 
-  const renderBackdrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
-  );
-
   const neighborhoodOptions = facets.data?.items ?? [];
 
   const dateValidation = customDate
@@ -213,23 +184,19 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
     : { message: null, fromInvalid: false, toInvalid: false };
 
   return (
-    <BottomSheetModal
-      ref={sheetRef}
-      snapPoints={['60%', '90%']}
-      enablePanDownToClose
-      onDismiss={handleDismiss}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.handleIndicator}
-    >
-      <BottomSheetView style={styles.header}>
+    <View style={styles.root}>
+      <View style={styles.header}>
         <AppText variant="title" color={theme.colors.ink}>
           Filtres
         </AppText>
-      </BottomSheetView>
+      </View>
 
-      <BottomSheetScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Section title="TYPE">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Section title="Type">
           <View style={styles.chipRow}>
             <Chip label="Tous" active={draft.kind === undefined} onPress={() => selectKind(undefined)} />
             <Chip label="Événements" active={draft.kind === 'EVENT'} onPress={() => selectKind('EVENT')} />
@@ -237,7 +204,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
           </View>
         </Section>
 
-        <Section title="DATE">
+        <Section title="Date">
           <View style={styles.chipRow}>
             <Chip
               label="Aujourd’hui"
@@ -255,7 +222,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
             <View style={styles.dateRangeRow}>
               <View style={styles.dateField}>
                 <AppText variant="caption" color={theme.colors.smoke}>
-                  DU
+                  Du
                 </AppText>
                 <TextInput
                   value={fromText}
@@ -269,7 +236,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
               </View>
               <View style={styles.dateField}>
                 <AppText variant="caption" color={theme.colors.smoke}>
-                  AU
+                  Au
                 </AppText>
                 <TextInput
                   value={toText}
@@ -290,7 +257,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
           )}
         </Section>
 
-        <Section title="QUARTIERS">
+        <Section title="Quartiers">
           {facets.isLoading ? (
             <ActivityIndicator color={theme.colors.brass} style={styles.facetsLoading} />
           ) : facets.isError ? (
@@ -326,7 +293,7 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
           )}
         </Section>
 
-        <Section title="PRIX">
+        <Section title="Prix">
           <TextInput
             value={priceMaxText}
             onChangeText={handlePriceMaxChange}
@@ -341,13 +308,13 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
           </View>
         </Section>
 
-        <Section title="CADRE">
+        <Section title="Cadre">
           <View style={styles.chipRow}>
             <Chip label="Intérieur" active={draft.indoor === true} onPress={toggleIndoor} />
             <Chip label="Extérieur" active={draft.outdoor === true} onPress={toggleOutdoor} />
           </View>
         </Section>
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         <Pressable onPress={handleReset} accessibilityRole="button" style={styles.resetButton}>
@@ -361,14 +328,14 @@ export function FilterSheet({ visible, value, onApply, onClose }: FilterSheetPro
           </AppText>
         </Pressable>
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={styles.section}>
-      <AppText variant="caption" color={theme.colors.smoke}>
+      <AppText variant="label" color={theme.colors.smoke}>
         {title}
       </AppText>
       {children}
@@ -391,47 +358,17 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-type FilterTriggerButtonProps = {
-  count: number;
-  onPress: () => void;
-};
-
-export function FilterTriggerButton({ count, onPress }: FilterTriggerButtonProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Filtres"
-      style={styles.trigger}
-    >
-      <Icon name="filter" size={18} color={theme.colors.white} strokeWidth={1.8} />
-      <AppText variant="subtitle" color={theme.colors.white}>
-        Filtres
-      </AppText>
-      {count > 0 && (
-        <View style={styles.triggerBadge}>
-          <AppText variant="caption" color={theme.colors.ink}>
-            {count}
-          </AppText>
-        </View>
-      )}
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: theme.colors.surface2,
-    borderTopLeftRadius: theme.radius.sheet,
-    borderTopRightRadius: theme.radius.sheet,
-  },
-  handleIndicator: {
-    backgroundColor: theme.colors.silver,
-    width: 40,
+  root: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: theme.space.s5,
+    paddingTop: theme.space.s4,
     paddingBottom: theme.space.s3,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: theme.space.s5,
@@ -532,28 +469,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 44,
     borderRadius: theme.radius.btn,
-    backgroundColor: theme.colors.brass,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trigger: {
-    position: 'absolute',
-    right: theme.space.s4,
-    bottom: theme.space.s5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.space.s2,
-    minHeight: 44,
-    paddingHorizontal: theme.space.s4,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.ink,
-    ...theme.shadow.card,
-  },
-  triggerBadge: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 4,
-    borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.brass,
     alignItems: 'center',
     justifyContent: 'center',

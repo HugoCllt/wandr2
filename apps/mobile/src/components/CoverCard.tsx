@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ActivityDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { usePressFeedback } from '../theme/usePressFeedback';
 import { AppText } from '../ui/AppText';
-import { Badge } from '../ui/Badge';
 import { PriceLabel } from '../ui/PriceLabel';
-import { formatActivityWhen, formatActivityWhere } from './cardMeta';
+import { describeActivity, formatActivityWhen, formatActivityWhere } from './cardMeta';
 
 type CoverCardProps = {
   activity: ActivityDTO;
@@ -25,7 +25,7 @@ export function CoverCard({ activity, onPress, actionsSlot }: CoverCardProps) {
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
-      accessibilityLabel={activity.title}
+      accessibilityLabel={describeActivity(activity)}
       style={styles.wrapper}
     >
       <Animated.View style={[styles.card, animatedStyle]}>
@@ -38,11 +38,10 @@ export function CoverCard({ activity, onPress, actionsSlot }: CoverCardProps) {
           />
           <LinearGradient
             colors={['transparent', theme.colors.scrim900]}
-            locations={[0.35, 1]}
+            locations={[0.5, 1]}
             style={styles.scrim}
             pointerEvents="none"
           />
-          {activity.isFeatured && <Badge variant="trending" label="Tendance" style={styles.badge} />}
           {actionsSlot ? <View style={styles.actions}>{actionsSlot}</View> : null}
           <View style={styles.body}>
             <AppText variant="title" color={theme.colors.white} numberOfLines={2}>
@@ -72,6 +71,7 @@ const styles = StyleSheet.create({
   card: {
     aspectRatio: 4 / 3,
     borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.surface3,
     ...theme.shadow.card,
   },
   clip: {
@@ -92,12 +92,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: '60%',
-  },
-  badge: {
-    position: 'absolute',
-    top: theme.space.s3,
-    left: theme.space.s3,
+    height: '55%',
   },
   actions: {
     position: 'absolute',

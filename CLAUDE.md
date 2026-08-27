@@ -4,6 +4,8 @@ Architecture rules and working principles. Read this + [`CONTEXT.md`](./CONTEXT.
 
 > **Stage:** personal POC. Single locale, single user, single deployment. Anything that doesn't serve "make Phase 1 work end-to-end" is out of scope.
 
+> **Dev account:** `dev@wandr.local` / `WandrAdmin2026!` — the single seeded user (premium, onboarded), web + mobile. Mirrored in `.env` as `SEED_USER_PASSWORD`, so `pnpm db:seed` recreates it with the same password.
+
 > **Mobile:** the iOS/Android migration analysis (Expo, backend reuse, DB, BYOK chat, store constraints) lives in [`MOBILE_MIGRATION.md`](./MOBILE_MIGRATION.md) — exploratory, nothing in `src/` targets mobile today.
 
 ---

@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { theme } from '../../src/theme/tokens';
 import { AppText } from '../../src/ui/AppText';
 import { Icon } from '../../src/ui/Icon';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { MonthGrid, MONTHS_FULL, type MonthGridEntry } from '../../src/components/MonthGrid';
 import { UpcomingList, type UpcomingItem } from '../../src/components/UpcomingList';
-import { ReviewSheet } from '../../src/components/ReviewSheet';
+import { useTabBarClearance } from '../../src/theme/useTabBarClearance';
 import { localDayKey } from '../../src/lib/monthGrid';
 import {
   useCalendarEntries,
@@ -27,18 +28,13 @@ function formatShortDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
 }
 
-type ActiveReview = {
-  entryId: string;
-  title: string;
-  defaultOutcome: 'DONE' | 'MISSED';
-};
-
 export default function CalendarScreen() {
+  const router = useRouter();
+  const clearance = useTabBarClearance();
   const [viewed, setViewed] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), monthIndex: now.getMonth() };
   });
-  const [activeReview, setActiveReview] = useState<ActiveReview | null>(null);
 
   const [now] = useState(() => new Date());
   const { from, to } = useMemo(() => monthRangeIso(viewed.year, viewed.monthIndex), [viewed]);
@@ -96,7 +92,7 @@ export default function CalendarScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: theme.space.s4 + clearance }]} showsVerticalScrollIndicator={false}>
         <AppText variant="display" color={theme.colors.ink}>
           Calendrier
         </AppText>
@@ -163,7 +159,10 @@ export default function CalendarScreen() {
                   <View style={styles.pendingActions}>
                     <Pressable
                       onPress={() =>
-                        setActiveReview({ entryId: item.id, title: item.title, defaultOutcome: 'DONE' })
+                        router.push({
+                          pathname: '/review',
+                          params: { entryId: item.id, activityTitle: item.title, outcome: 'DONE' },
+                        })
                       }
                       accessibilityRole="button"
                       style={styles.pendingButtonDone}
@@ -174,7 +173,10 @@ export default function CalendarScreen() {
                     </Pressable>
                     <Pressable
                       onPress={() =>
-                        setActiveReview({ entryId: item.id, title: item.title, defaultOutcome: 'MISSED' })
+                        router.push({
+                          pathname: '/review',
+                          params: { entryId: item.id, activityTitle: item.title, outcome: 'MISSED' },
+                        })
                       }
                       accessibilityRole="button"
                       style={styles.pendingButtonMissed}
@@ -214,14 +216,6 @@ export default function CalendarScreen() {
           )}
         </View>
       </ScrollView>
-
-      <ReviewSheet
-        entryId={activeReview?.entryId ?? null}
-        activityTitle={activeReview?.title ?? ''}
-        defaultOutcome={activeReview?.defaultOutcome}
-        visible={activeReview !== null}
-        onClose={() => setActiveReview(null)}
-      />
     </SafeAreaView>
   );
 }

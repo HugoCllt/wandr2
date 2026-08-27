@@ -11,6 +11,7 @@ import { authClient } from '../../src/lib/auth-client';
 import { queryClient } from '../../src/lib/queries/queryClient';
 import { useProfile } from '../../src/lib/queries/useProfile';
 import { categoryLabelFor } from '../../src/components/cardMeta';
+import { useTabBarClearance } from '../../src/theme/useTabBarClearance';
 
 const AVATAR_BASE_URL = 'https://api.dicebear.com/9.x/avataaars/svg';
 
@@ -59,6 +60,7 @@ function ProfileRow({
 export default function ProfileScreen() {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
+  const clearance = useTabBarClearance();
   const { data: profile, isLoading, isError, refetch } = useProfile();
 
   async function handleSignOut() {
@@ -104,7 +106,10 @@ export default function ProfileScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: theme.space.s6 + clearance }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Image
             source={{ uri: buildAvatarUrl(profile.profile.id) }}
@@ -133,8 +138,8 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.affinitySection}>
-          <AppText variant="eyebrow" color={theme.colors.smoke}>
-            MES AFFINITÉS
+          <AppText variant="label" color={theme.colors.smoke}>
+            Mes affinités
           </AppText>
           <View style={styles.chipWrap}>
             {PROFILE_AFFINITY_CATEGORIES.map((category) => {
@@ -200,7 +205,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scroll: {
-    paddingBottom: theme.space.s6,
   },
   header: {
     alignItems: 'center',

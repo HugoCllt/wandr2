@@ -1,15 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
+import { Icon } from '../ui/Icon';
 import { useReviewEntry } from '../lib/queries/useCalendar';
 
 const NOTE_MAX_LENGTH = 280;
@@ -17,59 +11,22 @@ const SATISFACTION_LABELS = ['Décevant', 'Bof', 'Correct', 'Très bien', 'Inoub
 
 type Outcome = 'DONE' | 'MISSED';
 
-type ReviewSheetProps = {
-  entryId: string | null;
+type ReviewBodyProps = {
+  entryId: string;
   activityTitle: string;
   defaultOutcome?: Outcome;
-  visible: boolean;
   onClose: () => void;
 };
 
-export function ReviewSheet({
-  entryId,
-  activityTitle,
-  defaultOutcome = 'DONE',
-  visible,
-  onClose,
-}: ReviewSheetProps) {
-  const sheetRef = useRef<BottomSheetModal>(null);
+export function ReviewBody({ entryId, activityTitle, defaultOutcome = 'DONE', onClose }: ReviewBodyProps) {
   const insets = useSafeAreaInsets();
-  const [outcome, setOutcome] = useState<Outcome>('DONE');
+  const [outcome, setOutcome] = useState<Outcome>(defaultOutcome);
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const reviewEntry = useReviewEntry();
 
-  const [wasVisible, setWasVisible] = useState(visible);
-  if (visible !== wasVisible) {
-    setWasVisible(visible);
-    if (visible) {
-      setOutcome(defaultOutcome);
-    }
-  }
-
-  useEffect(() => {
-    if (visible) {
-      sheetRef.current?.present();
-    } else {
-      sheetRef.current?.dismiss();
-    }
-  }, [visible]);
-
-  function reset() {
-    setOutcome('DONE');
-    setSatisfaction(null);
-    setNote('');
-    setError(null);
-  }
-
-  function handleDismiss() {
-    reset();
-    onClose();
-  }
-
   async function handleSubmit() {
-    if (!entryId) return;
     if (outcome === 'DONE' && satisfaction === null) return;
     setError(null);
     try {
@@ -79,7 +36,7 @@ export function ReviewSheet({
         satisfaction: outcome === 'DONE' ? satisfaction : null,
         reviewNote: note.trim().length > 0 ? note.trim() : null,
       });
-      sheetRef.current?.dismiss();
+      onClose();
     } catch {
       setError('Échec de l’enregistrement.');
     }
@@ -87,30 +44,32 @@ export function ReviewSheet({
 
   const valid = outcome === 'MISSED' || satisfaction !== null;
 
-  const renderBackdrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
-  );
-
   return (
-    <BottomSheetModal
-      ref={sheetRef}
-      snapPoints={['70%']}
-      enablePanDownToClose
-      onDismiss={handleDismiss}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.handleIndicator}
-    >
-      <BottomSheetView style={styles.header}>
-        <AppText variant="title" color={theme.colors.ink}>
-          Comment c’était ?
-        </AppText>
-        <AppText variant="body" color={theme.colors.smoke}>
-          {activityTitle}
-        </AppText>
-      </BottomSheetView>
+    <View style={styles.root}>
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <AppText variant="title" color={theme.colors.ink}>
+            Comment c’était ?
+          </AppText>
+          <AppText variant="body" color={theme.colors.smoke} numberOfLines={2}>
+            {activityTitle}
+          </AppText>
+        </View>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Fermer"
+          style={styles.closeButton}
+        >
+          <Icon name="close" size={18} color={theme.colors.ink} strokeWidth={2} />
+        </Pressable>
+      </View>
 
-      <BottomSheetScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.segment}>
           <Pressable
             onPress={() => setOutcome('DONE')}
@@ -183,8 +142,7 @@ export function ReviewSheet({
             {note.length}/{NOTE_MAX_LENGTH}
           </AppText>
         </View>
-
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         {error && (
@@ -205,24 +163,36 @@ export function ReviewSheet({
           </AppText>
         </Pressable>
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: theme.colors.surface2,
-    borderTopLeftRadius: theme.radius.sheet,
-    borderTopRightRadius: theme.radius.sheet,
-  },
-  handleIndicator: {
-    backgroundColor: theme.colors.silver,
-    width: 40,
+  root: {
+    flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.space.s3,
     paddingHorizontal: theme.space.s5,
+    paddingTop: theme.space.s4,
     paddingBottom: theme.space.s3,
+  },
+  headerText: {
+    flex: 1,
     gap: theme.space.s1,
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surface3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: theme.space.s5,

@@ -97,8 +97,8 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <AppText variant="wordmark">Wandr</AppText>
-          <AppText variant="eyebrow" color={theme.colors.smoke} style={styles.tagline}>
-            VOTRE VILLE, VOS SORTIES
+          <AppText variant="body" color={theme.colors.smoke} style={styles.tagline}>
+            Votre ville, vos sorties
           </AppText>
         </View>
 

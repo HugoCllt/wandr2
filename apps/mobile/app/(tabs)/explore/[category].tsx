@@ -1,22 +1,19 @@
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, useLocalSearchParams } from 'expo-router';
-import { isCategoryKey, type CategoryKey, type FilterValueDTO } from '@wandr/shared';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { isCategoryKey, type CategoryKey } from '@wandr/shared';
 import { theme } from '../../../src/theme/tokens';
 import { useFeedColumns } from '../../../src/theme/useFeedColumns';
+import { useTabBarClearance } from '../../../src/theme/useTabBarClearance';
 import { useFeed } from '../../../src/lib/queries/useFeed';
+import { useHeroSlideIds } from '../../../src/lib/queries/useHeroSlides';
 import { AppText } from '../../../src/ui/AppText';
 import { FeedList } from '../../../src/components/FeedList';
-import { CATEGORY_KEY_EYEBROW, CATEGORY_KEY_LABEL } from '../../../src/components/categoryCopy';
-import {
-  FilterSheet,
-  FilterTriggerButton,
-  FILTER_TRIGGER_CLEARANCE,
-} from '../../../src/components/FilterSheet';
+import { HeroCarousel } from '../../../src/components/HeroCarousel';
+import { ScreenHeader } from '../../../src/components/ScreenHeader';
+import { CATEGORY_KEY_LABEL } from '../../../src/components/categoryCopy';
 import { countActiveFilters, emptyFilters } from '../../../src/lib/filtersState';
-
-const CITY_NAME = 'Montréal';
+import { setScopedFilters, useScopedFilters } from '../../../src/lib/filtersStore';
 
 export default function CategoryRouteScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
@@ -29,48 +26,56 @@ export default function CategoryRouteScreen() {
 }
 
 function CategoryScreen({ categoryKey }: { categoryKey: CategoryKey }) {
+  const router = useRouter();
   const { columns } = useFeedColumns();
-  const [filters, setFilters] = useState<FilterValueDTO>(emptyFilters());
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const filters = useScopedFilters(categoryKey);
   const query = useFeed({ preset: categoryKey, filters });
-  const eyebrow = CATEGORY_KEY_EYEBROW[categoryKey].replace('{city}', CITY_NAME.toUpperCase());
+  const clearance = useTabBarClearance();
+  const activeFilters = countActiveFilters(filters);
+  const heroIds = useHeroSlideIds(categoryKey);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <View style={styles.screen}>
+      <StatusBar style="light" />
       <FeedList
         query={query}
         columns={columns}
         emptyLabel="Rien ici pour l’instant"
-        bottomInset={FILTER_TRIGGER_CLEARANCE}
+        bottomInset={clearance}
+        excludeIds={heroIds}
+        onResetFilters={activeFilters > 0 ? () => setScopedFilters(categoryKey, emptyFilters()) : undefined}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <AppText variant="eyebrow" color={theme.colors.smoke}>
-              {eyebrow}
-            </AppText>
-            <AppText variant="display" color={theme.colors.ink}>
+          <View>
+            <View style={styles.hero}>
+              <HeroCarousel preset={categoryKey} />
+            </View>
+            <AppText variant="display" color={theme.colors.ink} style={styles.heading}>
               {CATEGORY_KEY_LABEL[categoryKey]}
             </AppText>
           </View>
         }
       />
-      <FilterTriggerButton count={countActiveFilters(filters)} onPress={() => setFilterSheetOpen(true)} />
-      <FilterSheet
-        visible={filterSheetOpen}
-        value={filters}
-        onApply={setFilters}
-        onClose={() => setFilterSheetOpen(false)}
+      <ScreenHeader
+        filterCount={activeFilters}
+        onPressFilters={() => router.push({ pathname: '/filters', params: { scope: categoryKey } })}
+        onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
     backgroundColor: theme.colors.offwhite,
   },
-  header: {
-    gap: theme.space.s1,
-    paddingBottom: theme.space.s2,
+  hero: {
+    marginHorizontal: -theme.space.s4,
+    marginTop: -theme.space.s4,
+  },
+  heading: {
+    textAlign: 'center',
+    marginTop: theme.space.s5,
+    marginBottom: theme.space.s1,
   },
 });

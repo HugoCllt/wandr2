@@ -8,12 +8,14 @@ export type IconName =
   | 'leaf'
   | 'moon'
   | 'heart'
+  | 'heart-fill'
   | 'calendar'
   | 'chat'
   | 'profile'
   | 'home'
   | 'compass'
   | 'bookmark'
+  | 'bookmark-fill'
   | 'flame'
   | 'pin'
   | 'clock'
@@ -115,6 +117,12 @@ export function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.
           <Path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" />
         </Svg>
       );
+    case 'heart-fill':
+      return (
+        <Svg {...common} fill={color} stroke="none">
+          <Path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" />
+        </Svg>
+      );
     case 'pin':
       return (
         <Svg {...common}>
@@ -125,6 +133,12 @@ export function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.
     case 'bookmark':
       return (
         <Svg {...common}>
+          <Path d="M6 4h12v17l-6-4-6 4V4Z" />
+        </Svg>
+      );
+    case 'bookmark-fill':
+      return (
+        <Svg {...common} fill={color} stroke="none">
           <Path d="M6 4h12v17l-6-4-6 4V4Z" />
         </Svg>
       );

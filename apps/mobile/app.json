@@ -16,7 +16,8 @@
         "backgroundColor": "#F6F1E8",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": true,
+      "package": "com.anonymous.wandr"
     },
     "web": {
       "favicon": "./assets/favicon.png"

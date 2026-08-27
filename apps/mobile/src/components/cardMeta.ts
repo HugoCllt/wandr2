@@ -45,3 +45,7 @@ export function categoryIconFor(category: ActivityCategory): IconName {
 export function categoryLabelFor(category: ActivityCategory): string {
   return CATEGORY_LABEL[category];
 }
+
+export function describeActivity(activity: Pick<ActivityDTO, 'title' | 'kind' | 'dateStart' | 'neighborhood'>): string {
+  return `${activity.title}. ${formatActivityWhen(activity)}, ${formatActivityWhere(activity)}.`;
+}

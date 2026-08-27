@@ -1,60 +1,58 @@
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import type { FilterValueDTO } from '@wandr/shared';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { theme } from '../../src/theme/tokens';
 import { useFeedColumns } from '../../src/theme/useFeedColumns';
+import { useTabBarClearance } from '../../src/theme/useTabBarClearance';
 import { useFeed } from '../../src/lib/queries/useFeed';
-import { AppText } from '../../src/ui/AppText';
+import { useHeroSlideIds } from '../../src/lib/queries/useHeroSlides';
 import { HeroCarousel } from '../../src/components/HeroCarousel';
-import { SectionHeader } from '../../src/components/SectionHeader';
 import { FeedList } from '../../src/components/FeedList';
-import { FilterSheet, FilterTriggerButton, FILTER_TRIGGER_CLEARANCE } from '../../src/components/FilterSheet';
+import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { countActiveFilters, emptyFilters } from '../../src/lib/filtersState';
+import { setScopedFilters, useScopedFilters } from '../../src/lib/filtersStore';
 
 export default function AccueilScreen() {
+  const router = useRouter();
   const { columns } = useFeedColumns();
-  const [filters, setFilters] = useState<FilterValueDTO>(emptyFilters());
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const filters = useScopedFilters('home');
   const query = useFeed({ filters });
+  const clearance = useTabBarClearance();
+  const activeFilters = countActiveFilters(filters);
+  const heroIds = useHeroSlideIds();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <View style={styles.screen}>
+      <StatusBar style="light" />
       <FeedList
         query={query}
         columns={columns}
         emptyLabel="Rien ici pour l’instant"
-        bottomInset={FILTER_TRIGGER_CLEARANCE}
+        bottomInset={clearance}
+        excludeIds={heroIds}
+        onResetFilters={activeFilters > 0 ? () => setScopedFilters('home', emptyFilters()) : undefined}
         ListHeaderComponent={
-          <View>
-            <AppText variant="eyebrow" color={theme.colors.smoke}>
-              CE WEEK-END À MONTRÉAL
-            </AppText>
-            <View style={styles.hero}>
-              <HeroCarousel />
-            </View>
-            <SectionHeader title="Pour toi" />
+          <View style={styles.hero}>
+            <HeroCarousel />
           </View>
         }
       />
-      <FilterTriggerButton count={countActiveFilters(filters)} onPress={() => setFilterSheetOpen(true)} />
-      <FilterSheet
-        visible={filterSheetOpen}
-        value={filters}
-        onApply={setFilters}
-        onClose={() => setFilterSheetOpen(false)}
+      <ScreenHeader
+        filterCount={activeFilters}
+        onPressFilters={() => router.push({ pathname: '/filters', params: { scope: 'home' } })}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
     backgroundColor: theme.colors.offwhite,
   },
   hero: {
     marginHorizontal: -theme.space.s4,
-    marginTop: theme.space.s3,
+    marginTop: -theme.space.s4,
+    marginBottom: theme.space.s2,
   },
 });

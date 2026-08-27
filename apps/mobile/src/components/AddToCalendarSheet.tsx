@@ -1,15 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme/tokens';
 import { AppText } from '../ui/AppText';
+import { Icon } from '../ui/Icon';
 import { ApiError } from '../lib/api';
 import { useAddToCalendar } from '../lib/queries/useCalendar';
 
@@ -55,22 +49,14 @@ const TIME_SLOTS: string[] = (() => {
   return slots;
 })();
 
-type AddToCalendarSheetProps = {
+type AddToCalendarBodyProps = {
   activityId: string;
   activityTitle: string;
-  visible: boolean;
   onClose: () => void;
-  onSaved?: () => void;
+  onSaved: () => void;
 };
 
-export function AddToCalendarSheet({
-  activityId,
-  activityTitle,
-  visible,
-  onClose,
-  onSaved,
-}: AddToCalendarSheetProps) {
-  const sheetRef = useRef<BottomSheetModal>(null);
+export function AddToCalendarBody({ activityId, activityTitle, onClose, onSaved }: AddToCalendarBodyProps) {
   const insets = useSafeAreaInsets();
   const days = useMemo(() => buildUpcomingDays(UPCOMING_DAYS), []);
   const [selectedDay, setSelectedDay] = useState<DayOption>(days[0]);
@@ -78,22 +64,6 @@ export function AddToCalendarSheet({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const addToCalendar = useAddToCalendar();
-
-  useEffect(() => {
-    if (visible) {
-      sheetRef.current?.present();
-    } else {
-      sheetRef.current?.dismiss();
-    }
-  }, [visible]);
-
-  function handleDismiss() {
-    setSelectedDay(days[0]);
-    setSelectedTime(null);
-    setError(null);
-    setPending(false);
-    onClose();
-  }
 
   async function handleSubmit() {
     if (!selectedTime || pending) return;
@@ -110,8 +80,7 @@ export function AddToCalendarSheet({
 
     try {
       await addToCalendar.mutateAsync({ activityId, scheduledAt });
-      onSaved?.();
-      sheetRef.current?.dismiss();
+      onSaved();
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setError('Activité introuvable.');
@@ -123,34 +92,36 @@ export function AddToCalendarSheet({
     }
   }
 
-  const renderBackdrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
-  );
-
   return (
-    <BottomSheetModal
-      ref={sheetRef}
-      snapPoints={['80%']}
-      enablePanDownToClose
-      onDismiss={handleDismiss}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.handleIndicator}
-    >
-      <BottomSheetView style={styles.header}>
-        <AppText variant="title" color={theme.colors.ink}>
-          Ajouter au calendrier
-        </AppText>
-        <AppText variant="body" color={theme.colors.smoke}>
-          {activityTitle}
-        </AppText>
-      </BottomSheetView>
+    <View style={styles.root}>
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <AppText variant="title" color={theme.colors.ink}>
+            Ajouter au calendrier
+          </AppText>
+          <AppText variant="body" color={theme.colors.smoke} numberOfLines={2}>
+            {activityTitle}
+          </AppText>
+        </View>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Fermer"
+          style={styles.closeButton}
+        >
+          <Icon name="close" size={18} color={theme.colors.ink} strokeWidth={2} />
+        </Pressable>
+      </View>
 
-      <BottomSheetScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <AppText variant="caption" color={theme.colors.smoke}>
           JOUR
         </AppText>
-        <BottomSheetScrollView
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.dayScroll}
@@ -175,7 +146,7 @@ export function AddToCalendarSheet({
               </Pressable>
             );
           })}
-        </BottomSheetScrollView>
+        </ScrollView>
 
         <AppText variant="caption" color={theme.colors.smoke} style={styles.sectionLabel}>
           HEURE
@@ -198,7 +169,7 @@ export function AddToCalendarSheet({
             );
           })}
         </View>
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.ctaBar, { paddingBottom: Math.max(theme.space.s6, theme.space.s3 + insets.bottom) }]}>
         {error && (
@@ -219,24 +190,36 @@ export function AddToCalendarSheet({
           </AppText>
         </Pressable>
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: theme.colors.surface2,
-    borderTopLeftRadius: theme.radius.sheet,
-    borderTopRightRadius: theme.radius.sheet,
-  },
-  handleIndicator: {
-    backgroundColor: theme.colors.silver,
-    width: 40,
+  root: {
+    flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.space.s3,
     paddingHorizontal: theme.space.s5,
+    paddingTop: theme.space.s4,
     paddingBottom: theme.space.s3,
+  },
+  headerText: {
+    flex: 1,
     gap: theme.space.s1,
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.surface3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: theme.space.s5,

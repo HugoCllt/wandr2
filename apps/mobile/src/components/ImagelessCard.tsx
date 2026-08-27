@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import type { ActivityDTO } from '@wandr/shared';
 import { theme } from '../theme/tokens';
 import { usePressFeedback } from '../theme/usePressFeedback';
@@ -28,38 +28,31 @@ export function ImagelessCard({ activity, onPress, actionsSlot }: ImagelessCardP
       accessibilityLabel={activity.title}
       style={styles.wrapper}
     >
-      <Animated.View style={animatedStyle}>
-        <LinearGradient
-          colors={[theme.colors.surface2, theme.colors.surface3]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.card}
-        >
-          <View style={styles.topRow}>
-            <AppText variant="caption" color={theme.colors.smoke}>
-              {categoryLabelFor(primary)}
-            </AppText>
-            <View style={styles.topRowRight}>
-              {actionsSlot}
-              <View style={styles.iconMark}>
-                <Icon name={categoryIconFor(primary)} size={18} color={theme.colors.brass} strokeWidth={1.6} />
-              </View>
+      <Animated.View style={[styles.card, animatedStyle]}>
+        <View style={styles.topRow}>
+          <AppText variant="caption" color={theme.colors.smoke}>
+            {categoryLabelFor(primary)}
+          </AppText>
+          <View style={styles.topRowRight}>
+            {actionsSlot}
+            <View style={styles.iconMark}>
+              <Icon name={categoryIconFor(primary)} size={18} color={theme.colors.brass} strokeWidth={1.6} />
             </View>
           </View>
-          <AppText variant="title" color={theme.colors.ink} numberOfLines={3} style={styles.title}>
-            {activity.title}
+        </View>
+        <AppText variant="title" color={theme.colors.ink} numberOfLines={3} style={styles.title}>
+          {activity.title}
+        </AppText>
+        <View style={styles.metaRow}>
+          <AppText variant="caption" color={theme.colors.smoke} numberOfLines={1}>
+            {formatActivityWhen(activity)}
           </AppText>
-          <View style={styles.metaRow}>
-            <AppText variant="caption" color={theme.colors.smoke} numberOfLines={1}>
-              {formatActivityWhen(activity)}
-            </AppText>
-            <View style={styles.dot} />
-            <AppText variant="caption" color={theme.colors.smoke} numberOfLines={1} style={styles.metaWhere}>
-              {formatActivityWhere(activity)}
-            </AppText>
-          </View>
-          <PriceLabel activity={activity} color={theme.colors.brass700} style={styles.price} />
-        </LinearGradient>
+          <View style={styles.dot} />
+          <AppText variant="caption" color={theme.colors.smoke} numberOfLines={1} style={styles.metaWhere}>
+            {formatActivityWhere(activity)}
+          </AppText>
+        </View>
+        <PriceLabel activity={activity} color={theme.colors.brass700} style={styles.price} />
       </Animated.View>
     </Pressable>
   );
@@ -72,9 +65,11 @@ const styles = StyleSheet.create({
   card: {
     aspectRatio: 4 / 3,
     borderRadius: theme.radius.card,
+    borderWidth: theme.hairline,
+    borderColor: theme.colors.line,
+    backgroundColor: theme.colors.surface,
     padding: theme.space.s4,
     justifyContent: 'space-between',
-    ...theme.shadow.card,
   },
   topRow: {
     flexDirection: 'row',

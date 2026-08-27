@@ -2,6 +2,14 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+# Moved from .npmrc, which pnpm 11 no longer reads for this setting. The
+# isolated store nests packages under
+# `node_modules/.pnpm/<name>@<version>_<hash>/node_modules/<name>`, adding ~80
+# characters to every path. Android's CMake/ninja toolchain is not
+# long-path-aware, so worklets' object paths blew past MAX_PATH and ninja
+# looped on "manifest 'build.ninja' still dirty after 100 tries".
+nodeLinker: hoisted
+
 # pnpm 11 enforces a default 24h minimum-release-age supply-chain policy.
 # Disabled for this solo POC — it was a recurring false positive on
 # fast-publishing browser-data packages (electron-to-chromium, caniuse-lite).
@@ -27,3 +35,4 @@ allowBuilds:
   esbuild: true
   unrs-resolver: true
   better-sqlite3: false
+

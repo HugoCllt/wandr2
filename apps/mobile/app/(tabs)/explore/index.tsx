@@ -1,4 +1,5 @@
-import { Animated, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -8,6 +9,9 @@ import { theme } from '../../../src/theme/tokens';
 import { usePressFeedback } from '../../../src/theme/usePressFeedback';
 import { AppText } from '../../../src/ui/AppText';
 import { CATEGORY_KEY_LABEL } from '../../../src/components/categoryCopy';
+import { useTabBarClearance } from '../../../src/theme/useTabBarClearance';
+
+const WIDE_LAYOUT_MIN_WIDTH = 900;
 
 function CategoryTile({ categoryKey }: { categoryKey: CategoryKey }) {
   const router = useRouter();
@@ -29,6 +33,7 @@ function CategoryTile({ categoryKey }: { categoryKey: CategoryKey }) {
           <Image source={{ uri: preset.heroImage }} style={styles.image} contentFit="cover" transition={150} />
           <LinearGradient
             colors={['transparent', theme.colors.scrim900]}
+            locations={[0, 1]}
             style={styles.scrim}
             pointerEvents="none"
           />
@@ -44,15 +49,20 @@ function CategoryTile({ categoryKey }: { categoryKey: CategoryKey }) {
 }
 
 export default function ExploreScreen() {
+  const { width } = useWindowDimensions();
+  const columns = width >= WIDE_LAYOUT_MIN_WIDTH ? 3 : 2;
+  const clearance = useTabBarClearance();
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <FlatList
+        key={columns}
         data={CATEGORY_KEYS}
-        numColumns={2}
+        numColumns={columns}
         columnWrapperStyle={styles.row}
         keyExtractor={(key) => key}
         renderItem={({ item }) => <CategoryTile categoryKey={item} />}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: theme.space.s4 + clearance }]}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <AppText variant="display" color={theme.colors.ink} style={styles.heading}>
@@ -85,6 +95,7 @@ const styles = StyleSheet.create({
   tile: {
     aspectRatio: 1,
     borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.surface3,
     ...theme.shadow.card,
   },
   tileClip: {
