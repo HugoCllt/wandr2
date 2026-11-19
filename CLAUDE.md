@@ -121,4 +121,4 @@ Knowledge graph of the codebase at `graphify-out/`.
 
 ## Home server
 
-On the home server Wandr lives in WSL (`~/dev/Wandr`, Linux Node 24 + pnpm 11) with its own PostgreSQL 18 in WSL: database `wandr`, owned by the dedicated role `wandr` (credentials only in the gitignored `.env`, mode 600). The schema is applied with `pnpm db:push` (not Prisma Migrate). SuperMes (`activity` profile) starts the MCP server with `pnpm tsx --env-file=.env src/mcp/server.ts`.
+On the home server Wandr lives in WSL (`~/dev/Wandr`, Linux Node 24 + pnpm 11) with its own PostgreSQL 18 in WSL on **port 5434** (5432 is taken by the unused native Windows PostgreSQL through WSL's mirrored networking, 5433 by Hugoomberg's Docker DB): database `wandr`, owned by the dedicated role `wandr` (credentials only in the gitignored `.env`, mode 600). The schema is applied with `pnpm db:push` (not Prisma Migrate). SuperMes (`activity` profile) starts the MCP server with `pnpm tsx --env-file=.env src/mcp/server.ts`.
