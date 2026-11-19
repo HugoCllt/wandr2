@@ -118,3 +118,7 @@ Knowledge graph of the codebase at `graphify-out/`.
 - `graphify path "<A>" "<B>"` for relationships, `graphify explain "<concept>"` for focused concepts.
 - Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review.
 - After modifying code: `graphify update .` (AST-only, no API cost).
+
+## Home server
+
+On the home server Wandr lives in WSL (`~/dev/Wandr`, Linux Node 24 + pnpm 11) with its own PostgreSQL 18 in WSL: database `wandr`, owned by the dedicated role `wandr` (credentials only in the gitignored `.env`, mode 600). The schema is applied with `pnpm db:push` (not Prisma Migrate). SuperMes (`activity` profile) starts the MCP server with `pnpm tsx --env-file=.env src/mcp/server.ts`.
